@@ -95,6 +95,13 @@
             color: #3b82f6;
         }
 
+        /* Right side menu - JD and Hamburger together */
+        .right-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
         .mobile-menu-btn {
             display: none;
             background: none;
@@ -102,8 +109,24 @@
             color: #1a1f36;
             font-size: 1.3rem;
             cursor: pointer;
+            padding: 0.3rem;
         }
 
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* Mobile Menu Dropdown */
         .mobile-menu {
             display: none;
             position: absolute;
@@ -126,33 +149,15 @@
         .mobile-menu a {
             color: #4a5568;
             text-decoration: none;
-            padding: 0.4rem;
-            font-size: 0.8rem;
+            padding: 0.5rem;
+            font-size: 0.85rem;
             font-weight: 500;
+            border-radius: 8px;
         }
 
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .user-menu span {
-            font-size: 0.7rem;
-        }
-
-        .user-avatar {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.7rem;
-            cursor: pointer;
+        .mobile-menu a:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
         }
 
         /* Main Layout */
@@ -182,7 +187,7 @@
             font-size: 0.8rem;
         }
 
-        /* Stats Grid - Mobile Compressed */
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -488,13 +493,7 @@
             font-size: 0.6rem;
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
+        /* Desktop nav links - hide on mobile */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -535,13 +534,13 @@
             <a href="settings.html">Settings</a>
             <a href="support.html">Support</a>
         </div>
-        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-        <div class="user-menu">
-            <span>John Doe</span>
+        <div class="right-menu">
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
             <div class="user-avatar" onclick="showMessage('Account settings')">JD</div>
         </div>
     </nav>
 
+    <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <a href="trade.html">Trade</a>
         <a href="markets.html">Markets</a>
@@ -768,7 +767,17 @@
                     <td>$${asset.avgPrice.toLocaleString()}</td>
                     <td>$${asset.currentPrice.toLocaleString()}</td>
                     <td>$${asset.value.toLocaleString()}</td>
-                    <td class="${asset.pnl >= 0 ? 'positive' : 'negative'}">${asset.pnl >= 0 ? '▲' : '▼'} $${Math.abs(asset.pnl).toLocaleString()} (${asset.pnlPercent}%)</td>
+                    <td class="${asset.pnl >= 0 ? 'positive' : 'negative'}">${asset.pnl >= 0 ? '▲' : '▼'} $${Math.abs(asset.pnl).toLocaleString()} (${asset.pnlPercent}%)</div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
                     <td><button class="btn-small" onclick="showMessage('Trade page')">Trade</button></td>
                 </tr>
             `).join('');
