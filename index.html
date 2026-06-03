@@ -34,6 +34,7 @@
             background: linear-gradient(135deg, #f5f7fb 0%, #ffffff 50%, #f0f4f9 100%);
         }
 
+        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -233,16 +234,6 @@
             margin-bottom: 1.5rem;
         }
 
-        .hero-buttons .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
-
-        .hero-buttons .btn-outline {
-            border-color: white;
-            color: white;
-        }
-
         .trust-badge {
             display: flex;
             gap: 1rem;
@@ -330,9 +321,9 @@
             }
         }
 
-        /* Markets Section - Compressed for Mobile */
+        /* Markets Section */
         .market-section {
-            padding: 1.5rem 4%;
+            padding: 2rem 5%;
             max-width: 1400px;
             margin: 0 auto;
         }
@@ -341,25 +332,25 @@
             font-size: 1.3rem;
             font-weight: 600;
             color: #1a1f36;
-            margin-bottom: 0.8rem;
+            margin-bottom: 1rem;
         }
 
         .market-filters {
             display: flex;
-            gap: 0.4rem;
+            gap: 0.5rem;
             flex-wrap: wrap;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .filter-btn {
             background: #f1f5f9;
             border: none;
-            padding: 0.35rem 0.8rem;
+            padding: 0.4rem 1rem;
             border-radius: 6px;
             color: #4a5568;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 0.7rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
@@ -368,136 +359,157 @@
             color: white;
         }
 
-        .market-table-container {
+        /* Desktop Table View */
+        .desktop-table {
+            display: table;
+            width: 100%;
             background: white;
-            border-radius: 12px;
-            overflow-x: auto;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            -webkit-overflow-scrolling: touch;
+            overflow-x: auto;
         }
 
         .market-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 550px;
         }
 
         .market-table th {
             text-align: left;
-            padding: 0.7rem 0.8rem;
+            padding: 1rem;
+            background: #f8fafc;
             color: #64748b;
+            font-size: 0.75rem;
             font-weight: 600;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            background: #f8fafc;
         }
 
         .market-table td {
-            padding: 0.7rem 0.8rem;
+            padding: 1rem;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.75rem;
-            color: #1a1f36;
+            font-size: 0.85rem;
         }
 
         .crypto-name {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.5rem;
             font-weight: 600;
-        }
-
-        .crypto-name span:first-child {
-            font-size: 0.8rem;
         }
 
         .crypto-symbol {
             color: #718096;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             font-weight: 400;
         }
 
         .positive {
             color: #10b981;
-            font-weight: 500;
         }
 
         .negative {
             color: #ef4444;
-            font-weight: 500;
         }
 
         .trade-link {
             color: #3b82f6;
             text-decoration: none;
-            font-size: 0.7rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
-        /* Mobile: Extreme Compression for Markets Table */
+        /* Mobile Card View */
+        .mobile-cards {
+            display: none;
+        }
+
+        .market-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .card-symbol {
+            color: #718096;
+            font-size: 0.7rem;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.8rem;
+        }
+
+        .card-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .card-value {
+            font-weight: 500;
+        }
+
+        .card-trade {
+            margin-top: 0.75rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e2e8f0;
+            text-align: right;
+        }
+
+        .card-trade .trade-link {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.75rem;
+        }
+
+        /* Responsive: Hide table on mobile, show cards */
         @media (max-width: 768px) {
-            .market-section {
-                padding: 1rem 4%;
+            .desktop-table {
+                display: none;
+            }
+            .mobile-cards {
+                display: block;
             }
             
             .market-title {
-                font-size: 1rem;
-                margin-bottom: 0.6rem;
-            }
-            
-            .market-filters {
-                gap: 0.3rem;
+                font-size: 1.1rem;
                 margin-bottom: 0.8rem;
             }
             
             .filter-btn {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.6rem;
-            }
-            
-            .market-table-container {
-                border-radius: 10px;
-            }
-            
-            .market-table {
-                min-width: 450px;
-            }
-            
-            .market-table th {
-                padding: 0.35rem 0.5rem;
-                font-size: 0.55rem;
-            }
-            
-            .market-table td {
-                padding: 0.35rem 0.5rem;
-                font-size: 0.6rem;
-            }
-            
-            .crypto-name {
-                gap: 0.25rem;
-            }
-            
-            .crypto-name span:first-child {
-                font-size: 0.65rem;
-            }
-            
-            .crypto-symbol {
-                font-size: 0.5rem;
-            }
-            
-            .trade-link {
-                font-size: 0.55rem;
-                padding: 0.1rem 0.3rem;
-                display: inline-block;
+                padding: 0.3rem 0.8rem;
+                font-size: 0.7rem;
             }
         }
 
+        /* App Showcase */
         .app-showcase {
-            padding: 2rem 5%;
+            padding: 3rem 5%;
             background: #f8fafc;
-            margin: 1.5rem 0;
+            margin: 2rem 0;
             overflow: hidden;
         }
 
@@ -553,6 +565,7 @@
             border-radius: 20px;
         }
 
+        /* Features */
         .features {
             padding: 2rem 5%;
             background: white;
@@ -574,6 +587,11 @@
             transition: all 0.2s;
         }
 
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: #3b82f6;
+        }
+
         .feature-icon {
             font-size: 1.5rem;
             margin-bottom: 0.6rem;
@@ -583,7 +601,6 @@
             margin-bottom: 0.3rem;
             font-size: 0.9rem;
             font-weight: 600;
-            color: #1a1f36;
         }
 
         .feature-card p {
@@ -592,6 +609,7 @@
             line-height: 1.4;
         }
 
+        /* CTA Section */
         .cta-section {
             text-align: center;
             padding: 2rem 5%;
@@ -613,6 +631,7 @@
             font-size: 0.85rem;
         }
 
+        /* Footer */
         footer {
             background: #1a1f36;
             padding: 1.5rem 5% 1rem;
@@ -633,7 +652,6 @@
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
         .footer-col a {
@@ -642,7 +660,10 @@
             text-decoration: none;
             margin-bottom: 0.3rem;
             font-size: 0.7rem;
-            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: #60a5fa;
         }
 
         .copyright {
@@ -688,43 +709,21 @@
                 padding: 4rem 0;
             }
             
-            .hero-content {
-                padding: 0 1.2rem;
-            }
-            
             .hero-content h1 {
                 font-size: 1.5rem;
-                margin-bottom: 0.8rem;
             }
             
             .hero-content p {
                 font-size: 0.8rem;
-                margin-bottom: 1rem;
-            }
-            
-            .hero-badge {
-                font-size: 0.55rem;
-                padding: 0.25rem 0.6rem;
-                margin-bottom: 0.8rem;
             }
             
             .hero-buttons {
                 flex-direction: column;
                 gap: 0.6rem;
-                margin-bottom: 1rem;
             }
             
             .hero-buttons .btn-large {
                 width: 100%;
-                text-align: center;
-            }
-            
-            .trust-badge {
-                gap: 0.6rem;
-            }
-            
-            .trust-badge span {
-                font-size: 0.5rem;
             }
             
             .app-showcase-inner {
@@ -733,13 +732,8 @@
                 gap: 1rem;
             }
             
-            .app-showcase-content h2 {
-                font-size: 1.2rem;
-            }
-            
             .app-features {
                 text-align: left;
-                margin-top: 0.8rem;
             }
             
             .hand-phone-mockup {
@@ -755,26 +749,16 @@
                 gap: 0.8rem;
             }
             
-            .feature-card {
-                padding: 0.8rem;
-            }
-            
             .cta-section {
-                padding: 1.5rem 1rem;
-                margin: 1rem 5%;
+                padding: 1.5rem;
             }
             
             .cta-section h2 {
                 font-size: 1rem;
             }
             
-            .cta-section p {
-                font-size: 0.75rem;
-            }
-            
             .footer-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 0.8rem;
             }
         }
     </style>
@@ -862,7 +846,7 @@
         </div>
     </div>
 
-    <!-- Markets Section - Compressed -->
+    <!-- Markets Section -->
     <section class="market-section">
         <div class="market-title">Markets</div>
         
@@ -873,21 +857,25 @@
             <button class="filter-btn" onclick="filterMarkets('volume')">Volume</button>
         </div>
 
-        <div class="market-table-container">
+        <!-- Desktop Table View -->
+        <div class="desktop-table">
             <table class="market-table">
                 <thead>
                     <tr>
                         <th>Asset</th>
                         <th>Price</th>
-                        <th>24h</th>
-                        <th>Volume</th>
-                        <th>M.Cap</th>
+                        <th>24h Change</th>
+                        <th>24h Volume</th>
+                        <th>Market Cap</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
+
+        <!-- Mobile Card View -->
+        <div class="mobile-cards" id="mobileCards"></div>
     </section>
 
     <section class="app-showcase">
@@ -969,33 +957,381 @@
 
         // Market Data
         const marketData = [
-            { name: "Bitcoin", symbol: "BTC", price: 43250, change: 2.4, volume: "28.5B", marketCap: "845B" },
-            { name: "Ethereum", symbol: "ETH", price: 2250, change: 1.8, volume: "15.2B", marketCap: "270B" },
-            { name: "Solana", symbol: "SOL", price: 95.50, change: -0.5, volume: "4.2B", marketCap: "42B" },
-            { name: "Ripple", symbol: "XRP", price: 0.62, change: -1.2, volume: "2.1B", marketCap: "34B" },
-            { name: "Cardano", symbol: "ADA", price: 0.48, change: 3.2, volume: "1.8B", marketCap: "17B" },
-            { name: "Avalanche", symbol: "AVAX", price: 38.20, change: 4.2, volume: "0.6B", marketCap: "14.2B" },
-            { name: "Polygon", symbol: "MATIC", price: 0.85, change: -0.3, volume: "0.4B", marketCap: "7.8B" },
-            { name: "Chainlink", symbol: "LINK", price: 15.30, change: 2.1, volume: "0.8B", marketCap: "8.5B" },
-            { name: "Binance Coin", symbol: "BNB", price: 312.50, change: 1.2, volume: "1.5B", marketCap: "48B" },
-            { name: "Dogecoin", symbol: "DOGE", price: 0.082, change: 5.1, volume: "1.2B", marketCap: "11.8B" },
-            { name: "Polkadot", symbol: "DOT", price: 7.25, change: 0.8, volume: "0.5B", marketCap: "9.2B" },
-            { name: "Litecoin", symbol: "LTC", price: 72.80, change: -0.8, volume: "0.6B", marketCap: "5.4B" }
+            { name: "Bitcoin", symbol: "BTC", icon: "₿", price: 43250, change: 2.4, volume: "28.5B", marketCap: "845B" },
+            { name: "Ethereum", symbol: "ETH", icon: "Ξ", price: 2250, change: 1.8, volume: "15.2B", marketCap: "270B" },
+            { name: "Solana", symbol: "SOL", icon: "◎", price: 95.50, change: -0.5, volume: "4.2B", marketCap: "42B" },
+            { name: "Ripple", symbol: "XRP", icon: "X", price: 0.62, change: -1.2, volume: "2.1B", marketCap: "34B" },
+            { name: "Cardano", symbol: "ADA", icon: "₳", price: 0.48, change: 3.2, volume: "1.8B", marketCap: "17B" },
+            { name: "Avalanche", symbol: "AVAX", icon: "A", price: 38.20, change: 4.2, volume: "0.6B", marketCap: "14.2B" },
+            { name: "Polygon", symbol: "MATIC", icon: "P", price: 0.85, change: -0.3, volume: "0.4B", marketCap: "7.8B" },
+            { name: "Chainlink", symbol: "LINK", icon: "L", price: 15.30, change: 2.1, volume: "0.8B", marketCap: "8.5B" },
+            { name: "Binance Coin", symbol: "BNB", icon: "B", price: 312.50, change: 1.2, volume: "1.5B", marketCap: "48B" },
+            { name: "Dogecoin", symbol: "DOGE", icon: "D", price: 0.082, change: 5.1, volume: "1.2B", marketCap: "11.8B" },
+            { name: "Polkadot", symbol: "DOT", icon: "●", price: 7.25, change: 0.8, volume: "0.5B", marketCap: "9.2B" },
+            { name: "Litecoin", symbol: "LTC", icon: "Ł", price: 72.80, change: -0.8, volume: "0.6B", marketCap: "5.4B" }
         ];
 
         let currentMarkets = [...marketData];
 
         function loadMarketTable() {
+            // Desktop Table
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = currentMarkets.map(crypto => `
                 <tr>
-                    <td><div class="crypto-name"><span>${crypto.name}</span><span class="crypto-symbol">${crypto.symbol}</span></div></td>
+                    <td>
+                        <div class="crypto-name">
+                            <span>${crypto.icon}</span>
+                            <div>
+                                <div>${crypto.name}</div>
+                                <div class="crypto-symbol">${crypto.symbol}</div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
                     <td><strong>$${crypto.price.toLocaleString()}</strong></td>
-                    <td class="${crypto.change >= 0 ? 'positive' : 'negative'}">${crypto.change >= 0 ? '▲' : '▼'} ${Math.abs(crypto.change)}%</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></td>
-                    <td>$${crypto.volume}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></td>
-                    <td>$${crypto.marketCap}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></td>
-                    <td class="$
-        </tr>
+                    <td class="${crypto.change >= 0 ? 'positive' : 'negative'}">${crypto.change >= 0 ? '▲' : '▼'} ${Math.abs(crypto.change)}%</div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                    <td>$${crypto.volume}</div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                    <td>$${crypto.marketCap}</div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                    <td><a href="#" class="trade-link" onclick="showMessage('Trading platform coming soon'); return false;">Trade →</a></div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Mobile Cards
+            loadMobileCards();
+        }
+
+        function loadMobileCards() {
+            const cardsContainer = document.getElementById('mobileCards');
+            cardsContainer.innerHTML = currentMarkets.map(crypto => `
+                <div class="market-card">
+                    <div class="card-header">
+                        <div>
+                            <span class="card-name">${crypto.icon} ${crypto.name}</span>
+                            <span class="card-symbol">${crypto.symbol}</span>
+                        </div>
+                        <div class="${crypto.change >= 0 ? 'positive' : 'negative'}">
+                            ${crypto.change >= 0 ? '▲' : '▼'} ${Math.abs(crypto.change)}%
+                        </div>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Price</span>
+                        <span class="card-value">$${crypto.price.toLocaleString()}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">24h Volume</span>
+                        <span class="card-value">$${crypto.volume}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Market Cap</span>
+                        <span class="card-value">$${crypto.marketCap}</span>
+                    </div>
+                    <div class="card-trade">
+                        <a href="#" class="trade-link" onclick="showMessage('Trading platform coming soon'); return false;">Trade →</a>
+                    </div>
+                </div>
             `).join('');
         }
 
