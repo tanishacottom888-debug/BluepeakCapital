@@ -25,7 +25,7 @@
             overflow-x: hidden;
         }
 
-        /* Navigation - Clean with only Logo and Hamburger */
+        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -85,7 +85,7 @@
             color: #3b82f6;
         }
 
-        /* Right Menu - Only Hamburger on Trade Page */
+        /* Right Menu */
         .right-menu {
             display: flex;
             align-items: center;
@@ -230,8 +230,9 @@
             color: white;
         }
 
+        /* Chart Height - Increased */
         #tradingview_chart {
-            height: 300px;
+            height: 400px;
             width: 100%;
         }
 
@@ -428,9 +429,18 @@
             z-index: 1000;
         }
 
-        /* Hide desktop market panel on mobile */
-        .desktop-market-panel {
-            display: none;
+        /* Mobile Specific - Chart Height */
+        @media (max-width: 768px) {
+            #tradingview_chart {
+                height: 450px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            .hamburger-btn {
+                display: block;
+            }
         }
 
         /* Desktop Layout */
@@ -474,16 +484,6 @@
             
             .bottom-panel {
                 display: block !important;
-            }
-        }
-
-        /* Mobile Navigation */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-            .hamburger-btn {
-                display: block;
             }
         }
     </style>
@@ -543,7 +543,7 @@
             </select>
         </div>
 
-        <!-- Chart - On Top -->
+        <!-- Chart - On Top (Increased Height) -->
         <div class="chart-container">
             <div class="chart-header">
                 <div class="timeframes" id="timeframes">
@@ -650,7 +650,6 @@
     </div>
 
     <script>
-        // Market Data
         const markets = [
             { symbol: "BTC/USD", name: "Bitcoin", price: 43250, change: 2.4 },
             { symbol: "ETH/USD", name: "Ethereum", price: 2250, change: 1.8 },
@@ -666,7 +665,6 @@
         let trades = [];
         let tvWidget = null;
 
-        // Initialize Chart
         function initTradingView() {
             if (tvWidget) tvWidget.remove();
             tvWidget = new TradingView.widget({
@@ -690,9 +688,7 @@
             currentPair = select.value;
             document.getElementById('currentPairDisplay').innerHTML = currentPair;
             const market = markets.find(m => m.symbol === currentPair);
-            if (market) {
-                currentPrice = market.price;
-            }
+            if (market) currentPrice = market.price;
             initTradingView();
             updateOrderBook();
             updateCalculations();
@@ -707,15 +703,14 @@
             }
             const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2);
             document.getElementById('spreadDisplay').innerHTML = `Spread: ${spread}%`;
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></tr>`).join('');
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></td>`).join('');
             document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('');
         }
 
         function addTrade(price, size, type) {
             trades.unshift({ time: new Date().toLocaleTimeString(), price: price, size: size, type: type });
             if (trades.length > 15) trades.pop();
-            const tbody = document.getElementById('tradesList');
-            tbody.innerHTML = trades.map(t => `
+            document.getElementById('tradesList').innerHTML = trades.map(t => `
                 <tr>
                     <td>${t.time}</td>
                     <td class="${t.type === 'buy' ? 'positive' : 'negative'}">$${t.price.toLocaleString()}</td>
@@ -730,14 +725,17 @@
         }
 
         function renderOpenOrders() {
-            const container = document.getElementById('openOrdersList');
-            container.innerHTML = openOrders.map(o => `
+            document.getElementById('openOrdersList').innerHTML = openOrders.map(o => `
                 <tr>
                     <td>${o.pair}</td>
                     <td class="${o.type === 'buy' ? 'positive' : 'negative'}">${o.type.toUpperCase()}</td>
                     <td>$${o.price.toLocaleString()}</td>
                     <td>${o.amount}</td>
                     <td>${o.filled}%</div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
                     </div>
                     </div>
                     </div>
@@ -764,15 +762,13 @@
             currentOrderType = type;
             document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelector(`.order-tab.${type}`).classList.add('active');
-            const btn = document.getElementById('submitBtn');
-            btn.className = `submit-btn ${type}`;
-            btn.textContent = `${type.toUpperCase()} ${currentPair.split('/')[0]}`;
+            document.getElementById('submitBtn').className = `submit-btn ${type}`;
+            document.getElementById('submitBtn').textContent = `${type.toUpperCase()} ${currentPair.split('/')[0]}`;
         }
 
         function setPercentage(perc) {
             const maxAmount = balance[currentPair.split('/')[0]] || 0.25;
-            const amount = (maxAmount * perc / 100).toFixed(4);
-            document.getElementById('amount').value = amount;
+            document.getElementById('amount').value = (maxAmount * perc / 100).toFixed(4);
             updateCalculations();
         }
 
@@ -789,12 +785,10 @@
             const amount = parseFloat(document.getElementById('amount').value);
             const price = parseFloat(document.getElementById('price').value);
             const orderType = document.getElementById('orderType').value;
-            
             if (!amount || amount <= 0) { showToast('Enter valid amount'); return; }
             const total = amount * price;
             if (currentOrderType === 'buy' && total > balance.USD) { showToast('Insufficient USD balance'); return; }
             if (currentOrderType === 'sell' && amount > balance.BTC) { showToast('Insufficient BTC balance'); return; }
-            
             if (orderType === 'market') {
                 if (currentOrderType === 'buy') { balance.USD -= total; balance.BTC += amount; }
                 else { balance.BTC -= amount; balance.USD += total; }
@@ -859,7 +853,6 @@
             document.getElementById('priceGroup').style.display = this.value === 'market' ? 'none' : 'block';
         });
 
-        // Initialize
         initTradingView();
         updateOrderBook();
         updateBalanceDisplay();
