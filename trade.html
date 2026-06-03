@@ -67,7 +67,7 @@
             color: transparent;
         }
 
-        /* Desktop Navigation */
+        /* Desktop Navigation - No Trade tab active */
         .nav-links {
             display: flex;
             gap: 1rem;
@@ -81,9 +81,11 @@
             font-weight: 500;
         }
 
-        .nav-links a:hover, .nav-links a.active {
+        .nav-links a:hover {
             color: #3b82f6;
         }
+
+        /* No active tab on Trade page - just like Dashboard */
 
         /* Right Menu */
         .right-menu {
@@ -191,7 +193,7 @@
             font-size: 0.75rem;
         }
 
-        /* Chart Container - On Top */
+        /* Chart Container */
         .chart-container {
             background: white;
             border-radius: 12px;
@@ -230,13 +232,12 @@
             color: white;
         }
 
-        /* Chart Height - Increased */
         #tradingview_chart {
             height: 400px;
             width: 100%;
         }
 
-        /* Order Form - Below Chart */
+        /* Order Form */
         .order-container {
             background: white;
             border: 1px solid #e2e8f0;
@@ -338,7 +339,7 @@
             color: white;
         }
 
-        /* Bottom Panels - Tabs for Mobile */
+        /* Bottom Panels */
         .bottom-tabs {
             display: flex;
             gap: 0.5rem;
@@ -429,12 +430,10 @@
             z-index: 1000;
         }
 
-        /* Mobile Specific - Chart Height */
         @media (max-width: 768px) {
             #tradingview_chart {
                 height: 450px;
             }
-            
             .nav-links {
                 display: none;
             }
@@ -443,47 +442,23 @@
             }
         }
 
-        /* Desktop Layout */
         @media (min-width: 769px) {
             .pair-selector-mobile {
                 display: none;
             }
-            
-            .desktop-market-panel {
-                display: block;
-                width: 260px;
-                background: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                overflow: hidden;
-                flex-shrink: 0;
+            .bottom-tabs {
+                display: none;
             }
-            
-            .trading-row-desktop {
-                display: flex;
-                gap: 1rem;
+            .bottom-panel {
+                display: block !important;
             }
-            
-            .chart-order-col {
-                flex: 1;
-            }
-            
-            .bottom-panels-desktop {
+            .desktop-bottom-grid {
                 display: flex;
                 gap: 1rem;
                 margin-top: 1rem;
             }
-            
-            .bottom-panels-desktop > div {
+            .desktop-bottom-grid > div {
                 flex: 1;
-            }
-            
-            .mobile-bottom-tabs {
-                display: none;
-            }
-            
-            .bottom-panel {
-                display: block !important;
             }
         }
     </style>
@@ -496,7 +471,6 @@
         </div>
         <div class="nav-links">
             <a href="dashboard.html">Dashboard</a>
-            <a href="#" class="active">Trade</a>
             <a href="markets.html">Markets</a>
             <a href="orders.html">Orders</a>
             <a href="bots.html">Bots</a>
@@ -520,7 +494,6 @@
                 </div>
             </div>
             <a href="dashboard.html">Dashboard</a>
-            <a href="trade.html">Trade</a>
             <a href="markets.html">Markets</a>
             <a href="orders.html">Orders</a>
             <a href="bots.html">Bots</a>
@@ -543,7 +516,7 @@
             </select>
         </div>
 
-        <!-- Chart - On Top (Increased Height) -->
+        <!-- Chart -->
         <div class="chart-container">
             <div class="chart-header">
                 <div class="timeframes" id="timeframes">
@@ -566,7 +539,7 @@
             <div id="tradingview_chart"></div>
         </div>
 
-        <!-- Order Form - Below Chart -->
+        <!-- Order Form -->
         <div class="order-container">
             <div class="order-tabs">
                 <div class="order-tab buy active" onclick="setOrderType('buy')">BUY</div>
@@ -614,38 +587,38 @@
         </div>
 
         <!-- Mobile Bottom Tabs -->
-        <div class="bottom-tabs mobile-bottom-tabs">
+        <div class="bottom-tabs">
             <button class="bottom-tab active" onclick="switchBottomTab('orderbook')">Order Book</button>
             <button class="bottom-tab" onclick="switchBottomTab('trades')">Recent Trades</button>
             <button class="bottom-tab" onclick="switchBottomTab('orders')">Open Orders</button>
         </div>
 
-        <!-- Order Book Panel -->
-        <div id="orderbookPanel" class="bottom-panel active">
-            <div class="panel-header">Order Book <span id="spreadDisplay"></span></div>
-            <table class="orderbook-table">
-                <thead><tr><th>Price (USD)</th><th>Size</th><th>Total</th></tr></thead>
-                <tbody id="askOrders"></tbody>
-                <tbody id="bidOrders"></tbody>
-            </table>
-        </div>
+        <!-- Desktop Bottom Grid -->
+        <div class="desktop-bottom-grid">
+            <div id="orderbookPanel" class="bottom-panel active">
+                <div class="panel-header">Order Book <span id="spreadDisplay"></span></div>
+                <table class="orderbook-table">
+                    <thead><tr><th>Price (USD)</th><th>Size</th><th>Total</th></tr></thead>
+                    <tbody id="askOrders"></tbody>
+                    <tbody id="bidOrders"></tbody>
+                </table>
+            </div>
 
-        <!-- Recent Trades Panel -->
-        <div id="tradesPanel" class="bottom-panel">
-            <div class="panel-header">Recent Trades</div>
-            <table class="trades-table">
-                <thead><tr><th>Time</th><th>Price</th><th>Size</th></tr></thead>
-                <tbody id="tradesList"></tbody>
-            </table>
-        </div>
+            <div id="tradesPanel" class="bottom-panel">
+                <div class="panel-header">Recent Trades</div>
+                <table class="trades-table">
+                    <thead><tr><th>Time</th><th>Price</th><th>Size</th></tr></thead>
+                    <tbody id="tradesList"></tbody>
+                </table>
+            </div>
 
-        <!-- Open Orders Panel -->
-        <div id="ordersPanel" class="bottom-panel">
-            <div class="panel-header">Open Orders</div>
-            <table class="orders-table">
-                <thead><tr><th>Pair</th><th>Type</th><th>Price</th><th>Amount</th><th>Filled</th><th></th></tr></thead>
-                <tbody id="openOrdersList"></tbody>
-            </table>
+            <div id="ordersPanel" class="bottom-panel">
+                <div class="panel-header">Open Orders</div>
+                <table class="orders-table">
+                    <thead><tr><th>Pair</th><th>Type</th><th>Price</th><th>Amount</th><th>Filled</th><th></th></tr></thead>
+                    <tbody id="openOrdersList"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -703,8 +676,8 @@
             }
             const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2);
             document.getElementById('spreadDisplay').innerHTML = `Spread: ${spread}%`;
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></td>`).join('');
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('');
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}<td>${a.size}<td>$${parseInt(a.total).toLocaleString()}</tr>`).join('');
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}<td>${b.size}<td>$${parseInt(b.total).toLocaleString()}</tr>`).join('');
         }
 
         function addTrade(price, size, type) {
@@ -732,6 +705,7 @@
                     <td>$${o.price.toLocaleString()}</td>
                     <td>${o.amount}</td>
                     <td>${o.filled}%</div>
+                    </div>
                     </div>
                     </div>
                     </div>
