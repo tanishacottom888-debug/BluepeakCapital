@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - Cryptocurrency markets. Real-time prices, volume, and market data for institutional investors." />
+    <meta name="keywords" content="crypto markets, bitcoin price, ethereum price, institutional trading" />
+    <title>BluepeakCapital | Markets</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #3b82f6;
+        }
+
+        .flag-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Trust Badges Bar */
+        .trust-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.5rem 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            color: #475569;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .trust-separator {
+            width: 1px;
+            height: 12px;
+            background: #cbd5e1;
+        }
+
+        /* Main Container */
+        .markets-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a1f36;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        /* Filters Bar */
+        .filters-bar {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .search-input {
+            padding: 0.4rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            width: 200px;
+        }
+
+        /* Market Table */
+        .table-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        .market-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .market-table th {
+            text-align: left;
+            padding: 1rem;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .market-table th:hover {
+            background: #f1f5f9;
+        }
+
+        .market-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+        }
+
+        .market-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .coin-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .coin-rank {
+            color: #94a3b8;
+            font-weight: 500;
+            width: 30px;
+        }
+
+        .coin-icon {
+            width: 24px;
+            height: 24px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.7rem;
+        }
+
+        .coin-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .coin-name {
+            font-weight: 600;
+        }
+
+        .coin-symbol {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .price-value {
+            font-weight: 500;
+        }
+
+        .sparkline {
+            width: 80px;
+            height: 30px;
+        }
+
+        .trade-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.3rem 1rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .trade-btn:hover {
+            background: #2563eb;
+        }
+
+        .favorite-star {
+            cursor: pointer;
+            color: #cbd5e1;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+
+        .favorite-star.active {
+            color: #f59e0b;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .page-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover, .page-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .items-per-page {
+            padding: 0.4rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .update-time {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .markets-container {
+                padding: 1rem;
+            }
+            .filters-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-input {
+                width: 100%;
+            }
+            .trust-bar {
+                display: none;
+            }
+        }
+
+        /* Price Flash Animation */
+        .flash-up {
+            animation: flashGreen 0.3s ease;
+        }
+
+        .flash-down {
+            animation: flashRed 0.3s ease;
+        }
+
+        @keyframes flashGreen {
+            0% { background-color: rgba(16, 185, 129, 0.2); }
+            100% { background-color: transparent; }
+        }
+
+        @keyframes flashRed {
+            0% { background-color: rgba(239, 68, 68, 0.2); }
+            100% { background-color: transparent; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='index.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="trade.html">Trade</a>
+            <a href="#" class="active">Markets</a>
+            <a href="#">Deposit</a>
+            <a href="#">Withdraw</a>
+        </div>
+        <div class="right-nav">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
+            <div class="balance-amount" id="balanceDisplay">$12,450.00</div>
+            <div class="user-avatar" onclick="showToast('Account settings')">JD</div>
+        </div>
+    </nav>
+
+    <!-- Trust Bar - Professional Badges -->
+    <div class="trust-bar">
+        <span class="trust-item">FINRA Member</span>
+        <span class="trust-separator"></span>
+        <span class="trust-item">SIPC Insured</span>
+        <span class="trust-separator"></span>
+        <span class="trust-item">SOC 2 Type II Certified</span>
+        <span class="trust-separator"></span>
+        <span class="trust-item">500M Insurance Coverage</span>
+        <span class="trust-separator"></span>
+        <span class="trust-item">Trusted by 5M+ Users</span>
+        <span class="trust-separator"></span>
+        <span class="trust-item">24/7 Institutional Support</span>
+    </div>
+
+    <div class="markets-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Markets</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="exportToCSV()">Export CSV</button>
+                <button class="btn-secondary" onclick="refreshData()">Refresh</button>
+            </div>
+        </div>
+
+        <!-- Filters Bar -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="filterMarkets('all')">All Markets</button>
+                <button class="filter-btn" onclick="filterMarkets('favorites')">Favorites</button>
+                <button class="filter-btn" onclick="filterMarkets('gainers')">Top Gainers</button>
+                <button class="filter-btn" onclick="filterMarkets('losers')">Top Losers</button>
+                <button class="filter-btn" onclick="filterMarkets('volume')">Highest Volume</button>
+            </div>
+            <input type="text" class="search-input" placeholder="Search by name or symbol" id="searchInput" onkeyup="searchMarkets()">
+        </div>
+
+        <!-- Market Table -->
+        <div class="table-container">
+            <table class="market-table" id="marketTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('rank')">#</th>
+                        <th onclick="sortBy('name')">Asset</th>
+                        <th onclick="sortBy('price')">Price (USD)</th>
+                        <th onclick="sortBy('change24h')">24h Change</th>
+                        <th onclick="sortBy('change7d')">7d Change</th>
+                        <th onclick="sortBy('volume')">24h Volume</th>
+                        <th onclick="sortBy('marketCap')">Market Cap</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <div class="update-time" id="updateTime">Live data • Updated just now</div>
+            <div class="pagination-controls">
+                <select class="items-per-page" id="itemsPerPage" onchange="changeItemsPerPage()">
+                    <option value="25">25 per page</option>
+                    <option value="50" selected>50 per page</option>
+                    <option value="100">100 per page</option>
+                </select>
+                <button class="page-btn" onclick="prevPage()">Previous</button>
+                <span id="pageInfo" style="font-size: 0.8rem; color: #64748b;">Page 1</span>
+                <button class="page-btn" onclick="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Market Data - 50 cryptocurrencies
+        const marketData = [
+            { rank: 1, name: "Bitcoin", symbol: "BTC", price: 43250, change24h: 2.4, change7d: 5.2, volume: "28,500,000,000", marketCap: "845,000,000,000", icon: "₿" },
+            { rank: 2, name: "Ethereum", symbol: "ETH", price: 2250, change24h: 1.8, change7d: 3.1, volume: "15,200,000,000", marketCap: "270,000,000,000", icon: "Ξ" },
+            { rank: 3, name: "Solana", symbol: "SOL", price: 95.50, change24h: -0.5, change7d: 8.2, volume: "4,200,000,000", marketCap: "42,000,000,000", icon: "◎" },
+            { rank: 4, name: "Ripple", symbol: "XRP", price: 0.62, change24h: -1.2, change7d: -0.8, volume: "2,100,000,000", marketCap: "34,000,000,000", icon: "X" },
+            { rank: 5, name: "Cardano", symbol: "ADA", price: 0.48, change24h: 3.2, change7d: 2.5, volume: "1,800,000,000", marketCap: "17,000,000,000", icon: "₳" },
+            { rank: 6, name: "Avalanche", symbol: "AVAX", price: 38.20, change24h: 4.2, change7d: 12.4, volume: "600,000,000", marketCap: "14,200,000,000", icon: "A" },
+            { rank: 7, name: "Polygon", symbol: "MATIC", price: 0.85, change24h: -0.3, change7d: -2.1, volume: "400,000,000", marketCap: "7,800,000,000", icon: "P" },
+            { rank: 8, name: "Chainlink", symbol: "LINK", price: 15.30, change24h: 2.1, change7d: 4.5, volume: "800,000,000", marketCap: "8,500,000,000", icon: "L" },
+            { rank: 9, name: "Binance Coin", symbol: "BNB", price: 312.50, change24h: 1.2, change7d: 2.8, volume: "1,500,000,000", marketCap: "48,000,000,000", icon: "B" },
+            { rank: 10, name: "Dogecoin", symbol: "DOGE", price: 0.082, change24h: 5.1, change7d: 15.3, volume: "1,200,000,000", marketCap: "11,800,000,000", icon: "D" },
+            { rank: 11, name: "Polkadot", symbol: "DOT", price: 7.25, change24h: 0.8, change7d: 1.2, volume: "500,000,000", marketCap: "9,200,000,000", icon: "D" },
+            { rank: 12, name: "Litecoin", symbol: "LTC", price: 72.80, change24h: -0.8, change7d: -1.5, volume: "600,000,000", marketCap: "5,400,000,000", icon: "Ł" },
+            { rank: 13, name: "Uniswap", symbol: "UNI", price: 6.45, change24h: 2.9, change7d: 5.1, volume: "300,000,000", marketCap: "4,800,000,000", icon: "U" },
+            { rank: 14, name: "Cosmos", symbol: "ATOM", price: 9.15, change24h: 1.5, change7d: 3.2, volume: "200,000,000", marketCap: "3,500,000,000", icon: "C" },
+            { rank: 15, name: "Near Protocol", symbol: "NEAR", price: 4.20, change24h: 6.2, change7d: 18.5, volume: "350,000,000", marketCap: "4,200,000,000", icon: "N" }
+        ];
+
+        let currentMarkets = [...marketData];
+        let favorites = JSON.parse(localStorage.getItem('marketFavorites') || '[]');
+        let currentFilter = 'all';
+        let currentPage = 1;
+        let itemsPerPage = 50;
+        let sortColumn = 'rank';
+        let sortDirection = 'asc';
+
+        function loadMarkets() {
+            const tbody = document.getElementById('tableBody');
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedMarkets = currentMarkets.slice(start, end);
+            
+            tbody.innerHTML = paginatedMarkets.map(coin => `
+                <tr data-symbol="${coin.symbol}">
+                    <td class="coin-rank">${coin.rank}</td>
+                    <td>
+                        <div class="coin-cell">
+                            <div class="coin-icon">${coin.icon}</div>
+                            <div class="coin-info">
+                                <span class="coin-name">${coin.name}</span>
+                                <span class="coin-symbol">${coin.symbol}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="price-value" data-price="${coin.price}">$${coin.price.toLocaleString()}</td>
+                    <td class="${coin.change24h >= 0 ? 'positive' : 'negative'}">
+                        ${coin.change24h >= 0 ? '▲' : '▼'} ${Math.abs(coin.change24h)}%
+                    </td>
+                    <td class="${coin.change7d >= 0 ? 'positive' : 'negative'}">
+                        ${coin.change7d >= 0 ? '▲' : '▼'} ${Math.abs(coin.change7d)}%
+                    </td>
+                    <td>$${(parseFloat(coin.volume) / 1000000000).toFixed(1)}B</td>
+                    <td>$${(parseFloat(coin.marketCap) / 1000000000).toFixed(0)}B</td>
+                    <td>
+                        <span class="favorite-star ${favorites.includes(coin.symbol) ? 'active' : ''}" onclick="toggleFavorite('${coin.symbol}')">★</span>
+                    </td>
+                    <td>
+                        <button class="trade-btn" onclick="window.location.href='trade.html'">Trade</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('pageInfo').innerHTML = `Page ${currentPage} of ${Math.ceil(currentMarkets.length / itemsPerPage)}`;
+        }
+
+        function toggleFavorite(symbol) {
+            if (favorites.includes(symbol)) {
+                favorites = favorites.filter(s => s !== symbol);
+            } else {
+                favorites.push(symbol);
+            }
+            localStorage.setItem('marketFavorites', JSON.stringify(favorites));
+            filterMarkets(currentFilter);
+        }
+
+        function filterMarkets(filter) {
+            currentFilter = filter;
+            currentPage = 1;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (filter === 'favorites') {
+                currentMarkets = marketData.filter(coin => favorites.includes(coin.symbol));
+            } else if (filter === 'gainers') {
+                currentMarkets = [...marketData].sort((a, b) => b.change24h - a.change24h);
+            } else if (filter === 'losers') {
+                currentMarkets = [...marketData].sort((a, b) => a.change24h - b.change24h);
+            } else if (filter === 'volume') {
+                currentMarkets = [...marketData].sort((a, b) => parseFloat(b.volume) - parseFloat(a.volume));
+            } else {
+                currentMarkets = [...marketData];
+            }
+            
+            applySort();
+        }
+
+        function searchMarkets() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm === '') {
+                currentMarkets = [...marketData];
+            } else {
+                currentMarkets = marketData.filter(coin => 
+                    coin.name.toLowerCase().includes(searchTerm) || 
+                    coin.symbol.toLowerCase().includes(searchTerm)
+                );
+            }
+            currentPage = 1;
+            applySort();
+        }
+
+        function sortBy(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            applySort();
+        }
+
+        function applySort() {
+            currentMarkets.sort((a, b) => {
+                let aVal, bVal;
+                if (sortColumn === 'rank') { aVal = a.rank; bVal = b.rank; }
+                else if (sortColumn === 'name') { aVal = a.name; bVal = b.name; }
+                else if (sortColumn === 'price') { aVal = a.price; bVal = b.price; }
+                else if (sortColumn === 'change24h') { aVal = a.change24h; bVal = b.change24h; }
+                else if (sortColumn === 'change7d') { aVal = a.change7d; bVal = b.change7d; }
+                else if (sortColumn === 'volume') { aVal = parseFloat(a.volume); bVal = parseFloat(b.volume); }
+                else if (sortColumn === 'marketCap') { aVal = parseFloat(a.marketCap); bVal = parseFloat(b.marketCap); }
+                else { aVal = a.rank; bVal = b.rank; }
+                
+                if (sortDirection === 'asc') return aVal > bVal ? 1 : -1;
+                else return aVal < bVal ? 1 : -1;
+            });
+            loadMarkets();
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadMarkets();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < Math.ceil(currentMarkets.length / itemsPerPage)) {
+                currentPage++;
+                loadMarkets();
+            }
+        }
+
+        function changeItemsPerPage() {
+            itemsPerPage = parseInt(document.getElementById('itemsPerPage').value);
+            currentPage = 1;
+            loadMarkets();
+        }
+
+        function exportToCSV() {
+            let csv = "Rank,Name,Symbol,Price (USD),24h Change,7d Change,24h Volume,Market Cap\n";
+            currentMarkets.forEach(coin => {
+                csv += `${coin.rank},${coin.name},${coin.symbol},${coin.price},${coin.change24h},${coin.change7d},${coin.volume},${coin.marketCap}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bluepeak_markets.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Exported to CSV');
+        }
+
+        function refreshData() {
+            showToast('Refreshing market data...');
+            setTimeout(() => {
+                marketData.forEach(coin => {
+                    const change = (Math.random() - 0.5) * 4;
+                    coin.price = Math.max(0.01, coin.price * (1 + change / 100));
+                    coin.change24h = parseFloat((Math.random() * 8 - 2).toFixed(1));
+                });
+                filterMarkets(currentFilter);
+                document.getElementById('updateTime').innerHTML = `Live data • Updated just now`;
+            }, 500);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.8rem; z-index: 1000; animation: slideIn 0.3s ease;';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Live price updates
+        setInterval(() => {
+            marketData.forEach(coin => {
+                const change = (Math.random() - 0.5) * 10;
+                const oldPrice = coin.price;
+                coin.price = Math.max(0.01, coin.price + change);
+                
+                const row = document.querySelector(`tr[data-symbol="${coin.symbol}"]`);
+                if (row) {
+                    const priceCell = row.querySelector('.price-value');
+                    if (priceCell) {
+                        if (coin.price > oldPrice) {
+                            priceCell.classList.add('flash-up');
+                            setTimeout(() => priceCell.classList.remove('flash-up'), 300);
+                        } else if (coin.price < oldPrice) {
+                            priceCell.classList.add('flash-down');
+                            setTimeout(() => priceCell.classList.remove('flash-down'), 300);
+                        }
+                        priceCell.innerHTML = `$${coin.price.toLocaleString()}`;
+                        priceCell.setAttribute('data-price', coin.price);
+                    }
+                    
+                    const changeCell = row.cells[3];
+                    if (changeCell) {
+                        coin.change24h = parseFloat((Math.random() * 6 - 2).toFixed(1));
+                        changeCell.className = coin.change24h >= 0 ? 'positive' : 'negative';
+                        changeCell.innerHTML = `${coin.change24h >= 0 ? '▲' : '▼'} ${Math.abs(coin.change24h)}%`;
+                    }
+                }
+            });
+        }, 5000);
+
+        // Initialize
+        loadMarkets();
+    </script>
+</body>
+</html>

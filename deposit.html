@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - Deposit funds securely into your institutional trading account." />
+    <title>BluepeakCapital | Deposit</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #3b82f6;
+        }
+
+        .flag-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Trust Bar */
+        .trust-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.5rem 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            color: #475569;
+        }
+
+        .trust-separator {
+            width: 1px;
+            height: 12px;
+            background: #cbd5e1;
+        }
+
+        /* Main Container */
+        .deposit-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Two Column Layout */
+        .deposit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        /* Deposit Card */
+        .deposit-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Asset Selector */
+        .asset-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .asset-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .asset-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .asset-btn {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .asset-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .asset-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        /* QR Code */
+        .qr-container {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .qr-code {
+            width: 180px;
+            height: 180px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        /* Address Box */
+        .address-box {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            word-break: break-all;
+            border: 1px solid #e2e8f0;
+            margin: 0.5rem 0;
+        }
+
+        .copy-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+
+        /* Info Section */
+        .info-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 1.5rem;
+        }
+
+        .info-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .warning-box {
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .warning-text {
+            font-size: 0.7rem;
+            color: #dc2626;
+        }
+
+        /* Recent Deposits */
+        .recent-section {
+            margin-top: 2rem;
+        }
+
+        .recent-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .recent-table {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow-x: auto;
+        }
+
+        .recent-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .recent-table th {
+            text-align: left;
+            padding: 1rem;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .recent-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.8rem;
+        }
+
+        .status-pending {
+            color: #f59e0b;
+        }
+
+        .status-completed {
+            color: #10b981;
+        }
+
+        @media (max-width: 768px) {
+            .deposit-grid {
+                grid-template-columns: 1fr;
+            }
+            .deposit-container {
+                padding: 1rem;
+            }
+            .trust-bar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='index.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="trade.html">Trade</a>
+            <a href="markets.html">Markets</a>
+            <a href="wallet.html">Wallet</a>
+            <a href="#" class="active">Deposit</a>
+            <a href="withdraw.html">Withdraw</a>
+        </div>
+        <div class="right-nav">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount">$12,450.00</div>
+            <div class="user-avatar">JD</div>
+        </div>
+    </nav>
+
+    <div class="trust-bar">
+        <span>FINRA Member</span>
+        <span class="trust-separator"></span>
+        <span>SIPC Insured</span>
+        <span class="trust-separator"></span>
+        <span>Cold Storage Assets</span>
+        <span class="trust-separator"></span>
+        <span>500M Insurance</span>
+    </div>
+
+    <div class="deposit-container">
+        <div class="page-header">
+            <h1>Deposit Funds</h1>
+            <p>Deposit cryptocurrency directly to your institutional wallet</p>
+        </div>
+
+        <div class="deposit-grid">
+            <!-- Left Column - Deposit Interface -->
+            <div class="deposit-card">
+                <div class="card-title">Select Asset</div>
+                
+                <div class="asset-selector">
+                    <label class="asset-label">Cryptocurrency</label>
+                    <div class="asset-buttons" id="assetButtons">
+                        <button class="asset-btn active" data-asset="BTC">Bitcoin (BTC)</button>
+                        <button class="asset-btn" data-asset="ETH">Ethereum (ETH)</button>
+                        <button class="asset-btn" data-asset="USDT">Tether (USDT)</button>
+                        <button class="asset-btn" data-asset="SOL">Solana (SOL)</button>
+                        <button class="asset-btn" data-asset="USDC">USD Coin (USDC)</button>
+                    </div>
+                </div>
+
+                <div class="qr-container">
+                    <div class="qr-code" id="qrDisplay">
+                        [ QR Code ]
+                    </div>
+                </div>
+
+                <div class="address-box" id="depositAddress">
+                    1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+                </div>
+                <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
+            </div>
+
+            <!-- Right Column - Information -->
+            <div>
+                <div class="info-card">
+                    <div class="card-title">Deposit Information</div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Minimum Deposit</div>
+                        <div class="info-value" id="minDeposit">0.001 BTC</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Confirmations Required</div>
+                        <div class="info-value" id="confirmations">3 confirmations</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Estimated Processing Time</div>
+                        <div class="info-value" id="processingTime">10-30 minutes</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Network Fee</div>
+                        <div class="info-value" id="networkFee">Paid by sender</div>
+                    </div>
+
+                    <div class="warning-box">
+                        <div class="warning-text">
+                            <strong>Important:</strong> Send only BTC to this address. Sending any other currency may result in permanent loss.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card" style="margin-top: 1rem;">
+                    <div class="card-title">Supported Networks</div>
+                    <div class="info-item">
+                        <div class="info-label">Bitcoin (BTC)</div>
+                        <div class="info-value">Bitcoin Network</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Ethereum (ETH / USDT / USDC)</div>
+                        <div class="info-value">ERC-20 Network</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Solana (SOL)</div>
+                        <div class="info-value">Solana Network</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Deposits -->
+        <div class="recent-section">
+            <div class="recent-title">Recent Deposits</div>
+            <div class="recent-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Asset</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Confirmations</th>
+                        </thead>
+                        <tbody id="recentDepositsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Asset Configuration
+        const assets = {
+            BTC: {
+                name: "Bitcoin",
+                symbol: "BTC",
+                address: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                minDeposit: "0.001 BTC",
+                confirmations: "3 confirmations",
+                processingTime: "10-30 minutes",
+                networkFee: "Paid by sender",
+                warning: "Send only BTC to this address"
+            },
+            ETH: {
+                name: "Ethereum",
+                symbol: "ETH",
+                address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
+                minDeposit: "0.01 ETH",
+                confirmations: "12 confirmations",
+                processingTime: "5-15 minutes",
+                networkFee: "Paid by sender",
+                warning: "Send only ETH to this address"
+            },
+            USDT: {
+                name: "Tether",
+                symbol: "USDT",
+                address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
+                minDeposit: "50 USDT",
+                confirmations: "12 confirmations",
+                processingTime: "5-15 minutes",
+                networkFee: "Paid by sender",
+                warning: "Send only USDT (ERC-20) to this address"
+            },
+            SOL: {
+                name: "Solana",
+                symbol: "SOL",
+                address: "7Ec5eJ3oVvLpJwQxNkLAvXLpM5YLZqVgXQZKQ7zVpXqZ",
+                minDeposit: "0.1 SOL",
+                confirmations: "1 confirmation",
+                processingTime: "2-5 minutes",
+                networkFee: "Paid by sender",
+                warning: "Send only SOL to this address"
+            },
+            USDC: {
+                name: "USD Coin",
+                symbol: "USDC",
+                address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
+                minDeposit: "50 USDC",
+                confirmations: "12 confirmations",
+                processingTime: "5-15 minutes",
+                networkFee: "Paid by sender",
+                warning: "Send only USDC (ERC-20) to this address"
+            }
+        };
+
+        let currentAsset = "BTC";
+
+        // Recent Deposits Data
+        let recentDeposits = [
+            { date: "2024-01-15 14:30", asset: "BTC", amount: "0.050", status: "Completed", confirmations: "6/3" },
+            { date: "2024-01-14 09:45", asset: "ETH", amount: "1.500", status: "Completed", confirmations: "15/12" },
+            { date: "2024-01-13 22:15", asset: "SOL", amount: "50.000", status: "Completed", confirmations: "3/1" },
+            { date: "2024-01-12 11:20", asset: "USDT", amount: "500.00", status: "Pending", confirmations: "3/12" }
+        ];
+
+        function updateDepositInterface() {
+            const asset = assets[currentAsset];
+            
+            // Update address
+            document.getElementById('depositAddress').innerHTML = asset.address;
+            
+            // Update info
+            document.getElementById('minDeposit').innerHTML = asset.minDeposit;
+            document.getElementById('confirmations').innerHTML = asset.confirmations;
+            document.getElementById('processingTime').innerHTML = asset.processingTime;
+            document.getElementById('networkFee').innerHTML = asset.networkFee;
+            
+            // Update warning
+            const warningBox = document.querySelector('.warning-box .warning-text');
+            warningBox.innerHTML = `<strong>Important:</strong> ${asset.warning}`;
+            
+            // Update QR display
+            const qrDisplay = document.getElementById('qrDisplay');
+            qrDisplay.innerHTML = `[ ${currentAsset} QR ]`;
+        }
+
+        function copyAddress() {
+            const address = document.getElementById('depositAddress').innerHTML;
+            navigator.clipboard.writeText(address);
+            showToast('Address copied to clipboard');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.8rem; z-index: 1000;';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function loadRecentDeposits() {
+            const tbody = document.getElementById('recentDepositsBody');
+            tbody.innerHTML = recentDeposits.map(deposit => `
+                <tr>
+                    <td>${deposit.date}</td>
+                    <td>${deposit.asset}</td>
+                    <td>${deposit.amount} ${deposit.asset}</td>
+                    <td class="${deposit.status === 'Completed' ? 'status-completed' : 'status-pending'}">${deposit.status}</td>
+                    <td>${deposit.confirmations}</td>
+                </table>
+            `).join('');
+        }
+
+        // Asset Button Handlers
+        document.querySelectorAll('.asset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentAsset = this.dataset.asset;
+                updateDepositInterface();
+            });
+        });
+
+        // Initialize
+        updateDepositInterface();
+        loadRecentDeposits();
+    </script>
+</body>
+</html>

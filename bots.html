@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - Automated trading bots. Create and deploy algorithmic trading strategies in demo or live mode." />
+    <title>BluepeakCapital | Trading Bots</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #3b82f6;
+        }
+
+        .flag-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Trust Bar */
+        .trust-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.5rem 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            color: #475569;
+        }
+
+        .trust-separator {
+            width: 1px;
+            height: 12px;
+            background: #cbd5e1;
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            padding: 0.25rem;
+            display: inline-flex;
+            margin-bottom: 1.5rem;
+        }
+
+        .mode-btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: transparent;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.demo.active {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .mode-btn.live.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Main Container */
+        .bots-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Bot Templates Grid */
+        .templates-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .template-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+
+        .template-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .template-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .template-desc {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .template-stats {
+            font-size: 0.7rem;
+            color: #10b981;
+        }
+
+        /* Active Bots */
+        .active-bots-section {
+            margin-bottom: 2rem;
+        }
+
+        .bots-table-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow-x: auto;
+        }
+
+        .bots-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .bots-table th {
+            text-align: left;
+            padding: 1rem;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .bots-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.8rem;
+        }
+
+        .status-running {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .status-paused {
+            color: #f59e0b;
+            font-weight: 500;
+        }
+
+        .profit-positive {
+            color: #10b981;
+        }
+
+        .profit-negative {
+            color: #ef4444;
+        }
+
+        .mode-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+
+        .mode-demo {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .mode-live {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .action-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-right: 0.25rem;
+        }
+
+        .action-btn.danger {
+            color: #ef4444;
+        }
+
+        .action-btn:hover {
+            background: #e2e8f0;
+        }
+
+        /* Create Bot Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+        }
+
+        .close-modal {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 0.7rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .bots-container {
+                padding: 1rem;
+            }
+            .trust-bar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='index.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="trade.html">Trade</a>
+            <a href="markets.html">Markets</a>
+            <a href="orders.html">Orders</a>
+            <a href="#" class="active">Bots</a>
+            <a href="deposit.html">Deposit</a>
+            <a href="withdraw.html">Withdraw</a>
+            <a href="settings.html">Settings</a>
+            <a href="support.html">Support</a>
+        </div>
+        <div class="right-nav">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount">$12,450.00</div>
+            <div class="user-avatar">JD</div>
+        </div>
+    </nav>
+
+    <div class="trust-bar">
+        <span>FINRA Member</span>
+        <span class="trust-separator"></span>
+        <span>SIPC Insured</span>
+        <span class="trust-separator"></span>
+        <span>Cold Storage Assets</span>
+        <span class="trust-separator"></span>
+        <span>500M Insurance</span>
+    </div>
+
+    <div class="bots-container">
+        <div class="page-header">
+            <h1>Trading Bots</h1>
+            <div class="mode-toggle">
+                <button class="mode-btn demo active" onclick="setMode('demo')">Demo Mode</button>
+                <button class="mode-btn live" onclick="setMode('live')">Live Mode</button>
+            </div>
+        </div>
+
+        <!-- Bot Templates -->
+        <div class="templates-section">
+            <div class="section-title">Bot Templates</div>
+            <div class="templates-grid">
+                <div class="template-card" onclick="openCreateModal('grid')">
+                    <div class="template-icon">📊</div>
+                    <div class="template-name">Grid Trading Bot</div>
+                    <div class="template-desc">Buy low, sell high within a price range</div>
+                    <div class="template-stats">Avg ROI: +15% / month</div>
+                </div>
+                <div class="template-card" onclick="openCreateModal('dca')">
+                    <div class="template-icon">💧</div>
+                    <div class="template-name">DCA Bot</div>
+                    <div class="template-desc">Dollar Cost Averaging strategy</div>
+                    <div class="template-stats">Accumulate over time</div>
+                </div>
+                <div class="template-card" onclick="openCreateModal('rebalance')">
+                    <div class="template-icon">🔄</div>
+                    <div class="template-name">Rebalancing Bot</div>
+                    <div class="template-desc">Maintain portfolio percentages</div>
+                    <div class="template-stats">Risk management</div>
+                </div>
+                <div class="template-card" onclick="openCreateModal('arbitrage')">
+                    <div class="template-icon">⚡</div>
+                    <div class="template-name">Arbitrage Bot</div>
+                    <div class="template-desc">Capture price differences</div>
+                    <div class="template-stats">Low risk, consistent gains</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Bots -->
+        <div class="active-bots-section">
+            <div class="section-title">Active Bots</div>
+            <div class="bots-table-container">
+                <table class="bots-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Pair</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                            <th>Total P&L</th>
+                            <th>ROI</th>
+                            <th>Actions</th>
+                        </thead>
+                        <tbody id="activeBotsBody"></tbody>
+                    </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Bot Modal -->
+    <div id="botModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create Grid Trading Bot</h3>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="botForm">
+                <div class="form-group">
+                    <label>Bot Name</label>
+                    <input type="text" id="botName" placeholder="My Grid Bot" required>
+                </div>
+                <div class="form-group">
+                    <label>Trading Pair</label>
+                    <select id="botPair">
+                        <option value="BTC/USD">BTC/USD</option>
+                        <option value="ETH/USD">ETH/USD</option>
+                        <option value="SOL/USD">SOL/USD</option>
+                        <option value="AVAX/USD">AVAX/USD</option>
+                    </select>
+                </div>
+                <div class="form-group" id="gridFields">
+                    <label>Lower Price (USD)</label>
+                    <input type="number" id="lowerPrice" placeholder="40000">
+                    <label style="margin-top: 0.5rem;">Upper Price (USD)</label>
+                    <input type="number" id="upperPrice" placeholder="45000">
+                    <label style="margin-top: 0.5rem;">Number of Grids</label>
+                    <input type="number" id="grids" placeholder="10">
+                </div>
+                <div class="form-group" id="dcaFields" style="display: none;">
+                    <label>Investment per Order (USD)</label>
+                    <input type="number" id="investment" placeholder="100">
+                    <label style="margin-top: 0.5rem;">Order Interval (hours)</label>
+                    <input type="number" id="interval" placeholder="6">
+                </div>
+                <div class="form-group" id="rebalanceFields" style="display: none;">
+                    <label>Target Allocation (%)</label>
+                    <input type="text" id="allocation" placeholder="BTC:50, ETH:30, SOL:20">
+                    <label style="margin-top: 0.5rem;">Rebalance Threshold (%)</label>
+                    <input type="number" id="threshold" placeholder="5">
+                </div>
+                <div class="form-group">
+                    <label>Total Investment (USD)</label>
+                    <input type="number" id="totalInvestment" placeholder="1000" required>
+                </div>
+                <button type="submit" class="modal-btn">Create Bot</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'demo';
+        let currentBotType = 'grid';
+        let botCounter = 3;
+
+        // Active Bots Data
+        let activeBots = [
+            { id: 1, name: "BTC Grid Bot", type: "Grid", pair: "BTC/USD", mode: "demo", status: "running", pnl: 245.50, roi: 8.2 },
+            { id: 2, name: "ETH DCA Bot", type: "DCA", pair: "ETH/USD", mode: "demo", status: "running", pnl: 128.30, roi: 5.4 }
+        ];
+
+        function loadActiveBots() {
+            const tbody = document.getElementById('activeBotsBody');
+            const filteredBots = activeBots.filter(bot => bot.mode === currentMode);
+            
+            if (filteredBots.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No active bots in this mode. Create one above!</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filteredBots.map(bot => `
+                <tr>
+                    <td>${bot.name}</td>
+                    <td>${bot.type}</td>
+                    <td>${bot.pair}</td>
+                    <td><span class="mode-badge ${bot.mode === 'demo' ? 'mode-demo' : 'mode-live'}">${bot.mode === 'demo' ? 'Demo' : 'Live'}</span></td>
+                    <td class="status-running">${bot.status}</td>
+                    <td class="${bot.pnl >= 0 ? 'profit-positive' : 'profit-negative'}">$${Math.abs(bot.pnl).toFixed(2)}</td>
+                    <td class="${bot.roi >= 0 ? 'profit-positive' : 'profit-negative'}">${bot.roi >= 0 ? '+' : ''}${bot.roi}%</td>
+                    <td>
+                        <button class="action-btn" onclick="pauseBot(${bot.id})">Pause</button>
+                        <button class="action-btn danger" onclick="deleteBot(${bot.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.mode-btn.${mode}`).classList.add('active');
+            loadActiveBots();
+        }
+
+        function openCreateModal(type) {
+            currentBotType = type;
+            const modal = document.getElementById('botModal');
+            const modalTitle = document.getElementById('modalTitle');
+            
+            // Hide all type-specific fields
+            document.getElementById('gridFields').style.display = 'none';
+            document.getElementById('dcaFields').style.display = 'none';
+            document.getElementById('rebalanceFields').style.display = 'none';
+            
+            // Show relevant fields
+            if (type === 'grid') {
+                modalTitle.textContent = 'Create Grid Trading Bot';
+                document.getElementById('gridFields').style.display = 'block';
+            } else if (type === 'dca') {
+                modalTitle.textContent = 'Create DCA Bot';
+                document.getElementById('dcaFields').style.display = 'block';
+            } else if (type === 'rebalance') {
+                modalTitle.textContent = 'Create Rebalancing Bot';
+                document.getElementById('rebalanceFields').style.display = 'block';
+            } else if (type === 'arbitrage') {
+                modalTitle.textContent = 'Create Arbitrage Bot';
+                document.getElementById('gridFields').style.display = 'block';
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('botModal').classList.remove('active');
+            document.getElementById('botForm').reset();
+        }
+
+        // Handle bot creation
+        document.getElementById('botForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const botName = document.getElementById('botName').value;
+            const pair = document.getElementById('botPair').value;
+            const totalInvestment = parseFloat(document.getElementById('totalInvestment').value);
+            
+            if (!botName || !totalInvestment) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            botCounter++;
+            
+            const newBot = {
+                id: botCounter,
+                name: botName,
+                type: currentBotType === 'grid' ? 'Grid' : currentBotType === 'dca' ? 'DCA' : currentBotType === 'rebalance' ? 'Rebalance' : 'Arbitrage',
+                pair: pair,
+                mode: currentMode,
+                status: 'running',
+                pnl: 0,
+                roi: 0
+            };
+            
+            activeBots.push(newBot);
+            loadActiveBots();
+            closeModal();
+            
+            const modeText = currentMode === 'demo' ? 'Demo Mode' : 'Live Mode';
+            alert(`Bot "${botName}" created successfully in ${modeText}!`);
+        });
+
+        function pauseBot(botId) {
+            const bot = activeBots.find(b => b.id === botId);
+            if (bot) {
+                bot.status = bot.status === 'running' ? 'paused' : 'running';
+                loadActiveBots();
+                alert(`Bot ${bot.name} ${bot.status === 'running' ? 'resumed' : 'paused'}`);
+            }
+        }
+
+        function deleteBot(botId) {
+            if (confirm('Are you sure you want to delete this bot?')) {
+                activeBots = activeBots.filter(b => b.id !== botId);
+                loadActiveBots();
+                alert('Bot deleted successfully');
+            }
+        }
+
+        // Simulate bot performance updates
+        setInterval(() => {
+            activeBots.forEach(bot => {
+                if (bot.status === 'running') {
+                    const change = (Math.random() - 0.5) * 20;
+                    bot.pnl += change;
+                    bot.roi = (bot.pnl / 1000) * 100;
+                    bot.roi = Math.max(-50, Math.min(50, bot.roi));
+                }
+            });
+            loadActiveBots();
+        }, 10000);
+
+        // Initialize
+        loadActiveBots();
+    </script>
+</body>
+</html>

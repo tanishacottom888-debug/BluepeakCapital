@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - 24/7 institutional support. Get help with trading, deposits, withdrawals, and account management." />
+    <title>BluepeakCapital | Support Center</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #3b82f6;
+        }
+
+        .flag-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Trust Bar */
+        .trust-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.5rem 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            color: #475569;
+        }
+
+        .trust-separator {
+            width: 1px;
+            height: 12px;
+            background: #cbd5e1;
+        }
+
+        /* Main Container */
+        .support-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .support-hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .support-hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .support-hero p {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .quick-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            border-color: #3b82f6;
+        }
+
+        .quick-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .quick-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .quick-desc {
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        /* Two Column Layout */
+        .support-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* FAQ Section */
+        .faq-section, .contact-section {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* FAQ Accordion */
+        .faq-item {
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .faq-question:hover {
+            color: #3b82f6;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            color: #64748b;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .faq-answer.active {
+            max-height: 200px;
+            padding-bottom: 1rem;
+        }
+
+        /* Contact Form */
+        .contact-form .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .contact-form label {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .contact-form input, .contact-form select, .contact-form textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.85rem;
+        }
+
+        .contact-form textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        /* Knowledge Base */
+        .kb-section {
+            margin-bottom: 3rem;
+        }
+
+        .kb-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .kb-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .kb-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+
+        .kb-category {
+            font-size: 0.7rem;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .kb-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .kb-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* System Status */
+        .status-section {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .status-name {
+            font-size: 0.85rem;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+        }
+
+        .status-operational {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-degraded {
+            background: #fed7aa;
+            color: #c2410c;
+        }
+
+        @media (max-width: 768px) {
+            .support-container {
+                padding: 1rem;
+            }
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .support-grid {
+                grid-template-columns: 1fr;
+            }
+            .kb-grid {
+                grid-template-columns: 1fr;
+            }
+            .trust-bar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='index.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="trade.html">Trade</a>
+            <a href="markets.html">Markets</a>
+            <a href="orders.html">Orders</a>
+            <a href="deposit.html">Deposit</a>
+            <a href="withdraw.html">Withdraw</a>
+            <a href="settings.html">Settings</a>
+            <a href="#" class="active">Support</a>
+        </div>
+        <div class="right-nav">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount">$12,450.00</div>
+            <div class="user-avatar">JD</div>
+        </div>
+    </nav>
+
+    <div class="trust-bar">
+        <span>FINRA Member</span>
+        <span class="trust-separator"></span>
+        <span>SIPC Insured</span>
+        <span class="trust-separator"></span>
+        <span>Cold Storage Assets</span>
+        <span class="trust-separator"></span>
+        <span>500M Insurance</span>
+        <span class="trust-separator"></span>
+        <span>24/7 Support</span>
+    </div>
+
+    <div class="support-container">
+        <!-- Hero Section -->
+        <div class="support-hero">
+            <h1>How can we help?</h1>
+            <p>Get instant answers from our support team and knowledge base</p>
+            <div class="search-box">
+                <input type="text" placeholder="Search for answers..." id="searchInput" onkeyup="searchFAQ()">
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="quick-card" onclick="scrollToContact()">
+                <div class="quick-icon">💬</div>
+                <div class="quick-title">Live Chat</div>
+                <div class="quick-desc">Chat with support 24/7</div>
+            </div>
+            <div class="quick-card" onclick="showToast('Ticket system opening')">
+                <div class="quick-icon">🎫</div>
+                <div class="quick-title">Submit Ticket</div>
+                <div class="quick-desc">Get help via email</div>
+            </div>
+            <div class="quick-card" onclick="showToast('Callback request sent')">
+                <div class="quick-icon">📞</div>
+                <div class="quick-title">Request Callback</div>
+                <div class="quick-desc">We'll call you back</div>
+            </div>
+            <div class="quick-card" onclick="showToast('Opening knowledge base')">
+                <div class="quick-icon">📚</div>
+                <div class="quick-title">Guides & Tutorials</div>
+                <div class="quick-desc">Step-by-step guides</div>
+            </div>
+        </div>
+
+        <!-- FAQ + Contact -->
+        <div class="support-grid">
+            <!-- FAQ Section -->
+            <div class="faq-section">
+                <div class="section-title">Frequently Asked Questions</div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        How do I deposit funds into my account?
+                        <span>▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Navigate to Wallet → Deposit. Select your preferred cryptocurrency, copy the deposit address, and send funds from your external wallet. Deposits typically confirm within 10-30 minutes.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        What are the withdrawal fees?
+                        <span>▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Withdrawal fees vary by asset. BTC: 0.0005, ETH: 0.005, USDT: $5, SOL: 0.01. Minimum withdrawal amounts apply. All fees are clearly shown before confirmation.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        How do I enable Two-Factor Authentication?
+                        <span>▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Go to Settings → Security → Enable 2FA. Scan the QR code with Google Authenticator or Authy, then enter the verification code to complete setup.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        What is the minimum deposit amount?
+                        <span>▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Minimum deposits: BTC: 0.001, ETH: 0.01, USDT: $50, SOL: 0.1. Deposits below these amounts may not be credited to your account.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        How long do withdrawals take?
+                        <span>▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Withdrawals are processed within 24 hours after security review. Crypto withdrawals then require network confirmations (typically 10-60 minutes depending on the asset).
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="contact-section" id="contactSection">
+                <div class="section-title">Contact Support</div>
+                <form class="contact-form" id="supportForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="contactName" value="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="contactEmail" value="john.doe@bluepeakcapital.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select id="contactSubject">
+                            <option>General Inquiry</option>
+                            <option>Technical Support</option>
+                            <option>Deposit Issue</option>
+                            <option>Withdrawal Issue</option>
+                            <option>Account Security</option>
+                            <option>Institutional Services</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea id="contactMessage" placeholder="Please describe your issue in detail..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Submit Request</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Knowledge Base -->
+        <div class="kb-section">
+            <div class="section-title">Knowledge Base</div>
+            <div class="kb-grid">
+                <div class="kb-card" onclick="showToast('Getting Started guide opening')">
+                    <div class="kb-category">Getting Started</div>
+                    <div class="kb-title">How to create and verify your account</div>
+                    <div class="kb-desc">Step-by-step guide to account setup and KYC verification</div>
+                </div>
+                <div class="kb-card" onclick="showToast('Trading guide opening')">
+                    <div class="kb-category">Trading</div>
+                    <div class="kb-title">Understanding order types</div>
+                    <div class="kb-desc">Market, Limit, Stop Loss orders explained</div>
+                </div>
+                <div class="kb-card" onclick="showToast('Security guide opening')">
+                    <div class="kb-category">Security</div>
+                    <div class="kb-title">Best practices for account security</div>
+                    <div class="kb-desc">How to keep your assets safe</div>
+                </div>
+                <div class="kb-card" onclick="showToast('API guide opening')">
+                    <div class="kb-category">API</div>
+                    <div class="kb-title">REST API documentation</div>
+                    <div class="kb-desc">Connect your trading bots and applications</div>
+                </div>
+                <div class="kb-card" onclick="showToast('Fees guide opening')">
+                    <div class="kb-category">Fees</div>
+                    <div class="kb-title">Trading fee structure explained</div>
+                    <div class="kb-desc">Maker/taker fees and volume tiers</div>
+                </div>
+                <div class="kb-card" onclick="showToast('Tax guide opening')">
+                    <div class="kb-category">Tax</div>
+                    <div class="kb-title">Tax reporting for crypto trading</div>
+                    <div class="kb-desc">Generate your tax reports</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="status-section">
+            <div class="section-title">System Status</div>
+            <div class="status-item">
+                <span class="status-name">Trading Engine</span>
+                <span class="status-badge status-operational">Operational</span>
+            </div>
+            <div class="status-item">
+                <span class="status-name">Deposits & Withdrawals</span>
+                <span class="status-badge status-operational">Operational</span>
+            </div>
+            <div class="status-item">
+                <span class="status-name">WebSocket Feeds</span>
+                <span class="status-badge status-operational">Operational</span>
+            </div>
+            <div class="status-item">
+                <span class="status-name">REST API</span>
+                <span class="status-badge status-operational">Operational</span>
+            </div>
+            <div class="status-item">
+                <span class="status-name">Customer Support</span>
+                <span class="status-badge status-operational">24/7 Available</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFAQ(element) {
+            const answer = element.nextElementSibling;
+            const arrow = element.querySelector('span');
+            answer.classList.toggle('active');
+            if (answer.classList.contains('active')) {
+                arrow.innerHTML = '▲';
+            } else {
+                arrow.innerHTML = '▼';
+            }
+        }
+
+        function searchFAQ() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+                
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else if (searchTerm === '') {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function scrollToContact() {
+            document.getElementById('contactSection').scrollIntoView({ behavior: 'smooth' });
+            showToast('Live chat will open in new window');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.8rem; z-index: 1000;';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Handle contact form submission
+        document.getElementById('supportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const subject = document.getElementById('contactSubject').value;
+            const message = document.getElementById('contactMessage').value;
+            
+            if (name && email && message) {
+                showToast(`Support ticket submitted! We'll respond within 24 hours.`);
+                document.getElementById('contactMessage').value = '';
+            } else {
+                showToast('Please fill in all required fields');
+            }
+        });
+    </script>
+</body>
+</html>

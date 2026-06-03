@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - Terms of Service. Legal terms and conditions for using our institutional trading platform." />
+    <title>BluepeakCapital | Terms of Service</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #3b82f6;
+        }
+
+        .legal-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .legal-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .legal-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .legal-header p {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .legal-content {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .legal-section {
+            margin-bottom: 2rem;
+        }
+
+        .legal-section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1a1f36;
+        }
+
+        .legal-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem;
+            color: #1a1f36;
+        }
+
+        .legal-section p {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #4a5568;
+            margin-bottom: 0.75rem;
+        }
+
+        .legal-section ul {
+            margin: 0.75rem 0 0.75rem 1.5rem;
+        }
+
+        .legal-section li {
+            font-size: 0.85rem;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .last-updated {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        footer {
+            background: #1a1f36;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        footer p {
+            color: #94a3b8;
+            font-size: 0.7rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.7rem;
+        }
+
+        .footer-links a:hover {
+            color: #60a5fa;
+        }
+
+        @media (max-width: 768px) {
+            .legal-container {
+                padding: 1rem;
+            }
+            .legal-content {
+                padding: 1rem;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='index.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="trade.html">Trade</a>
+            <a href="markets.html">Markets</a>
+            <a href="orders.html">Orders</a>
+            <a href="bots.html">Bots</a>
+            <a href="deposit.html">Deposit</a>
+            <a href="withdraw.html">Withdraw</a>
+            <a href="settings.html">Settings</a>
+            <a href="support.html">Support</a>
+        </div>
+    </nav>
+
+    <div class="legal-container">
+        <div class="legal-header">
+            <h1>Terms of Service</h1>
+            <p>Last updated: January 15, 2025</p>
+        </div>
+
+        <div class="legal-content">
+            <div class="legal-section">
+                <h2>1. Acceptance of Terms</h2>
+                <p>By accessing or using the BluepeakCapital platform, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>2. Eligibility</h2>
+                <p>To use BluepeakCapital, you must:</p>
+                <ul>
+                    <li>Be at least 18 years of age</li>
+                    <li>Have the legal capacity to enter into binding agreements</li>
+                    <li>Not be located in a restricted jurisdiction</li>
+                    <li>Complete our KYC verification process</li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>3. Account Registration</h2>
+                <p>You are responsible for maintaining the security of your account credentials. BluepeakCapital is not liable for any losses resulting from unauthorized access to your account. You must immediately notify us of any security breaches.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>4. Trading Services</h2>
+                <p>BluepeakCapital provides a platform for cryptocurrency trading. All trading involves risk. Past performance does not guarantee future results. You acknowledge that:</p>
+                <ul>
+                    <li>Cryptocurrency markets are highly volatile</li>
+                    <li>You may lose some or all of your invested capital</li>
+                    <li>We do not provide investment advice</li>
+                    <li>You are solely responsible for your trading decisions</li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>5. Fees</h2>
+                <p>All applicable fees are disclosed on our platform. We reserve the right to modify fees with 30 days' notice. Fees are non-refundable except as required by law.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>6. Deposits and Withdrawals</h2>
+                <p>Deposit and withdrawal processing times vary by asset. Minimum deposit and withdrawal amounts apply. We may hold withdrawals for security review up to 24 hours.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>7. Prohibited Activities</h2>
+                <p>You may not use BluepeakCapital for:</p>
+                <ul>
+                    <li>Money laundering or illegal activities</li>
+                    <li>Market manipulation or wash trading</li>
+                    <li>Unauthorized access to our systems</li>
+                    <li>Violating any applicable laws or regulations</li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>8. Risk Disclosure</h2>
+                <p>Trading digital assets involves substantial risk. Cryptocurrency prices can fluctuate dramatically. You should only trade with funds you can afford to lose. BluepeakCapital is not responsible for any trading losses.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>9. Limitation of Liability</h2>
+                <p>To the maximum extent permitted by law, BluepeakCapital shall not be liable for any indirect, incidental, or consequential damages arising from your use of our services.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>10. Termination</h2>
+                <p>We may suspend or terminate your account for violation of these terms, illegal activity, or as required by law. You may close your account at any time.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>11. Governing Law</h2>
+                <p>These terms shall be governed by the laws of the United States and the State of Delaware, without regard to conflict of law principles.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>12. Changes to Terms</h2>
+                <p>We may update these terms from time to time. Continued use of the platform after changes constitutes acceptance of the modified terms.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>13. Contact Information</h2>
+                <p>For questions about these Terms of Service, please contact us at: <strong>legal@bluepeakcapital.com</strong></p>
+            </div>
+
+            <div class="last-updated">
+                <p>© 2025 BluepeakCapital. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="support.html">Support</a>
+        </div>
+        <p>BluepeakCapital is a registered FINRA Member and SIPC Insured institution.</p>
+        <p style="margin-top: 0.5rem;">Cryptocurrency trading involves substantial risk of loss and is not suitable for all investors.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - Institutional-grade cryptocurrency trading platform. Professional digital asset management for sophisticated investors." />
+    <meta name="keywords" content="institutional crypto trading, digital assets, cryptocurrency exchange, BluepeakCapital" />
+    <title>BluepeakCapital | Institutional Digital Asset Platform</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+            overflow-x: hidden;
+        }
+
+        .bg-light {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(135deg, #f5f7fb 0%, #ffffff 50%, #f0f4f9 100%);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 5%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo-text span {
+            color: #3b82f6;
+            background: none;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #3b82f6;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            color: #3b82f6;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-outline:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-large {
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+        }
+
+        /* Hero Section with Background Slider */
+        .hero {
+            position: relative;
+            height: 90vh;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Background Slider */
+        .hero-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-slides {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+        }
+
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%);
+            z-index: 2;
+        }
+
+        /* Hero Content */
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            max-width: 800px;
+            padding: 0 2rem;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.9);
+            border-radius: 100px;
+            padding: 0.4rem 1rem;
+            font-size: 0.75rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-content h1 span {
+            color: #3b82f6;
+        }
+
+        .hero-content p {
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .hero-buttons .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .hero-buttons .btn-outline {
+            border-color: white;
+            color: white;
+        }
+
+        .hero-buttons .btn-outline:hover {
+            background: white;
+            color: #3b82f6;
+        }
+
+        .trust-badge {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .trust-badge span {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        /* Rest of the styles */
+        .ticker-container {
+            background: white;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .ticker {
+            display: inline-block;
+            animation: tickerScroll 30s linear infinite;
+        }
+
+        @keyframes tickerScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 2.5rem 5%;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1f36;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .market-section {
+            padding: 3rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a1f36;
+        }
+
+        .market-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .market-table-container {
+            background: white;
+            border-radius: 16px;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .market-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        .market-table th {
+            text-align: left;
+            padding: 1rem 1.2rem;
+            color: #64748b;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #f8fafc;
+        }
+
+        .market-table td {
+            padding: 1rem 1.2rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+            color: #1a1f36;
+        }
+
+        .market-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .crypto-name {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+        }
+
+        .crypto-symbol {
+            color: #718096;
+            font-size: 0.75rem;
+            font-weight: 400;
+        }
+
+        .positive {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .negative {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        .trade-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .app-showcase {
+            padding: 4rem 5%;
+            background: #f8fafc;
+            margin: 3rem 0;
+            overflow: hidden;
+        }
+
+        .app-showcase-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .app-showcase-content h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1f36;
+            margin-bottom: 1rem;
+        }
+
+        .app-showcase-content p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .app-features {
+            list-style: none;
+        }
+
+        .app-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: #4a5568;
+        }
+
+        .hand-phone-mockup {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hand-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.15));
+            border-radius: 20px;
+        }
+
+        .features {
+            padding: 5rem 5%;
+            background: white;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: #3b82f6;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1f36;
+        }
+
+        .feature-card p {
+            color: #4a5568;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 4rem 5%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 24px;
+            margin: 3rem 5%;
+            color: white;
+        }
+
+        .cta-section h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        footer {
+            background: #1a1f36;
+            padding: 3rem 5% 1.5rem;
+            margin-top: 3rem;
+            color: #94a3b8;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-col h4 {
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-col a {
+            display: block;
+            color: #94a3b8;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: #60a5fa;
+        }
+
+        .copyright {
+            text-align: center;
+            color: #64748b;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.7rem;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #1a1f36;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .nav-buttons.active {
+                display: flex;
+            }
+            .mobile-menu-btn {
+                display: block;
+            }
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .stats-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .app-showcase-inner {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .app-features {
+                text-align: left;
+            }
+            .hero {
+                height: 70vh;
+                min-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='/'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">Bluepeak<span>Capital</span></div>
+        </div>
+        <div class="nav-buttons" id="navButtons">
+            <button class="btn-outline" onclick="location.href='login.html'">Sign In</button>
+            <button class="btn-primary" onclick="location.href='signup.html'">Get Started</button>
+        </div>
+        <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
+    </nav>
+
+    <!-- Hero Section with Background Slider - Text on top of images -->
+    <section class="hero">
+        <!-- Background Slider -->
+        <div class="hero-slider">
+            <div class="hero-slides">
+                <div class="hero-slide active">
+                    <img src="https://images.unsplash.com/photo-1589560989620-61bf48e97abb?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Trading chart">
+                </div>
+                <div class="hero-slide">
+                    <img src="https://images.unsplash.com/photo-1745509267699-1b1db256601e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fGNoYXJ0c3xlbnwwfHwwfHx8MA%3D%3D" alt="Crypto analytics">
+                </div>
+                <div class="hero-slide">
+                    <img src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?q=80&w=806&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Market data">
+                </div>
+                <div class="hero-slide">
+                    <img src="https://images.unsplash.com/photo-1523961131990-5ea7c61b2107?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Trading platform">
+                </div>
+            </div>
+        </div>
+        <div class="hero-overlay"></div>
+        
+        <div class="hero-content">
+            <div class="hero-badge">Institutional Grade • Regulated • Secure</div>
+            <h1>Digital Asset <span>Capital</span><br>Management Platform</h1>
+            <p>Professional trading infrastructure for institutions and sophisticated investors. Execute with confidence across global markets.</p>
+            <div class="hero-buttons">
+                <button class="btn-primary btn-large" onclick="location.href='signup.html'">Open Account →</button>
+                <button class="btn-outline btn-large" onclick="location.href='login.html'">Sign In</button>
+            </div>
+            <div class="trust-badge">
+                <span>SOC 2 Type II</span>
+                <span>FDIC Eligible</span>
+                <span>150+ Countries</span>
+                <span>FINRA Member</span>
+                <span>SIPC Insured</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="ticker-container">
+        <div class="ticker" id="ticker"></div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value" id="totalVolume">$2.8B</div>
+            <div class="stat-label">24h Volume</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">150+</div>
+            <div class="stat-label">Markets</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">99.99%</div>
+            <div class="stat-label">Uptime SLA</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">0.02%</div>
+            <div class="stat-label">Maker Fee</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">24/7</div>
+            <div class="stat-label">Dedicated Support</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">$500M</div>
+            <div class="stat-label">Insurance</div>
+        </div>
+    </div>
+
+    <section class="market-section">
+        <div class="section-header">
+            <h2>Markets</h2>
+            <div class="market-filters">
+                <button class="filter-btn active" onclick="filterMarkets('all')">All Markets</button>
+                <button class="filter-btn" onclick="filterMarkets('gainers')">Top Gainers</button>
+                <button class="filter-btn" onclick="filterMarkets('losers')">Top Losers</button>
+                <button class="filter-btn" onclick="filterMarkets('volume')">Highest Volume</button>
+            </div>
+        </div>
+        <div class="market-table-container">
+            <table class="market-table">
+                <thead>
+                    <tr><th>Asset</th><th>Price</th><th>24h Change</th><th>24h Volume</th><th>Market Cap</th><th></th></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="app-showcase">
+        <div class="app-showcase-inner">
+            <div class="app-showcase-content">
+                <h2>Trade Anywhere, Anytime</h2>
+                <p>Take control of your portfolio with our powerful mobile app. Real-time quotes, instant execution, and advanced charting tools right at your fingertips.</p>
+                <ul class="app-features">
+                    <li>✓ Real-time market data and alerts</li>
+                    <li>✓ Biometric login for security</li>
+                    <li>✓ Instant deposits and withdrawals</li>
+                    <li>✓ Advanced order types</li>
+                    <li>✓ Portfolio analytics and reports</li>
+                </ul>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button class="btn-primary" onclick="showMessage('App Store link coming soon')">App Store</button>
+                    <button class="btn-outline" onclick="showMessage('Google Play link coming soon')">Google Play</button>
+                </div>
+            </div>
+            <div class="hand-phone-mockup">
+                <img class="hand-image" src="https://images.unsplash.com/photo-1716279083223-006db39251e1?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Person holding phone">
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="section-header" style="justify-content: center; text-align: center; flex-direction: column;">
+            <h2>Institutional Infrastructure</h2>
+            <p style="color: #4a5568; max-width: 600px;">Built for professional traders with enterprise-grade security and execution</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card"><div class="feature-icon">🔒</div><h3>Institutional Custody</h3><p>Multi-signature wallets with leading custodians and $500M insurance coverage.</p></div>
+            <div class="feature-card"><div class="feature-icon">⚡</div><h3>Ultra-Low Latency</h3><p>Direct market access with sub-millisecond execution.</p></div>
+            <div class="feature-card"><div class="feature-icon">📊</div><h3>Advanced Analytics</h3><p>Real-time portfolio tracking and risk metrics.</p></div>
+            <div class="feature-card"><div class="feature-icon">🌊</div><h3>Deep Liquidity</h3><p>Aggregated liquidity from 20+ exchanges.</p></div>
+            <div class="feature-card"><div class="feature-icon">🔌</div><h3>FIX and REST APIs</h3><p>Seamless integration with existing trading systems.</p></div>
+            <div class="feature-card"><div class="feature-icon">🌐</div><h3>Global Access</h3><p>Trade across multiple jurisdictions with local settlement.</p></div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2>Ready to elevate your trading?</h2>
+        <p>Join a select group of institutions and professional traders worldwide.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn-primary btn-large" onclick="location.href='signup.html'">Open Account →</button>
+            <button class="btn-outline btn-large" onclick="showMessage('Contact sales')">Contact Sales</button>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col"><h4>BluepeakCapital</h4><a href="#">About Us</a><a href="#">Careers</a><a href="terms.html">Legal</a></div>
+            <div class="footer-col"><h4>Products</h4><a href="#">Spot Trading</a><a href="#">OTC Desk</a><a href="#">Custody</a></div>
+            <div class="footer-col"><h4>Resources</h4><a href="#">Documentation</a><a href="support.html">Support Center</a><a href="#">System Status</a></div>
+            <div class="footer-col"><h4>Regulatory</h4><a href="terms.html">Terms of Service</a><a href="privacy.html">Privacy Policy</a></div>
+            <div class="footer-col"><h4>Connect</h4><a href="#">LinkedIn</a><a href="#">Twitter</a><a href="support.html">Contact Us</a></div>
+        </div>
+        <div class="copyright"><p>© 2025 BluepeakCapital. All rights reserved. Member FINRA and SIPC.</p></div>
+    </footer>
+
+    <script>
+        // Hero Background Slider - No visible controls, just auto sliding
+        let currentHeroSlide = 0;
+        const heroSlides = document.querySelectorAll('.hero-slide');
+        const heroTotalSlides = heroSlides.length;
+        let heroAutoInterval;
+
+        function changeHeroSlide() {
+            heroSlides[currentHeroSlide].classList.remove('active');
+            currentHeroSlide = (currentHeroSlide + 1) % heroTotalSlides;
+            heroSlides[currentHeroSlide].classList.add('active');
+        }
+
+        function startHeroSlider() {
+            heroAutoInterval = setInterval(changeHeroSlide, 5000);
+        }
+
+        startHeroSlider();
+
+        // Market Data
+        const marketData = [
+            { name: "Bitcoin", symbol: "BTC", price: 43250, change: 2.4, volume: "28.5B", marketCap: "845B" },
+            { name: "Ethereum", symbol: "ETH", price: 2250, change: 1.8, volume: "15.2B", marketCap: "270B" },
+            { name: "Solana", symbol: "SOL", price: 95.50, change: -0.5, volume: "4.2B", marketCap: "42B" },
+            { name: "Ripple", symbol: "XRP", price: 0.62, change: -1.2, volume: "2.1B", marketCap: "34B" },
+            { name: "Cardano", symbol: "ADA", price: 0.48, change: 3.2, volume: "1.8B", marketCap: "17B" },
+            { name: "Avalanche", symbol: "AVAX", price: 38.20, change: 4.2, volume: "0.6B", marketCap: "14.2B" },
+            { name: "Polygon", symbol: "MATIC", price: 0.85, change: -0.3, volume: "0.4B", marketCap: "7.8B" },
+            { name: "Chainlink", symbol: "LINK", price: 15.30, change: 2.1, volume: "0.8B", marketCap: "8.5B" },
+            { name: "Binance Coin", symbol: "BNB", price: 312.50, change: 1.2, volume: "1.5B", marketCap: "48B" },
+            { name: "Dogecoin", symbol: "DOGE", price: 0.082, change: 5.1, volume: "1.2B", marketCap: "11.8B" },
+            { name: "Polkadot", symbol: "DOT", price: 7.25, change: 0.8, volume: "0.5B", marketCap: "9.2B" },
+            { name: "Litecoin", symbol: "LTC", price: 72.80, change: -0.8, volume: "0.6B", marketCap: "5.4B" }
+        ];
+
+        let currentMarkets = [...marketData];
+
+        function loadMarketTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = currentMarkets.map(crypto => `
+                <tr>
+                    <td><div class="crypto-name"><span>${crypto.name}</span><span class="crypto-symbol">${crypto.symbol}</span></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                    <td><strong>$${crypto.price.toLocaleString()}</strong></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                    <td class="${crypto.change >= 0 ? 'positive' : 'negative'}">${crypto.change >= 0 ? '▲' : '▼'} ${Math.abs(crypto.change)}%</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                    <td>$${crypto.volume}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </td>
+                    <td>$${crypto.marketCap}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    <tr>
+                    <td class="$
+        </tr>
+            `).join('');
+        }
+
+        function loadTicker() {
+            const ticker = document.getElementById('ticker');
+            const items = marketData.map(c => `${c.name} $${c.price.toLocaleString()} ${c.change >= 0 ? '▲' : '▼'} ${Math.abs(c.change)}%`).join('  •  ');
+            ticker.innerHTML = items + '  •  ' + items;
+        }
+
+        function filterMarkets(type) {
+            if (type === 'gainers') {
+                currentMarkets = [...marketData].sort((a, b) => b.change - a.change);
+            } else if (type === 'losers') {
+                currentMarkets = [...marketData].sort((a, b) => a.change - b.change);
+            } else if (type === 'volume') {
+                currentMarkets = [...marketData].sort((a, b) => parseFloat(b.volume) - parseFloat(a.volume));
+            } else {
+                currentMarkets = [...marketData];
+            }
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            loadMarketTable();
+        }
+
+        function toggleMenu() {
+            document.getElementById('navButtons').classList.toggle('active');
+        }
+
+        function showMessage(msg) {
+            alert(msg);
+        }
+
+        // Initialize
+        loadMarketTable();
+        loadTicker();
+
+        // Live price updates
+        setInterval(() => {
+            marketData.forEach(crypto => {
+                const change = (Math.random() - 0.5) * 2;
+                crypto.price = Math.max(0.01, crypto.price * (1 + change / 100));
+                crypto.change = parseFloat((Math.random() * 4 - 1).toFixed(1));
+            });
+            currentMarkets = [...marketData];
+            loadMarketTable();
+            loadTicker();
+            const volumes = ['2.8B', '3.1B', '2.9B', '3.2B', '2.7B', '3.0B'];
+            document.getElementById('totalVolume').innerHTML = `$${volumes[Math.floor(Math.random() * volumes.length)]}`;
+        }, 10000);
+    </script>
+</body>
+</html>

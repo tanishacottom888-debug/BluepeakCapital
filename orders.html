@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - View and manage your trading orders. Track open orders, order history, and filled positions." />
+    <title>BluepeakCapital | Orders</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #3b82f6;
+        }
+
+        .flag-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Trust Bar */
+        .trust-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.5rem 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            color: #475569;
+        }
+
+        .trust-separator {
+            width: 1px;
+            height: 12px;
+            background: #cbd5e1;
+        }
+
+        /* Main Container */
+        .orders-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Tabs */
+        .orders-tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: #3b82f6;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #3b82f6;
+        }
+
+        /* Filters Bar */
+        .filters-bar {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: white;
+        }
+
+        .search-input {
+            padding: 0.4rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            width: 200px;
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .orders-table th {
+            text-align: left;
+            padding: 1rem;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .orders-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+        }
+
+        .orders-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .cancel-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        .cancel-btn:hover {
+            background: #dc2626;
+        }
+
+        .status-open {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .status-filled {
+            color: #3b82f6;
+            font-weight: 500;
+        }
+
+        .status-cancelled {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            color: #f59e0b;
+            font-weight: 500;
+        }
+
+        .buy-type {
+            color: #10b981;
+        }
+
+        .sell-type {
+            color: #ef4444;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .page-btn:hover {
+            background: #f1f5f9;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1rem;
+        }
+
+        .summary-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .orders-container {
+                padding: 1rem;
+            }
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .trust-bar {
+                display: none;
+            }
+            .filters-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='index.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="trade.html">Trade</a>
+            <a href="markets.html">Markets</a>
+            <a href="#" class="active">Orders</a>
+            <a href="deposit.html">Deposit</a>
+            <a href="withdraw.html">Withdraw</a>
+        </div>
+        <div class="right-nav">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount">$12,450.00</div>
+            <div class="user-avatar">JD</div>
+        </div>
+    </nav>
+
+    <div class="trust-bar">
+        <span>FINRA Member</span>
+        <span class="trust-separator"></span>
+        <span>SIPC Insured</span>
+        <span class="trust-separator"></span>
+        <span>Cold Storage Assets</span>
+        <span class="trust-separator"></span>
+        <span>500M Insurance</span>
+    </div>
+
+    <div class="orders-container">
+        <div class="page-header">
+            <h1>Orders</h1>
+            <button class="cancel-btn" onclick="cancelAllOrders()" style="background: #64748b;">Cancel All Open Orders</button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Open Orders</div>
+                <div class="summary-value" id="openOrdersCount">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Today's Volume</div>
+                <div class="summary-value" id="todayVolume">$0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Filled</div>
+                <div class="summary-value" id="totalFilled">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Cancelled</div>
+                <div class="summary-value" id="totalCancelled">0</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="orders-tabs">
+            <button class="tab-btn active" onclick="switchTab('open')">Open Orders</button>
+            <button class="tab-btn" onclick="switchTab('history')">Order History</button>
+            <button class="tab-btn" onclick="switchTab('filled')">Filled Orders</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <select class="filter-select" id="pairFilter" onchange="applyFilters()">
+                    <option value="all">All Pairs</option>
+                    <option value="BTC/USD">BTC/USD</option>
+                    <option value="ETH/USD">ETH/USD</option>
+                    <option value="SOL/USD">SOL/USD</option>
+                    <option value="AVAX/USD">AVAX/USD</option>
+                </select>
+                <select class="filter-select" id="typeFilter" onchange="applyFilters()">
+                    <option value="all">All Types</option>
+                    <option value="buy">Buy</option>
+                    <option value="sell">Sell</option>
+                </select>
+            </div>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search by pair or ID" onkeyup="applyFilters()">
+        </div>
+
+        <!-- Open Orders Tab -->
+        <div id="openTab" class="tab-content">
+            <div class="table-container">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Pair</th>
+                            <th>Type</th>
+                            <th>Price (USD)</th>
+                            <th>Amount</th>
+                            <th>Filled</th>
+                            <th>Value (USD)</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </thead>
+                        <tbody id="openOrdersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Order History Tab -->
+            <div id="historyTab" class="tab-content" style="display: none;">
+                <div class="table-container">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Pair</th>
+                                <th>Type</th>
+                                <th>Price (USD)</th>
+                                <th>Amount</th>
+                                <th>Filled</th>
+                                <th>Status</th>
+                            </thead>
+                            <tbody id="historyOrdersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Filled Orders Tab -->
+                <div id="filledTab" class="tab-content" style="display: none;">
+                    <div class="table-container">
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Pair</th>
+                                    <th>Type</th>
+                                    <th>Avg Price</th>
+                                    <th>Amount</th>
+                                    <th>Total</th>
+                                    <th>Fee</th>
+                                </thead>
+                                <tbody id="filledOrdersBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        <button class="page-btn" onclick="prevPage()">Previous</button>
+                        <span id="pageInfo" style="font-size: 0.8rem;">Page 1</span>
+                        <button class="page-btn" onclick="nextPage()">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Open Orders Data
+        let openOrders = [
+            { id: "ORD-001", pair: "BTC/USD", type: "buy", price: 42000, amount: 0.05, filled: 0, value: 2100, status: "open", date: "2024-01-15 10:30" },
+            { id: "ORD-002", pair: "ETH/USD", type: "sell", price: 2300, amount: 1.5, filled: 0, value: 3450, status: "open", date: "2024-01-15 09:15" },
+            { id: "ORD-003", pair: "SOL/USD", type: "buy", price: 92, amount: 50, filled: 25, value: 4600, status: "partial", date: "2024-01-14 14:20" }
+        ];
+
+        // Order History Data
+        let orderHistory = [
+            { id: "ORD-004", date: "2024-01-14 11:30", pair: "BTC/USD", type: "buy", price: 41500, amount: 0.03, filled: 100, status: "filled" },
+            { id: "ORD-005", date: "2024-01-13 16:45", pair: "ETH/USD", type: "sell", price: 2250, amount: 1.0, filled: 100, status: "filled" },
+            { id: "ORD-006", date: "2024-01-13 09:20", pair: "AVAX/USD", type: "buy", price: 36, amount: 25, filled: 0, status: "cancelled" },
+            { id: "ORD-007", date: "2024-01-12 13:15", pair: "SOL/USD", type: "sell", price: 94, amount: 30, filled: 100, status: "filled" }
+        ];
+
+        // Filled Orders Data
+        let filledOrders = [
+            { id: "ORD-004", date: "2024-01-14 11:30", pair: "BTC/USD", type: "buy", avgPrice: 41500, amount: 0.03, total: 1245, fee: 1.24 },
+            { id: "ORD-005", date: "2024-01-13 16:45", pair: "ETH/USD", type: "sell", avgPrice: 2250, amount: 1.0, total: 2250, fee: 2.25 },
+            { id: "ORD-007", date: "2024-01-12 13:15", pair: "SOL/USD", type: "sell", avgPrice: 94, amount: 30, total: 2820, fee: 2.82 }
+        ];
+
+        let currentTab = "open";
+        let currentPage = 1;
+        let itemsPerPage = 10;
+
+        function loadOpenOrders() {
+            const tbody = document.getElementById('openOrdersBody');
+            const pairFilter = document.getElementById('pairFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = openOrders.filter(order => {
+                if (pairFilter !== 'all' && order.pair !== pairFilter) return false;
+                if (typeFilter !== 'all' && order.type !== typeFilter) return false;
+                if (searchTerm && !order.id.toLowerCase().includes(searchTerm) && !order.pair.toLowerCase().includes(searchTerm)) return false;
+                return true;
+            });
+            
+            document.getElementById('openOrdersCount').innerHTML = filtered.length;
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No open orders</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(order => `
+                <tr>
+                    <td>${order.id}</td>
+                    <td>${order.pair}</td>
+                    <td class="${order.type === 'buy' ? 'buy-type' : 'sell-type'}">${order.type.toUpperCase()}</td>
+                    <td>$${order.price.toLocaleString()}</td>
+                    <td>${order.amount} ${order.pair.split('/')[0]}</td>
+                    <td>${order.filled}%</td>
+                    <td>$${order.value.toLocaleString()}</td>
+                    <td class="status-open">${order.status === 'partial' ? 'Partial' : 'Open'}</td>
+                    <td><button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function loadHistoryOrders() {
+            const tbody = document.getElementById('historyOrdersBody');
+            const pairFilter = document.getElementById('pairFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            let filtered = orderHistory.filter(order => {
+                if (pairFilter !== 'all' && order.pair !== pairFilter) return false;
+                if (typeFilter !== 'all' && order.type !== typeFilter) return false;
+                return true;
+            });
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No order history</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(order => `
+                <tr>
+                    <td>${order.id}</td>
+                    <td>${order.date}</td>
+                    <td>${order.pair}</td>
+                    <td class="${order.type === 'buy' ? 'buy-type' : 'sell-type'}">${order.type.toUpperCase()}</td>
+                    <td>$${order.price.toLocaleString()}</td>
+                    <td>${order.amount} ${order.pair.split('/')[0]}</td>
+                    <td>${order.filled}%</td>
+                    <td class="${order.status === 'filled' ? 'status-filled' : 'status-cancelled'}">${order.status.toUpperCase()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function loadFilledOrders() {
+            const tbody = document.getElementById('filledOrdersBody');
+            
+            if (filledOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No filled orders</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filledOrders.map(order => `
+                <tr>
+                    <td>${order.id}</td>
+                    <td>${order.date}</td>
+                    <td>${order.pair}</td>
+                    <td class="${order.type === 'buy' ? 'buy-type' : 'sell-type'}">${order.type.toUpperCase()}</td>
+                    <td>$${order.avgPrice.toLocaleString()}</td>
+                    <td>${order.amount} ${order.pair.split('/')[0]}</td>
+                    <td>$${order.total.toLocaleString()}</td>
+                    <td>$${order.fee.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function cancelOrder(orderId) {
+            const confirmed = confirm(`Cancel order ${orderId}?`);
+            if (confirmed) {
+                const orderIndex = openOrders.findIndex(o => o.id === orderId);
+                if (orderIndex !== -1) {
+                    const cancelledOrder = openOrders[orderIndex];
+                    openOrders.splice(orderIndex, 1);
+                    orderHistory.unshift({
+                        ...cancelledOrder,
+                        status: "cancelled",
+                        date: new Date().toLocaleString()
+                    });
+                    loadOpenOrders();
+                    loadHistoryOrders();
+                    updateSummary();
+                    showToast(`Order ${orderId} cancelled`);
+                }
+            }
+        }
+
+        function cancelAllOrders() {
+            if (openOrders.length === 0) {
+                showToast('No open orders to cancel');
+                return;
+            }
+            
+            const confirmed = confirm(`Cancel all ${openOrders.length} open orders?`);
+            if (confirmed) {
+                openOrders.forEach(order => {
+                    orderHistory.unshift({
+                        ...order,
+                        status: "cancelled",
+                        date: new Date().toLocaleString()
+                    });
+                });
+                openOrders = [];
+                loadOpenOrders();
+                loadHistoryOrders();
+                updateSummary();
+                showToast('All open orders cancelled');
+            }
+        }
+
+        function applyFilters() {
+            if (currentTab === 'open') {
+                loadOpenOrders();
+            } else if (currentTab === 'history') {
+                loadHistoryOrders();
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (tab === 'open') {
+                document.getElementById('openTab').style.display = 'block';
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                loadOpenOrders();
+            } else if (tab === 'history') {
+                document.getElementById('historyTab').style.display = 'block';
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                loadHistoryOrders();
+            } else if (tab === 'filled') {
+                document.getElementById('filledTab').style.display = 'block';
+                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                loadFilledOrders();
+            }
+        }
+
+        function updateSummary() {
+            const openCount = openOrders.length;
+            const filledCount = filledOrders.length;
+            const cancelledCount = orderHistory.filter(o => o.status === 'cancelled').length;
+            const todayVolume = filledOrders.reduce((sum, o) => sum + o.total, 0);
+            
+            document.getElementById('openOrdersCount').innerHTML = openCount;
+            document.getElementById('totalFilled').innerHTML = filledCount;
+            document.getElementById('totalCancelled').innerHTML = cancelledCount;
+            document.getElementById('todayVolume').innerHTML = `$${todayVolume.toLocaleString()}`;
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.8rem; z-index: 1000;';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                document.getElementById('pageInfo').innerHTML = `Page ${currentPage}`;
+                // Re-load current tab with pagination
+            }
+        }
+
+        function nextPage() {
+            currentPage++;
+            document.getElementById('pageInfo').innerHTML = `Page ${currentPage}`;
+            // Re-load current tab with pagination
+        }
+
+        // Initialize
+        loadOpenOrders();
+        loadHistoryOrders();
+        loadFilledOrders();
+        updateSummary();
+    </script>
+</body>
+</html>

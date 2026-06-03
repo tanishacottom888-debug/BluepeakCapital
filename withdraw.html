@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - Withdraw funds securely from your institutional trading account." />
+    <title>BluepeakCapital | Withdraw</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #1a1f36;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #3b82f6;
+        }
+
+        .flag-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Trust Bar */
+        .trust-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.5rem 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            color: #475569;
+        }
+
+        .trust-separator {
+            width: 1px;
+            height: 12px;
+            background: #cbd5e1;
+        }
+
+        /* Main Container */
+        .withdraw-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Two Column Layout */
+        .withdraw-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        /* Withdraw Card */
+        .withdraw-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Asset Selector */
+        .asset-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .asset-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .asset-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .asset-btn {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .asset-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .asset-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .balance-info {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        /* Fee Breakdown */
+        .fee-breakdown {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .fee-row.total {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background: #2563eb;
+        }
+
+        .submit-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .warning-text {
+            font-size: 0.7rem;
+            color: #dc2626;
+        }
+
+        /* Info Card */
+        .info-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 1.5rem;
+        }
+
+        .info-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Recent Withdrawals */
+        .recent-section {
+            margin-top: 2rem;
+        }
+
+        .recent-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .recent-table {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow-x: auto;
+        }
+
+        .recent-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .recent-table th {
+            text-align: left;
+            padding: 1rem;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .recent-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.8rem;
+        }
+
+        .status-pending {
+            color: #f59e0b;
+        }
+
+        .status-completed {
+            color: #10b981;
+        }
+
+        @media (max-width: 768px) {
+            .withdraw-grid {
+                grid-template-columns: 1fr;
+            }
+            .withdraw-container {
+                padding: 1rem;
+            }
+            .trust-bar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='index.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="trade.html">Trade</a>
+            <a href="markets.html">Markets</a>
+            <a href="wallet.html">Wallet</a>
+            <a href="deposit.html">Deposit</a>
+            <a href="#" class="active">Withdraw</a>
+        </div>
+        <div class="right-nav">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount">$12,450.00</div>
+            <div class="user-avatar">JD</div>
+        </div>
+    </nav>
+
+    <div class="trust-bar">
+        <span>FINRA Member</span>
+        <span class="trust-separator"></span>
+        <span>SIPC Insured</span>
+        <span class="trust-separator"></span>
+        <span>Cold Storage Assets</span>
+        <span class="trust-separator"></span>
+        <span>500M Insurance</span>
+    </div>
+
+    <div class="withdraw-container">
+        <div class="page-header">
+            <h1>Withdraw Funds</h1>
+            <p>Withdraw cryptocurrency from your institutional account</p>
+        </div>
+
+        <div class="withdraw-grid">
+            <!-- Left Column - Withdraw Interface -->
+            <div class="withdraw-card">
+                <div class="card-title">Withdrawal Request</div>
+                
+                <div class="asset-selector">
+                    <label class="asset-label">Select Asset</label>
+                    <div class="asset-buttons" id="assetButtons">
+                        <button class="asset-btn active" data-asset="BTC">Bitcoin (BTC)</button>
+                        <button class="asset-btn" data-asset="ETH">Ethereum (ETH)</button>
+                        <button class="asset-btn" data-asset="USDT">Tether (USDT)</button>
+                        <button class="asset-btn" data-asset="SOL">Solana (SOL)</button>
+                        <button class="asset-btn" data-asset="USDC">USD Coin (USDC)</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Withdrawal Address</label>
+                    <input type="text" id="withdrawAddress" placeholder="Enter wallet address">
+                    <div class="balance-info">Double-check address before submitting</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="withdrawAmount" placeholder="0.000" step="0.001">
+                    <div class="balance-info" id="availableBalance">Available: 0.250 BTC</div>
+                </div>
+
+                <div class="fee-breakdown">
+                    <div class="fee-row">
+                        <span>Amount</span>
+                        <span id="displayAmount">0 BTC</span>
+                    </div>
+                    <div class="fee-row">
+                        <span>Network Fee</span>
+                        <span id="networkFee">0.0005 BTC</span>
+                    </div>
+                    <div class="fee-row total">
+                        <span>Total to Deduct</span>
+                        <span id="totalDeduct">0.0005 BTC</span>
+                    </div>
+                </div>
+
+                <button class="submit-btn" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
+
+                <div class="warning-box">
+                    <div class="warning-text">
+                        <strong>Important:</strong> Withdrawals are processed within 24 hours. Once confirmed, transactions cannot be reversed.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Information -->
+            <div>
+                <div class="info-card">
+                    <div class="card-title">Withdrawal Information</div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Minimum Withdrawal</div>
+                        <div class="info-value" id="minWithdrawal">0.001 BTC</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Processing Time</div>
+                        <div class="info-value" id="processingTime">24 hours</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Daily Limit</div>
+                        <div class="info-value" id="dailyLimit">50,000 USD</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Whitelist Protection</div>
+                        <div class="info-value">Enabled (24h cooldown for new addresses)</div>
+                    </div>
+                </div>
+
+                <div class="info-card" style="margin-top: 1rem;">
+                    <div class="card-title">Security Checklist</div>
+                    <div class="info-item">
+                        <div class="info-label">✓ 2FA Authentication</div>
+                        <div class="info-value">Required for all withdrawals</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">✓ Email Confirmation</div>
+                        <div class="info-value">You will receive a confirmation email</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">✓ Address Whitelist</div>
+                        <div class="info-value">Add trusted addresses for faster processing</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Withdrawals -->
+        <div class="recent-section">
+            <div class="recent-title">Recent Withdrawals</div>
+            <div class="recent-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Asset</th>
+                            <th>Amount</th>
+                            <th>Address</th>
+                            <th>Status</th>
+                        </thead>
+                        <tbody id="recentWithdrawalsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Asset Configuration
+        const assetBalances = {
+            BTC: { balance: 0.25, minWithdraw: 0.001, networkFee: 0.0005, symbol: "BTC" },
+            ETH: { balance: 5.00, minWithdraw: 0.01, networkFee: 0.005, symbol: "ETH" },
+            USDT: { balance: 2500.00, minWithdraw: 50, networkFee: 5, symbol: "USDT" },
+            SOL: { balance: 120.00, minWithdraw: 0.1, networkFee: 0.01, symbol: "SOL" },
+            USDC: { balance: 1500.00, minWithdraw: 50, networkFee: 5, symbol: "USDC" }
+        };
+
+        let currentAsset = "BTC";
+
+        // Recent Withdrawals Data
+        let recentWithdrawals = [
+            { date: "2024-01-14 09:45", asset: "ETH", amount: "1.500", address: "0x742d...bEb5", status: "Completed" },
+            { date: "2024-01-12 15:30", asset: "BTC", amount: "0.100", address: "1A1zP...vfNa", status: "Completed" },
+            { date: "2024-01-10 22:15", asset: "SOL", amount: "50.000", address: "7Ec5e...XqZ", status: "Pending" },
+            { date: "2024-01-08 11:20", asset: "USDT", amount: "500.00", address: "0x742d...bEb5", status: "Completed" }
+        ];
+
+        function updateWithdrawInterface() {
+            const asset = assetBalances[currentAsset];
+            
+            // Update available balance display
+            document.getElementById('availableBalance').innerHTML = `Available: ${asset.balance} ${asset.symbol}`;
+            document.getElementById('minWithdrawal').innerHTML = `${asset.minWithdraw} ${asset.symbol}`;
+            document.getElementById('networkFee').innerHTML = `${asset.networkFee} ${asset.symbol}`;
+            
+            // Recalculate totals
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+            const asset = assetBalances[currentAsset];
+            const fee = asset.networkFee;
+            const total = amount + fee;
+            
+            document.getElementById('displayAmount').innerHTML = `${amount} ${asset.symbol}`;
+            document.getElementById('totalDeduct').innerHTML = `${total.toFixed(4)} ${asset.symbol}`;
+        }
+
+        function submitWithdrawal() {
+            const address = document.getElementById('withdrawAddress').value;
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const asset = assetBalances[currentAsset];
+            
+            // Validation
+            if (!address) {
+                showToast('Please enter a withdrawal address');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                showToast('Please enter a valid amount');
+                return;
+            }
+            
+            if (amount < asset.minWithdraw) {
+                showToast(`Minimum withdrawal is ${asset.minWithdraw} ${asset.symbol}`);
+                return;
+            }
+            
+            if (amount > asset.balance) {
+                showToast(`Insufficient balance. Available: ${asset.balance} ${asset.symbol}`);
+                return;
+            }
+            
+            // Show confirmation
+            const confirmed = confirm(`Confirm withdrawal of ${amount} ${asset.symbol} to ${address.substring(0, 10)}...\nNetwork fee: ${asset.networkFee} ${asset.symbol}\nTotal deducted: ${(amount + asset.networkFee).toFixed(4)} ${asset.symbol}`);
+            
+            if (confirmed) {
+                showToast(`Withdrawal request submitted for ${amount} ${asset.symbol}. Processing will begin within 24 hours.`);
+                
+                // Add to recent withdrawals
+                recentWithdrawals.unshift({
+                    date: new Date().toLocaleString(),
+                    asset: asset.symbol,
+                    amount: amount,
+                    address: address.substring(0, 10) + '...',
+                    status: "Pending"
+                });
+                
+                loadRecentWithdrawals();
+                
+                // Clear form
+                document.getElementById('withdrawAddress').value = '';
+                document.getElementById('withdrawAmount').value = '';
+                calculateTotal();
+            }
+        }
+
+        function loadRecentWithdrawals() {
+            const tbody = document.getElementById('recentWithdrawalsBody');
+            tbody.innerHTML = recentWithdrawals.map(w => `
+                <tr>
+                    <td>${w.date}</td>
+                    <td>${w.asset}</td>
+                    <td>${w.amount} ${w.asset}</td>
+                    <td>${w.address}</td>
+                    <td class="${w.status === 'Completed' ? 'status-completed' : 'status-pending'}">${w.status}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.8rem; z-index: 1000;';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Asset Button Handlers
+        document.querySelectorAll('.asset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentAsset = this.dataset.asset;
+                updateWithdrawInterface();
+                document.getElementById('withdrawAmount').value = '';
+                calculateTotal();
+            });
+        });
+
+        // Amount input handler
+        document.getElementById('withdrawAmount').addEventListener('input', calculateTotal);
+
+        // Initialize
+        updateWithdrawInterface();
+        loadRecentWithdrawals();
+    </script>
+</body>
+</html>
