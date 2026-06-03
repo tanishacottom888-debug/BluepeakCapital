@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
     <meta name="description" content="BluepeakCapital - Institutional-grade cryptocurrency trading platform. Professional digital asset management for sophisticated investors." />
     <meta name="keywords" content="institutional crypto trading, digital assets, cryptocurrency exchange, BluepeakCapital" />
     <title>BluepeakCapital | Institutional Digital Asset Platform</title>
@@ -32,6 +32,26 @@
             height: 100%;
             z-index: -2;
             background: linear-gradient(135deg, #f5f7fb 0%, #ffffff 50%, #f0f4f9 100%);
+        }
+
+        .bg-accent {
+            position: fixed;
+            width: 1000px;
+            height: 1000px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+            top: -500px;
+            right: -500px;
+            z-index: -1;
+        }
+
+        .bg-accent-2 {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.02) 0%, transparent 70%);
+            bottom: -400px;
+            left: -400px;
+            z-index: -1;
         }
 
         nav {
@@ -128,102 +148,43 @@
             font-size: 1rem;
         }
 
-        /* Hero Section with Background Slider */
         .hero {
-            position: relative;
-            height: 90vh;
-            min-height: 600px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 10rem 5% 5rem;
             text-align: center;
-            color: white;
-            overflow: hidden;
-        }
-
-        /* Background Slider */
-        .hero-slider {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        .hero-slides {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        .hero-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-        }
-
-        .hero-slide.active {
-            opacity: 1;
-        }
-
-        .hero-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .hero-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%);
-            z-index: 2;
-        }
-
-        /* Hero Content */
-        .hero-content {
-            position: relative;
-            z-index: 3;
-            max-width: 800px;
-            padding: 0 2rem;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .hero-badge {
             display: inline-block;
-            background: rgba(59, 130, 246, 0.9);
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             border-radius: 100px;
             padding: 0.4rem 1rem;
             font-size: 0.75rem;
-            color: white;
+            color: #3b82f6;
             margin-bottom: 1.5rem;
             font-weight: 500;
-            letter-spacing: 0.5px;
         }
 
-        .hero-content h1 {
+        .hero h1 {
             font-size: 3.5rem;
             font-weight: 700;
             line-height: 1.2;
             margin-bottom: 1.5rem;
             letter-spacing: -0.02em;
+            color: #1a1f36;
         }
 
-        .hero-content h1 span {
+        .hero h1 span {
             color: #3b82f6;
         }
 
-        .hero-content p {
+        .hero p {
             font-size: 1.125rem;
+            color: #4a5568;
             margin-bottom: 2rem;
             line-height: 1.6;
-            opacity: 0.9;
         }
 
         .hero-buttons {
@@ -233,35 +194,20 @@
             margin-bottom: 2rem;
         }
 
-        .hero-buttons .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
-
-        .hero-buttons .btn-outline {
-            border-color: white;
-            color: white;
-        }
-
-        .hero-buttons .btn-outline:hover {
-            background: white;
-            color: #3b82f6;
-        }
-
         .trust-badge {
             display: flex;
             gap: 1.5rem;
             align-items: center;
             justify-content: center;
+            margin-top: 1rem;
             flex-wrap: wrap;
         }
 
         .trust-badge span {
-            font-size: 0.7rem;
-            opacity: 0.8;
+            font-size: 0.75rem;
+            color: #718096;
         }
 
-        /* Rest of the styles */
         .ticker-container {
             background: white;
             padding: 12px 0;
@@ -280,10 +226,11 @@
             100% { transform: translateX(-50%); }
         }
 
+        /* Stats Bar - Horizontal Scroll on Mobile */
         .stats-bar {
             display: flex;
             justify-content: space-between;
-            padding: 2.5rem 5%;
+            padding: 2rem 5%;
             background: white;
             border-top: 1px solid #e2e8f0;
             border-bottom: 1px solid #e2e8f0;
@@ -310,6 +257,33 @@
             margin-top: 0.25rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+        }
+
+        /* Mobile Stats - Horizontal Scroll */
+        @media (max-width: 768px) {
+            .stats-bar {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 1.5rem;
+                padding: 1.5rem 5%;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .stat-item {
+                flex: 0 0 auto;
+                min-width: 110px;
+                scroll-snap-align: start;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem;
+            }
         }
 
         .market-section {
@@ -342,7 +316,7 @@
         .filter-btn {
             background: #f1f5f9;
             border: none;
-            padding: 0.4rem 1rem;
+            padding: 0.5rem 1rem;
             border-radius: 6px;
             color: #4a5568;
             cursor: pointer;
@@ -362,6 +336,7 @@
             overflow-x: auto;
             border: 1px solid #e2e8f0;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            -webkit-overflow-scrolling: touch;
         }
 
         .market-table {
@@ -421,6 +396,10 @@
             text-decoration: none;
             font-size: 0.8rem;
             font-weight: 500;
+        }
+
+        .trade-link:hover {
+            text-decoration: underline;
         }
 
         .app-showcase {
@@ -545,6 +524,22 @@
             margin-bottom: 2rem;
         }
 
+        .cta-section .btn-primary {
+            background: white;
+            color: #3b82f6;
+            box-shadow: none;
+        }
+
+        .cta-section .btn-outline {
+            border-color: white;
+            color: white;
+        }
+
+        .cta-section .btn-outline:hover {
+            background: white;
+            color: #3b82f6;
+        }
+
         footer {
             background: #1a1f36;
             padding: 3rem 5% 1.5rem;
@@ -598,51 +593,62 @@
             cursor: pointer;
         }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .nav-buttons {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: white;
-                flex-direction: column;
-                padding: 1rem;
-                gap: 1rem;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            .hero {
+                padding: 8rem 5% 3rem;
             }
-            .nav-buttons.active {
-                display: flex;
-            }
-            .mobile-menu-btn {
-                display: block;
-            }
-            .hero-content h1 {
+            
+            .hero h1 {
                 font-size: 2rem;
             }
+            
             .hero-buttons {
                 flex-direction: column;
                 align-items: center;
             }
-            .stats-bar {
-                flex-direction: column;
-                gap: 1rem;
+            
+            .trust-badge {
+                gap: 0.75rem;
             }
+            
             .app-showcase-inner {
                 grid-template-columns: 1fr;
                 text-align: center;
             }
+            
             .app-features {
                 text-align: left;
             }
-            .hero {
-                height: 70vh;
-                min-height: 500px;
+            
+            .hand-phone-mockup {
+                order: -1;
+                margin-bottom: 1rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .nav-buttons {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
             }
         }
     </style>
 </head>
 <body>
+    <div class="bg-light"></div>
+    <div class="bg-accent"></div>
+    <div class="bg-accent-2"></div>
+
     <nav>
         <div class="logo" onclick="location.href='/'">
             <div class="logo-icon">⛰️</div>
@@ -655,42 +661,20 @@
         <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
     </nav>
 
-    <!-- Hero Section with Background Slider - Text on top of images -->
     <section class="hero">
-        <!-- Background Slider -->
-        <div class="hero-slider">
-            <div class="hero-slides">
-                <div class="hero-slide active">
-                    <img src="https://images.unsplash.com/photo-1589560989620-61bf48e97abb?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Trading chart">
-                </div>
-                <div class="hero-slide">
-                    <img src="https://images.unsplash.com/photo-1745509267699-1b1db256601e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fGNoYXJ0c3xlbnwwfHwwfHx8MA%3D%3D" alt="Crypto analytics">
-                </div>
-                <div class="hero-slide">
-                    <img src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?q=80&w=806&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Market data">
-                </div>
-                <div class="hero-slide">
-                    <img src="https://images.unsplash.com/photo-1523961131990-5ea7c61b2107?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Trading platform">
-                </div>
-            </div>
+        <div class="hero-badge">Institutional Grade • Regulated • Secure</div>
+        <h1>Digital Asset <span>Capital</span><br>Management Platform</h1>
+        <p>Professional trading infrastructure for institutions and sophisticated investors. Execute with confidence across global markets.</p>
+        <div class="hero-buttons">
+            <button class="btn-primary btn-large" onclick="location.href='signup.html'">Open Account →</button>
+            <button class="btn-outline btn-large" onclick="location.href='login.html'">Sign In</button>
         </div>
-        <div class="hero-overlay"></div>
-        
-        <div class="hero-content">
-            <div class="hero-badge">Institutional Grade • Regulated • Secure</div>
-            <h1>Digital Asset <span>Capital</span><br>Management Platform</h1>
-            <p>Professional trading infrastructure for institutions and sophisticated investors. Execute with confidence across global markets.</p>
-            <div class="hero-buttons">
-                <button class="btn-primary btn-large" onclick="location.href='signup.html'">Open Account →</button>
-                <button class="btn-outline btn-large" onclick="location.href='login.html'">Sign In</button>
-            </div>
-            <div class="trust-badge">
-                <span>SOC 2 Type II</span>
-                <span>FDIC Eligible</span>
-                <span>150+ Countries</span>
-                <span>FINRA Member</span>
-                <span>SIPC Insured</span>
-            </div>
+        <div class="trust-badge">
+            <span>SOC 2 Type II</span>
+            <span>FDIC Eligible</span>
+            <span>150+ Countries</span>
+            <span>FINRA Member</span>
+            <span>SIPC Insured</span>
         </div>
     </section>
 
@@ -698,6 +682,7 @@
         <div class="ticker" id="ticker"></div>
     </div>
 
+    <!-- Stats Bar - Horizontal scroll on mobile -->
     <div class="stats-bar">
         <div class="stat-item">
             <div class="stat-value" id="totalVolume">$2.8B</div>
@@ -804,25 +789,6 @@
     </footer>
 
     <script>
-        // Hero Background Slider - No visible controls, just auto sliding
-        let currentHeroSlide = 0;
-        const heroSlides = document.querySelectorAll('.hero-slide');
-        const heroTotalSlides = heroSlides.length;
-        let heroAutoInterval;
-
-        function changeHeroSlide() {
-            heroSlides[currentHeroSlide].classList.remove('active');
-            currentHeroSlide = (currentHeroSlide + 1) % heroTotalSlides;
-            heroSlides[currentHeroSlide].classList.add('active');
-        }
-
-        function startHeroSlider() {
-            heroAutoInterval = setInterval(changeHeroSlide, 5000);
-        }
-
-        startHeroSlider();
-
-        // Market Data
         const marketData = [
             { name: "Bitcoin", symbol: "BTC", price: 43250, change: 2.4, volume: "28.5B", marketCap: "845B" },
             { name: "Ethereum", symbol: "ETH", price: 2250, change: 1.8, volume: "15.2B", marketCap: "270B" },
@@ -844,163 +810,13 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = currentMarkets.map(crypto => `
                 <tr>
-                    <td><div class="crypto-name"><span>${crypto.name}</span><span class="crypto-symbol">${crypto.symbol}</span></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td><strong>$${crypto.price.toLocaleString()}</strong></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td class="${crypto.change >= 0 ? 'positive' : 'negative'}">${crypto.change >= 0 ? '▲' : '▼'} ${Math.abs(crypto.change)}%</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td>$${crypto.volume}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td>$${crypto.marketCap}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    <tr>
+                    <td><div class="crypto-name"><span>${crypto.name}</span><span class="crypto-symbol">${crypto.symbol}</span></div></td>
+                    <td><strong>$${crypto.price.toLocaleString()}</strong></td>
+                    <td class="${crypto.change >= 0 ? 'positive' : 'negative'}">${crypto.change >= 0 ? '▲' : '▼'} ${Math.abs(crypto.change)}%</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></td>
+                    <td>$${crypto.volume}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></td>
+                    <td>$${crypto.marketCap}</div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></td>
                     <td class="$
-        </tr>
+        </table>
             `).join('');
         }
 
@@ -1026,18 +842,14 @@
         }
 
         function toggleMenu() {
-            document.getElementById('navButtons').classList.toggle('active');
+            const navButtons = document.getElementById('navButtons');
+            navButtons.classList.toggle('active');
         }
 
         function showMessage(msg) {
             alert(msg);
         }
 
-        // Initialize
-        loadMarketTable();
-        loadTicker();
-
-        // Live price updates
         setInterval(() => {
             marketData.forEach(crypto => {
                 const change = (Math.random() - 0.5) * 2;
@@ -1050,6 +862,9 @@
             const volumes = ['2.8B', '3.1B', '2.9B', '3.2B', '2.7B', '3.0B'];
             document.getElementById('totalVolume').innerHTML = `$${volumes[Math.floor(Math.random() * volumes.length)]}`;
         }, 10000);
+
+        loadMarketTable();
+        loadTicker();
     </script>
 </body>
 </html>
