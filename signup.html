@@ -23,6 +23,20 @@
         const errorDiv = document.getElementById('errorMessage');
         const successDiv = document.getElementById('successMessage');
 
+        // Google Login
+        window.googleLogin = async function() {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/dashboard.html'
+                }
+            })
+            
+            if (error) {
+                showError(error.message);
+            }
+        }
+
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -30,13 +44,12 @@
             const lastName = document.getElementById('lastName').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const accountType = document.getElementById('accountType').value;
-            const country = document.getElementById('country').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
 
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
 
-            if (!firstName || !lastName || !email || !password) {
+            if (!firstName || !lastName || !email || !password || !confirmPassword) {
                 showError('Please fill in all fields');
                 return;
             }
@@ -46,13 +59,17 @@
                 return;
             }
 
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
             const submitBtn = signupForm.querySelector('.btn-primary');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Creating account...';
             submitBtn.disabled = true;
 
             try {
-                // Sign up with Supabase
                 const { data, error } = await supabase.auth.signUp({
                     email: email,
                     password: password,
@@ -60,8 +77,6 @@
                         data: {
                             first_name: firstName,
                             last_name: lastName,
-                            account_type: accountType,
-                            country: country,
                             full_name: `${firstName} ${lastName}`
                         }
                     }
@@ -70,7 +85,6 @@
                 if (error) {
                     showError(error.message);
                 } else {
-                    // Create profile record
                     const { error: profileError } = await supabase
                         .from('profiles')
                         .insert([
@@ -78,8 +92,6 @@
                                 id: data.user.id,
                                 email: email,
                                 full_name: `${firstName} ${lastName}`,
-                                account_type: accountType,
-                                country: country,
                                 created_at: new Date().toISOString()
                             }
                         ])
@@ -211,7 +223,7 @@
             margin-bottom: 0.5rem;
         }
 
-        input, select {
+        input {
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid #e2e8f0;
@@ -221,7 +233,7 @@
             font-family: inherit;
         }
 
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -264,6 +276,52 @@
         .btn-primary:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+
+        .google-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1a1f36;
+        }
+
+        .google-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
         }
 
         .login-link {
@@ -323,32 +381,24 @@
 
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="password" placeholder="Create a strong password" required>
+                    <input type="password" id="password" placeholder="Create a password" required>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Account type</label>
-                        <select id="accountType">
-                            <option value="individual">Individual</option>
-                            <option value="institutional">Institutional</option>
-                            <option value="corporate">Corporate</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Country</label>
-                        <select id="country">
-                            <option value="US">United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="SG">Singapore</option>
-                            <option value="AE">UAE</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label>Confirm password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
                 </div>
 
                 <button type="submit" class="btn-primary">Create Account →</button>
             </form>
+
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+
+            <button class="google-btn" onclick="googleLogin()">
+                <span>G</span> Continue with Google
+            </button>
 
             <div class="login-link">
                 Already have an account? <a href="login.html">Sign in →</a>
