@@ -22,12 +22,16 @@
         const loginForm = document.getElementById('loginForm');
         const errorDiv = document.getElementById('errorMessage');
         const successDiv = document.getElementById('successMessage');
+        
+        // Track the last attempted email for resend
+        let lastAttemptedEmail = '';
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            lastAttemptedEmail = email;
 
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
@@ -49,7 +53,13 @@
                 })
 
                 if (error) {
-                    showError(error.message);
+                    // Handle email not confirmed error
+                    if (error.message.includes('Email not confirmed')) {
+                        showErrorWithResend('Email not confirmed. Please check your inbox or click below to resend the confirmation email.');
+                        document.getElementById('resendContainer').style.display = 'block';
+                    } else {
+                        showError(error.message);
+                    }
                 } else {
                     showSuccess('Login successful! Redirecting to dashboard...');
                     
@@ -67,18 +77,62 @@
                 submitBtn.disabled = false;
             }
         });
+        
+        // Resend confirmation email
+        window.resendConfirmation = async function() {
+            if (!lastAttemptedEmail) {
+                const email = document.getElementById('email').value;
+                if (!email) {
+                    showError('Please enter your email address first');
+                    return;
+                }
+                lastAttemptedEmail = email;
+            }
+            
+            const resendBtn = document.getElementById('resendBtn');
+            const originalText = resendBtn.textContent;
+            resendBtn.textContent = 'Sending...';
+            resendBtn.disabled = true;
+            
+            try {
+                const { error } = await supabase.auth.resend({
+                    type: 'signup',
+                    email: lastAttemptedEmail,
+                })
+                
+                if (error) {
+                    showError(error.message);
+                } else {
+                    showSuccess(`Confirmation email sent to ${lastAttemptedEmail}. Please check your inbox.`);
+                    document.getElementById('resendContainer').style.display = 'none';
+                }
+            } catch (err) {
+                showError('Network error. Please try again.');
+            } finally {
+                resendBtn.textContent = originalText;
+                resendBtn.disabled = false;
+            }
+        };
 
         function showError(message) {
-            errorDiv.textContent = message;
+            errorDiv.innerHTML = message;
             errorDiv.style.display = 'block';
             setTimeout(() => {
                 errorDiv.style.display = 'none';
-            }, 3000);
+            }, 5000);
+        }
+        
+        function showErrorWithResend(message) {
+            errorDiv.innerHTML = message;
+            errorDiv.style.display = 'block';
         }
 
         function showSuccess(message) {
-            successDiv.textContent = message;
+            successDiv.innerHTML = message;
             successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
         }
 
         async function checkSession() {
@@ -219,6 +273,29 @@
             display: none;
         }
 
+        .resend-container {
+            display: none;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .resend-btn {
+            background: transparent;
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .resend-btn:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
         .btn-primary {
             width: 100%;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -304,6 +381,10 @@
 
                 <button type="submit" class="btn-primary">Sign In →</button>
             </form>
+
+            <div class="resend-container" id="resendContainer">
+                <button class="resend-btn" id="resendBtn" onclick="resendConfirmation()">Resend Confirmation Email</button>
+            </div>
 
             <div class="signup-link">
                 Don't have an account? <a href="signup.html">Get started →</a>
