@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes, viewport-fit=cover" />
     <meta name="description" content="BluepeakCapital - Institutional-grade cryptocurrency trading platform dashboard" />
     <title>BluepeakCapital | Institutional Dashboard</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
@@ -110,6 +110,7 @@
             background: #f5f7fb;
             color: #1a1f36;
             overflow-x: hidden;
+            width: 100%;
         }
 
         /* Navigation */
@@ -249,6 +250,7 @@
             max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
+            width: 100%;
         }
 
         .welcome-section {
@@ -451,6 +453,7 @@
         .portfolio-table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 600px;
         }
 
         .portfolio-table th {
@@ -557,7 +560,7 @@
         }
 
         /* ============================================ */
-        /* IMPROVED MOBILE LAYOUT - ONLY CHANGES HERE */
+        /* MOBILE LAYOUT - NO PAGE DRAGGING, EDGE TO EDGE */
         /* ============================================ */
         
         @media (max-width: 1024px) {
@@ -567,6 +570,10 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+            
             /* Navigation */
             .nav-links {
                 display: none;
@@ -577,51 +584,59 @@
             .user-menu span {
                 display: none;
             }
+            nav {
+                padding: 0.8rem 1rem;
+            }
             
-            /* Main container padding reduced */
+            /* Main container - edge to edge */
             .main-container {
                 padding: 1rem;
                 margin-top: 60px;
+                width: 100%;
+                overflow-x: hidden;
             }
             
             /* Welcome section */
             .welcome-section {
                 padding: 1rem;
                 margin-bottom: 1rem;
+                border-radius: 12px;
             }
             .welcome-section h1 {
                 font-size: 1.2rem;
             }
             .welcome-section p {
-                font-size: 0.8rem;
+                font-size: 0.75rem;
             }
             
-            /* Stats Grid - 2 columns */
+            /* Stats Grid - 2 columns, no overflow */
             .stats-grid {
+                display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
                 margin-bottom: 1rem;
             }
             .stat-card {
                 padding: 0.75rem;
+                border-radius: 12px;
             }
             .stat-value {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
             .stat-label {
-                font-size: 0.6rem;
+                font-size: 0.55rem;
             }
             .stat-change {
-                font-size: 0.6rem;
+                font-size: 0.55rem;
             }
             
-            /* Chart */
+            /* Chart - edge to edge */
             .chart-container {
                 border-radius: 12px;
+                margin-bottom: 0;
             }
             .chart-header {
                 padding: 0.75rem;
-                flex-wrap: wrap;
             }
             .chart-header h3 {
                 font-size: 0.85rem;
@@ -632,6 +647,7 @@
             }
             #tradingview_chart {
                 height: 280px;
+                width: 100%;
             }
             
             /* Order Book */
@@ -648,18 +664,16 @@
                 font-size: 0.7rem;
             }
             .orderbook-table th, .orderbook-table td {
-                padding: 0.35rem 0.75rem;
+                padding: 0.35rem 0.6rem;
             }
             
-            /* Price Alerts */
+            /* Price Alerts - full width */
             .alerts-section {
                 border-radius: 12px;
             }
             .alerts-header {
                 padding: 0.75rem;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.3rem;
+                flex-wrap: wrap;
             }
             .alerts-header h3 {
                 font-size: 0.85rem;
@@ -674,13 +688,13 @@
             }
             .alert-form select, .alert-form input {
                 width: 100%;
-                padding: 0.4rem;
-                font-size: 0.7rem;
+                padding: 0.45rem;
+                font-size: 0.75rem;
             }
             .alert-form button {
                 width: 100%;
-                padding: 0.4rem;
-                font-size: 0.7rem;
+                padding: 0.45rem;
+                font-size: 0.75rem;
             }
             .alert-list {
                 padding: 0 0.75rem 0.75rem;
@@ -690,10 +704,15 @@
                 padding: 0.4rem 0;
             }
             
-            /* Portfolio Table */
+            /* Portfolio Table - horizontal scroll inside container only */
             .portfolio-container {
                 border-radius: 12px;
                 margin-bottom: 1rem;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .portfolio-table {
+                min-width: 550px;
             }
             .portfolio-table th {
                 padding: 0.6rem;
@@ -714,6 +733,7 @@
                 text-align: center;
                 padding: 1rem;
                 margin-bottom: 1rem;
+                border-radius: 12px;
             }
             .mobile-app-section h3 {
                 font-size: 0.9rem;
@@ -755,7 +775,7 @@
             }
         }
 
-        /* Extra small devices */
+        /* Small phones */
         @media (max-width: 480px) {
             .main-container {
                 padding: 0.75rem;
@@ -767,7 +787,10 @@
                 padding: 0.5rem;
             }
             .stat-value {
-                font-size: 1rem;
+                font-size: 0.95rem;
+            }
+            .portfolio-table {
+                min-width: 500px;
             }
             .portfolio-table th, .portfolio-table td {
                 padding: 0.4rem;
@@ -870,7 +893,7 @@
         <div class="alerts-section">
             <div class="alerts-header">
                 <h3>Price Alerts</h3>
-                <span style="font-size: 0.7rem; color: #718096;">Get notified when price hits your target</span>
+                <span>Get notified when price hits your target</span>
             </div>
             <div class="alert-form">
                 <select id="alertCoin">
@@ -901,8 +924,8 @@
         <div class="mobile-app-section">
             <div>
                 <h3>Trade on the Go</h3>
-                <p style="margin-top: 0.5rem; opacity: 0.8;">Download our mobile app for iOS and Android</p>
-                <div class="app-buttons" style="margin-top: 1rem;">
+                <p>Download our mobile app for iOS and Android</p>
+                <div class="app-buttons">
                     <button class="app-btn" onclick="showMessage('App Store coming soon')">App Store</button>
                     <button class="app-btn" onclick="showMessage('Google Play coming soon')">Google Play</button>
                 </div>
@@ -973,7 +996,7 @@
                 asks.push({ price: basePrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice + (i * 5)) * Math.random() * 2).toFixed(0) });
                 bids.push({ price: basePrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice - (i * 5)) * Math.random() * 2).toFixed(0) });
             }
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<td><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></div> </div>`).join('');
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></div> </div>`).join('');
             document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></div> </div>`).join('');
         }
 
