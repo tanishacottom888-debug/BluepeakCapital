@@ -22,6 +22,30 @@
         const errorDiv = document.getElementById('errorMessage');
         const successDiv = document.getElementById('successMessage');
 
+        // Password toggle functions
+        window.togglePassword = function(fieldId, iconId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                `;
+            } else {
+                field.type = 'password';
+                icon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                `;
+            }
+        }
+
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -174,6 +198,10 @@
             color: transparent;
         }
 
+        .logo-text span {
+            color: #3b82f6;
+        }
+
         h1 {
             font-size: 1.75rem;
             font-weight: 600;
@@ -208,6 +236,10 @@
             margin-bottom: 0.5rem;
         }
 
+        .password-wrapper {
+            position: relative;
+        }
+
         input {
             width: 100%;
             padding: 0.75rem 1rem;
@@ -222,6 +254,20 @@
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .error-message {
@@ -324,12 +370,28 @@
 
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="password" placeholder="Create a password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" placeholder="Create a password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('password', 'passwordIcon')">
+                            <svg id="passwordIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label>Confirm password</label>
-                    <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', 'confirmPasswordIcon')">
+                            <svg id="confirmPasswordIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-primary">Create Account →</button>
