@@ -22,19 +22,6 @@
             if (!session) {
                 window.location.href = 'login.html'
             }
-            await loadUserBalance(session.user.id)
-        }
-        
-        async function loadUserBalance(userId) {
-            const { data } = await supabase
-                .from('balances')
-                .select('balance')
-                .eq('user_id', userId)
-                .eq('asset', 'USD')
-                .single()
-            
-            const balance = data?.balance || 0
-            document.getElementById('balanceDisplay').innerHTML = `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         }
         
         checkAuth()
@@ -53,7 +40,6 @@
             color: #1a1f36;
         }
 
-        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -145,7 +131,6 @@
             display: none;
         }
 
-        /* Sidebar Menu */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -203,7 +188,6 @@
             color: #3b82f6;
         }
 
-        /* Trust Bar */
         .trust-bar {
             background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
@@ -222,7 +206,6 @@
             background: #cbd5e1;
         }
 
-        /* Main Container */
         .deposit-container {
             max-width: 1000px;
             margin: 0 auto;
@@ -244,7 +227,6 @@
             font-size: 0.8rem;
         }
 
-        /* Deposit Card */
         .deposit-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -261,7 +243,6 @@
             border-bottom: 1px solid #e2e8f0;
         }
 
-        /* Amount Input */
         .amount-section {
             margin-bottom: 1.5rem;
         }
@@ -281,12 +262,6 @@
             font-size: 1rem;
         }
 
-        .amount-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-        }
-
-        /* Asset Selector */
         .asset-label {
             display: block;
             font-size: 0.75rem;
@@ -322,7 +297,6 @@
             color: white;
         }
 
-        /* QR Code Section */
         .qr-section {
             text-align: center;
             padding: 1rem;
@@ -337,14 +311,28 @@
             background: white;
             border-radius: 12px;
             margin-bottom: 0.5rem;
+            position: relative;
         }
 
         .qr-code img {
             width: 150px;
             height: 150px;
+            display: block;
         }
 
-        /* Address Box */
+        .copy-qr-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
         .address-box {
             background: #f1f5f9;
             padding: 0.8rem;
@@ -353,24 +341,23 @@
             font-size: 0.75rem;
             word-break: break-all;
             margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .copy-btn {
+        .copy-address-btn {
             background: #3b82f6;
             color: white;
             border: none;
-            padding: 0.5rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
             cursor: pointer;
-            width: 100%;
+            white-space: nowrap;
         }
 
-        .copy-btn:hover {
-            background: #2563eb;
-        }
-
-        /* Info Box */
         .info-box {
             background: #f8fafc;
             border-radius: 12px;
@@ -415,6 +402,12 @@
             .asset-btn {
                 padding: 0.4rem 0.7rem;
                 font-size: 0.7rem;
+            }
+            .address-box {
+                flex-direction: column;
+            }
+            .copy-address-btn {
+                width: 100%;
             }
         }
     </style>
@@ -476,19 +469,17 @@
     <div class="deposit-container">
         <div class="page-header">
             <h1>Deposit Funds</h1>
-            <p>Enter amount, select asset, then send to the address below</p>
+            <p>Enter amount, select asset, then scan QR code or copy address</p>
         </div>
 
         <div class="deposit-card">
             <div class="card-title">Deposit Instructions</div>
 
-            <!-- Step 1: Enter Amount -->
             <div class="amount-section">
                 <label class="amount-label">Step 1: Enter Amount (USD)</label>
                 <input type="number" class="amount-input" id="depositAmount" placeholder="Enter amount in USD" value="100">
             </div>
 
-            <!-- Step 2: Select Asset -->
             <div>
                 <label class="asset-label">Step 2: Select Asset</label>
                 <div class="asset-buttons" id="assetButtons">
@@ -502,17 +493,17 @@
                 </div>
             </div>
 
-            <!-- Step 3: QR Code and Address -->
             <div id="depositInfo">
                 <div class="qr-section">
                     <div class="qr-code" id="qrCodeContainer">
-                        <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" alt="QR Code">
+                        <img id="qrImage" src="images/btc-qr.png" alt="QR Code">
+                        <button class="copy-qr-btn" onclick="copyQRCode()">Copy QR</button>
                     </div>
                 </div>
-                <div class="address-box" id="depositAddress">
-                    1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+                <div class="address-box">
+                    <span id="depositAddress">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>
+                    <button class="copy-address-btn" onclick="copyAddress()">Copy Address</button>
                 </div>
-                <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
 
                 <div class="info-box">
                     <div class="info-row">
@@ -540,12 +531,17 @@
     </div>
 
     <script>
-        // Asset Configuration
+        // ============================================
+        // REPLACE THESE WITH YOUR ACTUAL ADDRESSES
+        // AND QR CODE IMAGE PATHS
+        // ============================================
+        
         const assets = {
             BTC: {
                 name: "Bitcoin",
                 symbol: "BTC",
                 address: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                qrImage: "images/btc-qr.png",
                 minDeposit: "0.001 BTC",
                 network: "Bitcoin Network",
                 confirmations: "3",
@@ -556,6 +552,7 @@
                 name: "Ethereum",
                 symbol: "ETH",
                 address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
+                qrImage: "images/eth-qr.png",
                 minDeposit: "0.01 ETH",
                 network: "ERC-20",
                 confirmations: "12",
@@ -566,6 +563,7 @@
                 name: "Solana",
                 symbol: "SOL",
                 address: "7Ec5eJ3oVvLpJwQxNkLAvXLpM5YLZqVgXQZKQ7zVpXqZ",
+                qrImage: "images/sol-qr.png",
                 minDeposit: "0.1 SOL",
                 network: "Solana Network",
                 confirmations: "1",
@@ -576,6 +574,7 @@
                 name: "Tether",
                 symbol: "USDT",
                 address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
+                qrImage: "images/usdt-qr.png",
                 minDeposit: "50 USDT",
                 network: "ERC-20",
                 confirmations: "12",
@@ -586,6 +585,7 @@
                 name: "USD Coin",
                 symbol: "USDC",
                 address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
+                qrImage: "images/usdc-qr.png",
                 minDeposit: "50 USDC",
                 network: "ERC-20",
                 confirmations: "12",
@@ -596,6 +596,7 @@
                 name: "Ripple",
                 symbol: "XRP",
                 address: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+                qrImage: "images/xrp-qr.png",
                 minDeposit: "20 XRP",
                 network: "XRP Ledger",
                 confirmations: "4",
@@ -606,6 +607,7 @@
                 name: "Cardano",
                 symbol: "ADA",
                 address: "addr1q9z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z",
+                qrImage: "images/ada-qr.png",
                 minDeposit: "10 ADA",
                 network: "Cardano Network",
                 confirmations: "15",
@@ -618,14 +620,12 @@
 
         function updateDepositInterface() {
             const asset = assets[currentAsset];
-            const amount = document.getElementById('depositAmount').value || 0;
             
             // Update address
             document.getElementById('depositAddress').innerHTML = asset.address;
             
-            // Update QR Code (using free API)
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(asset.address)}`;
-            document.getElementById('qrImage').src = qrUrl;
+            // Update QR Code image
+            document.getElementById('qrImage').src = asset.qrImage;
             
             // Update info
             document.getElementById('minDeposit').innerHTML = asset.minDeposit;
@@ -634,14 +634,32 @@
             document.getElementById('processingTime').innerHTML = asset.processingTime;
             
             // Update warning
-            const warningBox = document.querySelector('.warning-text');
-            warningBox.innerHTML = `⚠️ ${asset.warning}`;
+            document.getElementById('warningText').innerHTML = `⚠️ ${asset.warning}`;
         }
 
         function copyAddress() {
             const address = document.getElementById('depositAddress').innerHTML;
             navigator.clipboard.writeText(address);
             showToast('Address copied to clipboard');
+        }
+
+        function copyQRCode() {
+            const qrImage = document.getElementById('qrImage');
+            
+            // Create a canvas to copy the image
+            fetch(qrImage.src)
+                .then(response => response.blob())
+                .then(blob => {
+                    navigator.clipboard.write([
+                        new ClipboardItem({
+                            [blob.type]: blob
+                        })
+                    ]);
+                    showToast('QR code copied to clipboard');
+                })
+                .catch(() => {
+                    showToast('Right-click on QR code and select "Copy Image"');
+                });
         }
 
         function showToast(message) {
@@ -660,23 +678,6 @@
                 currentAsset = this.dataset.asset;
                 updateDepositInterface();
             });
-        });
-
-        // Amount change updates estimated value
-        document.getElementById('depositAmount').addEventListener('input', function() {
-            const amount = this.value;
-            if (amount && currentAsset) {
-                const asset = assets[currentAsset];
-                // Show estimated amount in crypto
-                if (asset.symbol === 'BTC') {
-                    const estimatedBtc = (amount / 43250).toFixed(6);
-                    document.querySelector('.info-box').insertAdjacentHTML('beforeend', `<div class="info-row" id="estimatedRow"><span>Estimated ${asset.symbol} Amount</span><span>~${estimatedBtc} BTC</span></div>`);
-                    setTimeout(() => {
-                        const row = document.getElementById('estimatedRow');
-                        if (row) row.remove();
-                    }, 5000);
-                }
-            }
         });
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
