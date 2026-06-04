@@ -9,6 +9,120 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        let currentUserId = null
+
+        async function loadUserData() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                document.getElementById('balanceDisplay').innerHTML = '$0.00'
+                return
+            }
+            
+            currentUserId = session.user.id
+            
+            // Load user balance
+            const { data } = await supabase
+                .from('balances')
+                .select('balance')
+                .eq('user_id', currentUserId)
+                .eq('asset', 'USD')
+                .single()
+            
+            const balance = data?.balance || 0
+            document.getElementById('balanceDisplay').innerHTML = `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            
+            // Load orders from Supabase
+            await loadOrdersFromSupabase()
+        }
+        
+        async function loadOrdersFromSupabase() {
+            // Load open orders (pending status)
+            const { data: openData } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .in('status', ['pending', 'partial'])
+                .order('created_at', { ascending: false })
+            
+            if (openData && openData.length > 0) {
+                window.openOrders = openData.map(o => ({
+                    id: o.id.substring(0, 8),
+                    pair: o.pair,
+                    type: o.type,
+                    price: o.price,
+                    amount: o.amount,
+                    filled: o.filled || 0,
+                    value: o.amount * o.price,
+                    status: o.status,
+                    date: new Date(o.created_at).toLocaleString()
+                }))
+            } else {
+                window.openOrders = []
+            }
+            
+            // Load order history (filled + cancelled)
+            const { data: historyData } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .in('status', ['filled', 'cancelled'])
+                .order('created_at', { ascending: false })
+            
+            if (historyData && historyData.length > 0) {
+                window.orderHistory = historyData.map(o => ({
+                    id: o.id.substring(0, 8),
+                    date: new Date(o.created_at).toLocaleString(),
+                    pair: o.pair,
+                    type: o.type,
+                    price: o.price,
+                    amount: o.amount,
+                    filled: o.filled || 0,
+                    status: o.status
+                }))
+            } else {
+                window.orderHistory = []
+            }
+            
+            // Load filled trades from trades table
+            const { data: tradesData } = await supabase
+                .from('trades')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .order('created_at', { ascending: false })
+            
+            if (tradesData && tradesData.length > 0) {
+                window.filledOrders = tradesData.map(t => ({
+                    id: t.id.substring(0, 8),
+                    date: new Date(t.created_at).toLocaleString(),
+                    pair: t.pair,
+                    type: t.type,
+                    avgPrice: t.price,
+                    amount: t.amount,
+                    total: t.total,
+                    fee: t.fee
+                }))
+            } else {
+                window.filledOrders = []
+            }
+            
+            // Refresh UI
+            if (typeof loadOpenOrders === 'function') loadOpenOrders()
+            if (typeof loadHistoryOrders === 'function') loadHistoryOrders()
+            if (typeof loadFilledOrders === 'function') loadFilledOrders()
+            if (typeof updateSummary === 'function') updateSummary()
+        }
+        
+        loadUserData()
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -82,7 +196,7 @@
             color: #3b82f6;
         }
 
-        /* Right Menu */
+        /* Right Menu - No JD avatar */
         .right-menu {
             display: flex;
             align-items: center;
@@ -90,8 +204,8 @@
         }
 
         .flag-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             object-fit: cover;
             cursor: pointer;
@@ -104,20 +218,6 @@
             background: #f1f5f9;
             padding: 0.3rem 0.8rem;
             border-radius: 30px;
-        }
-
-        .user-avatar {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.7rem;
-            cursor: pointer;
         }
 
         .hamburger-btn {
@@ -455,6 +555,10 @@
             .page-header h1 {
                 font-size: 1.1rem;
             }
+            .flag-icon {
+                width: 24px;
+                height: 24px;
+            }
         }
     </style>
 </head>
@@ -476,9 +580,8 @@
             <a href="support.html">Support</a>
         </div>
         <div class="right-menu">
-            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
-            <div class="balance-amount">$12,450</div>
-            <div class="user-avatar" onclick="showToast('Account settings')">JD</div>
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="alert('Currency: USD')">
+            <div class="balance-amount" id="balanceDisplay">$0.00</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -606,46 +709,32 @@
     </div>
 
     <script>
-        let openOrders = [
-            { id: "ORD-001", pair: "BTC/USD", type: "buy", price: 42000, amount: 0.05, filled: 0, value: 2100, status: "open", date: "2024-01-15 10:30" },
-            { id: "ORD-002", pair: "ETH/USD", type: "sell", price: 2300, amount: 1.5, filled: 0, value: 3450, status: "open", date: "2024-01-15 09:15" },
-            { id: "ORD-003", pair: "SOL/USD", type: "buy", price: 92, amount: 50, filled: 25, value: 4600, status: "partial", date: "2024-01-14 14:20" }
-        ];
-
-        let orderHistory = [
-            { id: "ORD-004", date: "2024-01-14 11:30", pair: "BTC/USD", type: "buy", price: 41500, amount: 0.03, filled: 100, status: "filled" },
-            { id: "ORD-005", date: "2024-01-13 16:45", pair: "ETH/USD", type: "sell", price: 2250, amount: 1.0, filled: 100, status: "filled" },
-            { id: "ORD-006", date: "2024-01-13 09:20", pair: "AVAX/USD", type: "buy", price: 36, amount: 25, filled: 0, status: "cancelled" },
-            { id: "ORD-007", date: "2024-01-12 13:15", pair: "SOL/USD", type: "sell", price: 94, amount: 30, filled: 100, status: "filled" }
-        ];
-
-        let filledOrders = [
-            { id: "ORD-004", date: "2024-01-14 11:30", pair: "BTC/USD", type: "buy", avgPrice: 41500, amount: 0.03, total: 1245, fee: 1.24 },
-            { id: "ORD-005", date: "2024-01-13 16:45", pair: "ETH/USD", type: "sell", avgPrice: 2250, amount: 1.0, total: 2250, fee: 2.25 },
-            { id: "ORD-007", date: "2024-01-12 13:15", pair: "SOL/USD", type: "sell", avgPrice: 94, amount: 30, total: 2820, fee: 2.82 }
-        ];
-
-        let currentTab = "open";
-        let currentPage = 1;
+        // Demo data for when Supabase has no orders
+        let openOrders = []
+        let orderHistory = []
+        let filledOrders = []
+        
+        let currentTab = "open"
+        let currentPage = 1
 
         function loadOpenOrders() {
-            const tbody = document.getElementById('openOrdersBody');
-            const pairFilter = document.getElementById('pairFilter').value;
-            const typeFilter = document.getElementById('typeFilter').value;
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('openOrdersBody')
+            const pairFilter = document.getElementById('pairFilter').value
+            const typeFilter = document.getElementById('typeFilter').value
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase()
             
             let filtered = openOrders.filter(order => {
-                if (pairFilter !== 'all' && order.pair !== pairFilter) return false;
-                if (typeFilter !== 'all' && order.type !== typeFilter) return false;
-                if (searchTerm && !order.id.toLowerCase().includes(searchTerm) && !order.pair.toLowerCase().includes(searchTerm)) return false;
-                return true;
-            });
+                if (pairFilter !== 'all' && order.pair !== pairFilter) return false
+                if (typeFilter !== 'all' && order.type !== typeFilter) return false
+                if (searchTerm && !order.id.toLowerCase().includes(searchTerm) && !order.pair.toLowerCase().includes(searchTerm)) return false
+                return true
+            })
             
-            document.getElementById('openOrdersCount').innerHTML = filtered.length;
+            document.getElementById('openOrdersCount').innerHTML = filtered.length
             
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 1.5rem;">No open orders</td></tr>';
-                return;
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No open orders</td></tr>'
+                return
             }
             
             tbody.innerHTML = filtered.map(order => `
@@ -655,160 +744,28 @@
                     <td class="${order.type === 'buy' ? 'buy-type' : 'sell-type'}">${order.type.toUpperCase()}</td>
                     <td>$${order.price.toLocaleString()}</td>
                     <td>${order.amount} ${order.pair.split('/')[0]}</td>
-                    <td>${order.filled}%</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td>$${order.value.toLocaleString()}</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td class="status-open">${order.status === 'partial' ? 'Partial' : 'Open'}</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td><button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
+                    <td>${order.filled}%</td>
+                    <td>$${order.value.toLocaleString()}</td>
+                    <td class="status-open">${order.status === 'partial' ? 'Partial' : 'Open'}</td>
+                    <td><button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button></td>
                 </tr>
-            `).join('');
+            `).join('')
         }
 
         function loadHistoryOrders() {
-            const tbody = document.getElementById('historyOrdersBody');
-            const pairFilter = document.getElementById('pairFilter').value;
-            const typeFilter = document.getElementById('typeFilter').value;
+            const tbody = document.getElementById('historyOrdersBody')
+            const pairFilter = document.getElementById('pairFilter').value
+            const typeFilter = document.getElementById('typeFilter').value
             
             let filtered = orderHistory.filter(order => {
-                if (pairFilter !== 'all' && order.pair !== pairFilter) return false;
-                if (typeFilter !== 'all' && order.type !== typeFilter) return false;
-                return true;
-            });
+                if (pairFilter !== 'all' && order.pair !== pairFilter) return false
+                if (typeFilter !== 'all' && order.type !== typeFilter) return false
+                return true
+            })
             
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 1.5rem;">No order history</td></tr>';
-                return;
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No order history</td></tr>'
+                return
             }
             
             tbody.innerHTML = filtered.map(order => `
@@ -819,84 +776,18 @@
                     <td class="${order.type === 'buy' ? 'buy-type' : 'sell-type'}">${order.type.toUpperCase()}</td>
                     <td>$${order.price.toLocaleString()}</td>
                     <td>${order.amount} ${order.pair.split('/')[0]}</td>
-                    <td>${order.filled}%</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td class="${order.status === 'filled' ? 'status-filled' : 'status-cancelled'}">${order.status.toUpperCase()}</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
+                    <td>${order.filled}%</td>
+                    <td class="${order.status === 'filled' ? 'status-filled' : 'status-cancelled'}">${order.status.toUpperCase()}</td>
                 </tr>
-            `).join('');
+            `).join('')
         }
 
         function loadFilledOrders() {
-            const tbody = document.getElementById('filledOrdersBody');
+            const tbody = document.getElementById('filledOrdersBody')
             
             if (filledOrders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 1.5rem;">No filled orders</td></tr>';
-                return;
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No filled orders</td></tr>'
+                return
             }
             
             tbody.innerHTML = filledOrders.map(order => `
@@ -907,153 +798,97 @@
                     <td class="${order.type === 'buy' ? 'buy-type' : 'sell-type'}">${order.type.toUpperCase()}</td>
                     <td>$${order.avgPrice.toLocaleString()}</td>
                     <td>${order.amount} ${order.pair.split('/')[0]}</td>
-                    <td>$${order.total.toLocaleString()}</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td>$${order.fee.toFixed(2)}</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
+                    <td>$${order.total.toLocaleString()}</td>
+                    <td>$${order.fee.toFixed(2)}</td>
                 </tr>
-            `).join('');
+            `).join('')
         }
 
         function cancelOrder(orderId) {
             if (confirm(`Cancel order ${orderId}?`)) {
-                const orderIndex = openOrders.findIndex(o => o.id === orderId);
+                const orderIndex = openOrders.findIndex(o => o.id === orderId)
                 if (orderIndex !== -1) {
-                    const cancelledOrder = openOrders[orderIndex];
-                    openOrders.splice(orderIndex, 1);
-                    orderHistory.unshift({ ...cancelledOrder, status: "cancelled", date: new Date().toLocaleString() });
-                    loadOpenOrders();
-                    loadHistoryOrders();
-                    updateSummary();
-                    showToast(`Order ${orderId} cancelled`);
+                    const cancelledOrder = openOrders[orderIndex]
+                    openOrders.splice(orderIndex, 1)
+                    orderHistory.unshift({ ...cancelledOrder, status: "cancelled", date: new Date().toLocaleString() })
+                    loadOpenOrders()
+                    loadHistoryOrders()
+                    updateSummary()
+                    showToast(`Order ${orderId} cancelled`)
                 }
             }
         }
 
         function cancelAllOrders() {
-            if (openOrders.length === 0) { showToast('No open orders'); return; }
+            if (openOrders.length === 0) { showToast('No open orders'); return }
             if (confirm(`Cancel all ${openOrders.length} open orders?`)) {
-                openOrders.forEach(order => { orderHistory.unshift({ ...order, status: "cancelled", date: new Date().toLocaleString() }); });
-                openOrders = [];
-                loadOpenOrders();
-                loadHistoryOrders();
-                updateSummary();
-                showToast('All orders cancelled');
+                openOrders.forEach(order => {
+                    orderHistory.unshift({ ...order, status: "cancelled", date: new Date().toLocaleString() })
+                })
+                openOrders = []
+                loadOpenOrders()
+                loadHistoryOrders()
+                updateSummary()
+                showToast('All orders cancelled')
             }
         }
 
         function applyFilters() {
-            if (currentTab === 'open') loadOpenOrders();
-            else if (currentTab === 'history') loadHistoryOrders();
+            if (currentTab === 'open') loadOpenOrders()
+            else if (currentTab === 'history') loadHistoryOrders()
         }
 
         function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            currentTab = tab
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none')
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'))
             if (tab === 'open') {
-                document.getElementById('openTab').style.display = 'block';
-                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
-                loadOpenOrders();
+                document.getElementById('openTab').style.display = 'block'
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active')
+                loadOpenOrders()
             } else if (tab === 'history') {
-                document.getElementById('historyTab').style.display = 'block';
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-                loadHistoryOrders();
+                document.getElementById('historyTab').style.display = 'block'
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active')
+                loadHistoryOrders()
             } else if (tab === 'filled') {
-                document.getElementById('filledTab').style.display = 'block';
-                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
-                loadFilledOrders();
+                document.getElementById('filledTab').style.display = 'block'
+                document.querySelector('.tab-btn:nth-child(3)').classList.add('active')
+                loadFilledOrders()
             }
         }
 
         function updateSummary() {
-            document.getElementById('openOrdersCount').innerHTML = openOrders.length;
-            document.getElementById('totalFilled').innerHTML = filledOrders.length;
-            document.getElementById('totalCancelled').innerHTML = orderHistory.filter(o => o.status === 'cancelled').length;
-            document.getElementById('todayVolume').innerHTML = `$${filledOrders.reduce((sum, o) => sum + o.total, 0).toLocaleString()}`;
+            document.getElementById('openOrdersCount').innerHTML = openOrders.length
+            document.getElementById('totalFilled').innerHTML = filledOrders.length
+            document.getElementById('totalCancelled').innerHTML = orderHistory.filter(o => o.status === 'cancelled').length
+            document.getElementById('todayVolume').innerHTML = `$${filledOrders.reduce((sum, o) => sum + o.total, 0).toLocaleString()}`
         }
 
         function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;';
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
+            const toast = document.createElement('div')
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;'
+            toast.textContent = msg
+            document.body.appendChild(toast)
+            setTimeout(() => toast.remove(), 2000)
         }
 
-        function prevPage() { if (currentPage > 1) { currentPage--; document.getElementById('pageInfo').innerHTML = `Page ${currentPage}`; } }
-        function nextPage() { currentPage++; document.getElementById('pageInfo').innerHTML = `Page ${currentPage}`; }
-        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
-        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
+        function prevPage() { if (currentPage > 1) { currentPage--; document.getElementById('pageInfo').innerHTML = `Page ${currentPage}`; loadFilledOrders() } }
+        function nextPage() { currentPage++; document.getElementById('pageInfo').innerHTML = `Page ${currentPage}`; loadFilledOrders() }
+        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
+        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
 
-        loadOpenOrders();
-        loadHistoryOrders();
-        loadFilledOrders();
-        updateSummary();
+        // Load demo data if needed
+        if (openOrders.length === 0) {
+            // Demo data for empty state
+            openOrders = []
+            orderHistory = []
+            filledOrders = []
+        }
+        
+        loadOpenOrders()
+        loadHistoryOrders()
+        loadFilledOrders()
+        updateSummary()
     </script>
 </body>
 </html>
