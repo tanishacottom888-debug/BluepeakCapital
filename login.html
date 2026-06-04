@@ -19,36 +19,44 @@
         
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-        // Handle Login Form
         const loginForm = document.getElementById('loginForm');
         const errorDiv = document.getElementById('errorMessage');
         const successDiv = document.getElementById('successMessage');
+
+        // Google Login
+        window.googleLogin = async function() {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/dashboard.html'
+                }
+            })
+            
+            if (error) {
+                showError(error.message);
+            }
+        }
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const rememberMe = document.getElementById('rememberMe')?.checked || false;
 
-            // Clear previous messages
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
 
-            // Basic validation
             if (!email || !password) {
                 showError('Please fill in all fields');
                 return;
             }
 
-            // Show loading state
             const submitBtn = loginForm.querySelector('.btn-primary');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Signing in...';
             submitBtn.disabled = true;
 
             try {
-                // Sign in with Supabase
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password,
@@ -59,7 +67,6 @@
                 } else {
                     showSuccess('Login successful! Redirecting to dashboard...');
                     
-                    // Store user info in localStorage for other pages
                     localStorage.setItem('user', JSON.stringify(data.user));
                     localStorage.setItem('session', JSON.stringify(data.session));
                     
@@ -88,11 +95,9 @@
             successDiv.style.display = 'block';
         }
 
-        // Check if user is already logged in
         async function checkSession() {
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
-                // Redirect to dashboard if already logged in
                 window.location.href = 'dashboard.html';
             }
         }
@@ -159,10 +164,6 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-        }
-
-        .logo-text span {
-            color: #3b82f6;
         }
 
         h1 {
@@ -247,6 +248,52 @@
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
+        .divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+
+        .google-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1a1f36;
+        }
+
+        .google-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+        }
+
         .signup-link {
             text-align: center;
             margin-top: 1.5rem;
@@ -258,10 +305,6 @@
             color: #3b82f6;
             text-decoration: none;
             font-weight: 500;
-        }
-
-        .signup-link a:hover {
-            text-decoration: underline;
         }
 
         .back-home {
@@ -313,6 +356,14 @@
 
                 <button type="submit" class="btn-primary">Sign In →</button>
             </form>
+
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+
+            <button class="google-btn" onclick="googleLogin()">
+                <span>G</span> Continue with Google
+            </button>
 
             <div class="signup-link">
                 Don't have an account? <a href="signup.html">Get started →</a>
