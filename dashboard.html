@@ -2,15 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <meta name="description" content="BluepeakCapital - Institutional-grade cryptocurrency trading platform dashboard" />
     <title>BluepeakCapital | Institutional Dashboard</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        let currentUser = null;
+
+        // Check authentication and load user data
+        async function checkAuthAndLoadUser() {
+            const { data: { session } } = await supabase.auth.getSession()
+            
+            if (!session) {
+                window.location.href = 'login.html'
+                return
+            }
+            
+            currentUser = session.user
+            
+            // Fetch user profile from profiles table
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single()
+            
+            if (error) {
+                console.error('Error fetching profile:', error)
+                // Use auth user data as fallback
+                updateUserDisplay({
+                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+                    email: session.user.email
+                })
+            } else if (profile) {
+                updateUserDisplay(profile)
+            }
+        }
+        
+        // Update UI with real user data
+        function updateUserDisplay(user) {
+            const fullName = user.full_name || user.email?.split('@')[0] || 'User'
+            const firstName = fullName.split(' ')[0]
+            
+            // Update welcome message
+            const welcomeH1 = document.querySelector('.welcome-section h1')
+            if (welcomeH1) {
+                welcomeH1.textContent = `Welcome back, ${firstName}`
+            }
+            
+            // Update user name in top bar
+            const userNameSpan = document.querySelector('.user-menu span')
+            if (userNameSpan) {
+                userNameSpan.textContent = fullName
+            }
+            
+            // Update avatar with initials
+            const userAvatar = document.querySelector('.user-avatar')
+            if (userAvatar) {
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                userAvatar.textContent = initials
+            }
+        }
+        
+        // Logout function
+        window.logout = async function() {
+            const { error } = await supabase.auth.signOut()
+            if (!error) {
+                localStorage.removeItem('user')
+                localStorage.removeItem('session')
+                window.location.href = 'index.html'
+            } else {
+                showMessage('Error logging out')
+            }
+        }
+        
+        function showMessage(msg) {
+            alert(msg)
+        }
+        
+        // Run auth check when page loads
+        checkAuthAndLoadUser()
+    </script>
+    
+    <!-- TradingView Widget Script -->
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     
+    <!-- LiveChat Script -->
     <script>
         window.__lc = window.__lc || {};
         window.__lc.license = 19515979;
@@ -38,7 +126,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.8rem 1rem;
+            padding: 1rem 2rem;
             background: white;
             border-bottom: 1px solid #e2e8f0;
             position: fixed;
@@ -51,25 +139,24 @@
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.5rem;
             cursor: pointer;
         }
 
         .logo-icon {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 7px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.8rem;
             color: white;
         }
 
         .logo-text {
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #1a1f36, #3b82f6);
             -webkit-background-clip: text;
@@ -77,34 +164,74 @@
             color: transparent;
         }
 
-        /* Desktop Navigation */
         .nav-links {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             align-items: center;
         }
 
         .nav-links a {
             color: #4a5568;
             text-decoration: none;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             font-weight: 500;
         }
 
-        .nav-links a:hover {
+        .nav-links a:hover, .nav-links a.active {
             color: #3b82f6;
         }
 
-        /* Right side - JD and Hamburger */
-        .right-menu {
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #1a1f36;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Mobile Menu Dropdown */
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            flex-direction: column;
+            padding: 1rem;
+            gap: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid #e2e8f0;
+            z-index: 999;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .mobile-menu a:hover {
+            color: #3b82f6;
+        }
+
+        .user-menu {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
         }
 
         .user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border-radius: 50%;
             display: flex;
@@ -112,100 +239,29 @@
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 0.8rem;
             cursor: pointer;
         }
 
-        .hamburger-btn {
-            background: none;
-            border: none;
-            color: #1a1f36;
-            font-size: 1.3rem;
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
             cursor: pointer;
-            padding: 0.3rem;
-            display: none;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
         }
 
-        /* Sidebar Menu (slides from right) */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            visibility: hidden;
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-overlay.active {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .sidebar-menu {
-            position: fixed;
-            top: 0;
-            right: -280px;
-            width: 260px;
-            height: 100%;
-            background: white;
-            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-            z-index: 2001;
-            transition: right 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            padding: 1rem 0;
-        }
-
-        .sidebar-overlay.active .sidebar-menu {
-            right: 0;
-        }
-
-        .sidebar-header {
-            padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            margin-bottom: 0.5rem;
-        }
-
-        .sidebar-header .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .sidebar-menu a {
-            display: block;
-            padding: 0.8rem 1.2rem;
-            color: #4a5568;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .sidebar-menu a:hover {
-            background: #f1f5f9;
-            color: #3b82f6;
-        }
-
-        .sidebar-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: #64748b;
+        .logout-btn:hover {
+            background: #ef4444;
+            color: white;
         }
 
         /* Main Layout */
         .main-container {
-            margin-top: 60px;
-            padding: 1rem;
+            margin-top: 65px;
+            padding: 1.5rem;
             max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
@@ -214,76 +270,72 @@
         /* Welcome Section */
         .welcome-section {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 12px;
-            padding: 1rem;
+            border-radius: 16px;
+            padding: 1.5rem;
             color: white;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .welcome-section h1 {
-            font-size: 1.2rem;
-            margin-bottom: 0.2rem;
-        }
-
-        .welcome-section p {
-            font-size: 0.8rem;
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
         }
 
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.8rem;
-            margin-bottom: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .stat-card {
             background: white;
-            border-radius: 12px;
-            padding: 0.8rem;
+            border-radius: 16px;
+            padding: 1.25rem;
             border: 1px solid #e2e8f0;
         }
 
         .stat-label {
-            font-size: 0.6rem;
+            font-size: 0.75rem;
             color: #718096;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
         }
 
         .stat-value {
-            font-size: 1.2rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: #1a1f36;
         }
 
         .stat-change {
-            font-size: 0.6rem;
-            margin-top: 0.3rem;
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
         }
 
         .positive { color: #10b981; }
         .negative { color: #ef4444; }
 
-        /* Dashboard Grid */
+        /* Three Column Layout */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
         /* Trading Chart Container */
         .chart-container {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
             overflow: hidden;
         }
 
         .chart-header {
-            padding: 0.7rem;
+            padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
@@ -291,48 +343,53 @@
         }
 
         .chart-header h3 {
-            font-size: 0.85rem;
+            font-size: 1rem;
             font-weight: 600;
         }
 
         .pair-selector {
-            padding: 0.2rem 0.4rem;
+            padding: 0.25rem 0.5rem;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             background: white;
-            font-size: 0.7rem;
         }
 
         #tradingview_chart {
-            height: 280px;
+            height: 400px;
             width: 100%;
         }
 
         /* Order Book Panel */
         .orderbook-container {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
         }
 
         .orderbook-header {
-            padding: 0.7rem;
+            padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
         }
 
         .orderbook-header h3 {
-            font-size: 0.85rem;
+            font-size: 1rem;
             font-weight: 600;
         }
 
         .orderbook-table {
             width: 100%;
-            font-size: 0.7rem;
+            font-size: 0.8rem;
         }
 
         .orderbook-table th, .orderbook-table td {
-            padding: 0.3rem 0.7rem;
+            padding: 0.5rem 1rem;
             text-align: left;
+        }
+
+        .orderbook-table th {
+            color: #718096;
+            font-weight: 500;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .bid { color: #10b981; }
@@ -341,214 +398,195 @@
         /* Price Alerts Section */
         .alerts-section {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .alerts-header {
-            padding: 0.7rem;
+            padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
         }
 
         .alerts-header h3 {
-            font-size: 0.85rem;
+            font-size: 1rem;
             font-weight: 600;
         }
 
-        .alerts-header span {
-            font-size: 0.6rem;
-        }
-
         .alert-form {
-            padding: 0.8rem;
+            padding: 1rem;
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
         }
 
-        .alert-form select, .alert-form input {
-            padding: 0.4rem;
+        .alert-form input, .alert-form select {
+            padding: 0.5rem;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            flex: 1;
-            min-width: 100px;
+            border-radius: 8px;
+            font-size: 0.8rem;
         }
 
         .alert-form button {
             background: #3b82f6;
             color: white;
             border: none;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 0.7rem;
         }
 
         .alert-list {
-            padding: 0 0.8rem 0.8rem;
+            padding: 0 1rem 1rem;
         }
 
         .alert-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.4rem 0;
+            padding: 0.5rem 0;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.7rem;
+            font-size: 0.8rem;
         }
 
         .delete-alert {
             background: #ef4444;
             color: white;
             border: none;
-            padding: 0.15rem 0.4rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
         }
 
         /* Portfolio Table */
         .portfolio-container {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             overflow-x: auto;
         }
 
         .portfolio-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 500px;
         }
 
         .portfolio-table th {
             text-align: left;
-            padding: 0.6rem;
+            padding: 1rem;
             background: #f8fafc;
             color: #64748b;
-            font-size: 0.6rem;
+            font-size: 0.75rem;
             font-weight: 600;
             border-bottom: 1px solid #e2e8f0;
         }
 
         .portfolio-table td {
-            padding: 0.6rem;
+            padding: 1rem;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.7rem;
+            font-size: 0.85rem;
         }
 
         /* Mobile App Section */
         .mobile-app-section {
             background: linear-gradient(135deg, #1a1f36, #0f172a);
-            border-radius: 12px;
-            padding: 1rem;
+            border-radius: 16px;
+            padding: 1.5rem;
             color: white;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 0.8rem;
-        }
-
-        .mobile-app-section h3 {
-            font-size: 0.9rem;
-        }
-
-        .mobile-app-section p {
-            font-size: 0.7rem;
+            gap: 1rem;
         }
 
         .qr-code {
-            width: 70px;
-            height: 70px;
+            width: 100px;
+            height: 100px;
             background: white;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.6rem;
+            font-size: 0.8rem;
             color: #1a1f36;
             text-align: center;
         }
 
         .app-buttons {
             display: flex;
-            gap: 0.5rem;
+            gap: 1rem;
         }
 
         .app-btn {
             background: rgba(255,255,255,0.1);
             border: 1px solid rgba(255,255,255,0.2);
-            padding: 0.3rem 0.7rem;
-            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 0.7rem;
         }
 
         /* News Feed */
         .news-section {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
         }
 
         .news-header {
-            padding: 0.7rem;
+            padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
         }
 
         .news-header h3 {
-            font-size: 0.85rem;
+            font-size: 1rem;
             font-weight: 600;
         }
 
         .news-item {
-            padding: 0.7rem;
+            padding: 1rem;
             border-bottom: 1px solid #f1f5f9;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .news-item:hover {
+            background: #f8fafc;
         }
 
         .news-title {
             font-weight: 600;
-            font-size: 0.75rem;
-            margin-bottom: 0.2rem;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
         }
 
         .news-time {
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             color: #94a3b8;
         }
 
-        .btn-small {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.6rem;
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
-            .hamburger-btn {
+            .mobile-menu-btn {
                 display: block;
             }
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 0.6rem;
             }
             .mobile-app-section {
                 flex-direction: column;
@@ -557,9 +595,19 @@
             .alert-form {
                 flex-direction: column;
             }
-            .alert-form select, .alert-form input, .alert-form button {
-                width: 100%;
+            .user-menu span {
+                display: none;
             }
+        }
+
+        .btn-small {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
         }
     </style>
 </head>
@@ -570,6 +618,7 @@
             <div class="logo-text">BluepeakCapital</div>
         </div>
         <div class="nav-links">
+            <a href="#" class="active">Dashboard</a>
             <a href="trade.html">Trade</a>
             <a href="markets.html">Markets</a>
             <a href="orders.html">Orders</a>
@@ -579,53 +628,50 @@
             <a href="settings.html">Settings</a>
             <a href="support.html">Support</a>
         </div>
-        <div class="right-menu">
-            <div class="user-avatar" onclick="showMessage('Account settings')">JD</div>
-            <button class="hamburger-btn" onclick="openSidebar()">☰</button>
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+        <div class="user-menu">
+            <span style="font-size: 0.8rem;">Loading...</span>
+            <div class="user-avatar">JD</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </nav>
 
-    <!-- Sidebar Overlay -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
-        <div class="sidebar-menu" onclick="event.stopPropagation()">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon">⛰️</div>
-                    <div class="logo-text">BluepeakCapital</div>
-                </div>
-            </div>
-            <a href="trade.html">Trade</a>
-            <a href="markets.html">Markets</a>
-            <a href="orders.html">Orders</a>
-            <a href="bots.html">Bots</a>
-            <a href="deposit.html">Deposit</a>
-            <a href="withdraw.html">Withdraw</a>
-            <a href="settings.html">Settings</a>
-            <a href="support.html">Support</a>
-        </div>
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#" class="active">Dashboard</a>
+        <a href="trade.html">Trade</a>
+        <a href="markets.html">Markets</a>
+        <a href="orders.html">Orders</a>
+        <a href="bots.html">Bots</a>
+        <a href="deposit.html">Deposit</a>
+        <a href="withdraw.html">Withdraw</a>
+        <a href="settings.html">Settings</a>
+        <a href="support.html">Support</a>
     </div>
 
     <div class="main-container">
+        <!-- Welcome Section -->
         <div class="welcome-section">
-            <h1>Welcome back, John</h1>
+            <h1>Welcome back, User</h1>
             <p>Your portfolio is up +2.4% today</p>
         </div>
 
+        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total Balance</div>
-                <div class="stat-value" id="totalBalance">$1,284,520</div>
+                <div class="stat-value" id="totalBalance">$1,284,520.00</div>
                 <div class="stat-change positive">▲ +2.4% today</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">24h Volume</div>
-                <div class="stat-value" id="dailyVolume">$45,230</div>
+                <div class="stat-value" id="dailyVolume">$45,230.00</div>
                 <div class="stat-change positive">▲ +12.3%</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total P&L</div>
                 <div class="stat-value" id="totalPnl">+$28,450</div>
-                <div class="stat-change positive">▲ +8.2%</div>
+                <div class="stat-change positive">▲ +8.2% all time</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Open Positions</div>
@@ -634,6 +680,7 @@
             </div>
         </div>
 
+        <!-- Dashboard Grid: Chart + Order Book -->
         <div class="dashboard-grid">
             <div class="chart-container">
                 <div class="chart-header">
@@ -660,10 +707,11 @@
             </div>
         </div>
 
+        <!-- Price Alerts System -->
         <div class="alerts-section">
             <div class="alerts-header">
                 <h3>Price Alerts</h3>
-                <span>Get notified when price hits your target</span>
+                <span style="font-size: 0.7rem; color: #718096;">Get notified when price hits your target</span>
             </div>
             <div class="alert-form">
                 <select id="alertCoin">
@@ -682,25 +730,32 @@
             <div class="alert-list" id="alertList"></div>
         </div>
 
+        <!-- Portfolio Table -->
         <div class="portfolio-container">
             <table class="portfolio-table">
-                <thead><tr><th>Asset</th><th>Holdings</th><th>Avg Price</th><th>Current</th><th>Value</th><th>P&L</th><th></th></tr></thead>
+                <thead>
+                    <tr><th>Asset</th><th>Holdings</th><th>Avg. Price</th><th>Current Price</th><th>Value</th><th>P&L</th><th></th></tr>
+                </thead>
                 <tbody id="portfolioBody"></tbody>
             </table>
         </div>
 
+        <!-- Mobile App Section -->
         <div class="mobile-app-section">
             <div>
                 <h3>Trade on the Go</h3>
-                <p>Download our mobile app for iOS and Android</p>
-                <div class="app-buttons">
+                <p style="margin-top: 0.5rem; opacity: 0.8;">Download our mobile app for iOS and Android</p>
+                <div class="app-buttons" style="margin-top: 1rem;">
                     <button class="app-btn" onclick="showMessage('App Store coming soon')">App Store</button>
                     <button class="app-btn" onclick="showMessage('Google Play coming soon')">Google Play</button>
                 </div>
             </div>
-            <div class="qr-code">Scan to download</div>
+            <div class="qr-code">
+                Scan to download
+            </div>
         </div>
 
+        <!-- News Feed -->
         <div class="news-section">
             <div class="news-header">
                 <h3>Latest Crypto News</h3>
@@ -710,6 +765,7 @@
     </div>
 
     <script>
+        // Portfolio Data
         const portfolioData = [
             { asset: "Bitcoin", symbol: "BTC", holdings: 2.5, avgPrice: 38500, currentPrice: 43250, value: 108125, pnl: 11875, pnlPercent: 12.3 },
             { asset: "Ethereum", symbol: "ETH", holdings: 15, avgPrice: 1850, currentPrice: 2250, value: 33750, pnl: 6000, pnlPercent: 21.6 },
@@ -717,16 +773,21 @@
             { asset: "Avalanche", symbol: "AVAX", holdings: 50, avgPrice: 32, currentPrice: 38.20, value: 1910, pnl: 310, pnlPercent: 19.4 }
         ];
 
+        // Price Alerts Array
         let priceAlerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
 
+        // News Data
         const newsData = [
             { title: "Bitcoin surges past $43,000 as institutional inflows continue", time: "2 hours ago", source: "CoinDesk" },
             { title: "Ethereum futures ETF launch expected next week", time: "4 hours ago", source: "Bloomberg" },
             { title: "Solana ecosystem grows 200% in Q4", time: "6 hours ago", source: "The Block" },
             { title: "Avalanche partners with major gaming studio", time: "12 hours ago", source: "Decrypt" },
-            { title: "Crypto market cap hits $1.8 trillion", time: "1 day ago", source: "CoinGecko" }
+            { title: "Crypto market cap hits $1.8 trillion", time: "1 day ago", source: "CoinGecko" },
+            { title: "New stablecoin regulations proposed by SEC", time: "1 day ago", source: "Reuters" },
+            { title: "Institutional crypto trading volume up 40%", time: "2 days ago", source: "FT" }
         ];
 
+        // TradingView Chart
         let tvWidget = null;
 
         function initTradingView() {
@@ -738,53 +799,69 @@
                 fullscreen: false,
                 container_id: "tradingview_chart",
                 width: "100%",
-                height: 280,
+                height: 400,
                 autosize: true,
                 toolbar_bg: "#f1f3f6",
                 enable_publishing: false,
+                hide_side_toolbar: false,
                 allow_symbol_change: true,
+                save_image: false,
                 style: "1",
+                timezone: "exchange",
                 theme: "light"
             });
         }
 
-        function changeChartPair() { initTradingView(); }
+        function changeChartPair() {
+            initTradingView();
+        }
 
+        // Order Book Simulation
         function updateOrderBook() {
             const basePrice = portfolioData[0].currentPrice;
-            const asks = [], bids = [];
+            const asks = [];
+            const bids = [];
+            
             for (let i = 1; i <= 5; i++) {
                 asks.push({ price: basePrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice + (i * 5)) * Math.random() * 2).toFixed(0) });
                 bids.push({ price: basePrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice - (i * 5)) * Math.random() * 2).toFixed(0) });
             }
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></tr>`).join('');
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('');
+            
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<td><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></div> </div>`).join('');
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></div> </div>`).join('');
         }
 
+        // Price Alerts Functions
         function addPriceAlert() {
             const coin = document.getElementById('alertCoin').value;
             const condition = document.getElementById('alertCondition').value;
             const price = parseFloat(document.getElementById('alertPrice').value);
-            if (!price || price <= 0) { alert('Please enter a valid price'); return; }
+            
+            if (!price || price <= 0) {
+                alert('Please enter a valid price');
+                return;
+            }
+            
             priceAlerts.push({ coin, condition, price, triggered: false });
             localStorage.setItem('priceAlerts', JSON.stringify(priceAlerts));
             renderAlerts();
             document.getElementById('alertPrice').value = '';
             showMessage(`Alert set for ${coin} ${condition} $${price}`);
         }
-
+        
         function deleteAlert(index) {
             priceAlerts.splice(index, 1);
             localStorage.setItem('priceAlerts', JSON.stringify(priceAlerts));
             renderAlerts();
         }
-
+        
         function renderAlerts() {
             const alertList = document.getElementById('alertList');
             if (priceAlerts.length === 0) {
-                alertList.innerHTML = '<p style="padding: 0.8rem; color: #718096; font-size: 0.7rem;">No alerts set. Create one above.</p>';
+                alertList.innerHTML = '<p style="padding: 1rem; color: #718096; font-size: 0.8rem;">No alerts set. Create one above.</p>';
                 return;
             }
+            
             alertList.innerHTML = priceAlerts.map((alert, i) => `
                 <div class="alert-item">
                     <span>${alert.coin} ${alert.condition === 'above' ? '↑' : '↓'} $${alert.price.toLocaleString()}</span>
@@ -792,15 +869,23 @@
                 </div>
             `).join('');
         }
-
+        
         function checkPriceAlerts() {
-            const prices = { BTC: portfolioData[0].currentPrice, ETH: portfolioData[1].currentPrice, SOL: portfolioData[2].currentPrice, AVAX: portfolioData[3].currentPrice };
+            const prices = {
+                BTC: portfolioData[0].currentPrice,
+                ETH: portfolioData[1].currentPrice,
+                SOL: portfolioData[2].currentPrice,
+                AVAX: portfolioData[3].currentPrice
+            };
+            
             priceAlerts.forEach((alert, i) => {
                 if (!alert.triggered) {
                     const currentPrice = prices[alert.coin];
                     let triggered = false;
+                    
                     if (alert.condition === 'above' && currentPrice >= alert.price) triggered = true;
                     else if (alert.condition === 'below' && currentPrice <= alert.price) triggered = true;
+                    
                     if (triggered) {
                         alert.triggered = true;
                         showMessage(`ALERT: ${alert.coin} is ${alert.condition} $${alert.price}! Current: $${currentPrice}`);
@@ -811,6 +896,7 @@
             });
         }
 
+        // Load Portfolio
         function loadPortfolio() {
             const tbody = document.getElementById('portfolioBody');
             tbody.innerHTML = portfolioData.map(asset => `
@@ -820,7 +906,23 @@
                     <td>$${asset.avgPrice.toLocaleString()}</td>
                     <td>$${asset.currentPrice.toLocaleString()}</td>
                     <td>$${asset.value.toLocaleString()}</td>
-                    <td class="${asset.pnl >= 0 ? 'positive' : 'negative'}">${asset.pnl >= 0 ? '▲' : '▼'} $${Math.abs(asset.pnl).toLocaleString()} (${asset.pnlPercent}%)</div>
+                    <td class="${asset.pnl >= 0 ? 'positive' : 'negative'}">
+                        ${asset.pnl >= 0 ? '▲' : '▼'} $${Math.abs(asset.pnl).toLocaleString()} (${asset.pnlPercent}%)
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
                     </div>
                     </div>
                     </div>
@@ -843,12 +945,14 @@
                     <td><button class="btn-small" onclick="showMessage('Trade page')">Trade</button></td>
                 </tr>
             `).join('');
+            
             const totalBalance = portfolioData.reduce((sum, a) => sum + a.value, 0);
             const totalPnl = portfolioData.reduce((sum, a) => sum + a.pnl, 0);
             document.getElementById('totalBalance').innerHTML = `$${totalBalance.toLocaleString()}`;
             document.getElementById('totalPnl').innerHTML = `${totalPnl >= 0 ? '+' : '-'}$${Math.abs(totalPnl).toLocaleString()}`;
         }
 
+        // Load News Feed
         function loadNews() {
             const newsFeed = document.getElementById('newsFeed');
             newsFeed.innerHTML = newsData.map(news => `
@@ -859,22 +963,22 @@
             `).join('');
         }
 
-        function showMessage(msg) { alert(msg); }
-
-        function openSidebar() {
-            document.getElementById('sidebarOverlay').classList.add('active');
+        function showMessage(msg) {
+            alert(msg);
         }
 
-        function closeSidebar() {
-            document.getElementById('sidebarOverlay').classList.remove('active');
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('active');
         }
 
+        // Initialize Everything
         function init() {
             loadPortfolio();
             updateOrderBook();
             renderAlerts();
             loadNews();
             setTimeout(() => initTradingView(), 500);
+            
             setInterval(() => {
                 portfolioData.forEach(asset => {
                     const change = (Math.random() - 0.5) * 100;
@@ -889,6 +993,7 @@
                 document.getElementById('dailyVolume').innerHTML = `$${(Math.random() * 20 + 40).toFixed(0)},000`;
             }, 10000);
         }
+        
         init();
     </script>
 </body>
