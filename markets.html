@@ -10,6 +10,69 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        let currentUserId = null
+        let userBalance = 0
+
+        // Check authentication and load user data
+        async function checkAuthAndLoadData() {
+            const { data: { session } } = await supabase.auth.getSession()
+            
+            if (!session) {
+                // If not logged in, still show markets but with $0
+                updateBalanceDisplay(0)
+                return
+            }
+            
+            currentUserId = session.user.id
+            await loadUserBalance()
+        }
+        
+        // Load user's USD balance from Supabase
+        async function loadUserBalance() {
+            const { data, error } = await supabase
+                .from('balances')
+                .select('balance')
+                .eq('user_id', currentUserId)
+                .eq('asset', 'USD')
+                .single()
+            
+            if (error) {
+                console.error('Error loading balance:', error)
+                updateBalanceDisplay(0)
+                return
+            }
+            
+            const balance = data?.balance || 0
+            updateBalanceDisplay(balance)
+        }
+        
+        function updateBalanceDisplay(balance) {
+            const balanceElement = document.getElementById('balanceDisplay')
+            if (balanceElement) {
+                balanceElement.innerHTML = `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            }
+        }
+        
+        // Logout function (if needed)
+        window.logout = async function() {
+            const { error } = await supabase.auth.signOut()
+            if (!error) {
+                window.location.href = 'index.html'
+            }
+        }
+        
+        // Run auth check
+        checkAuthAndLoadData()
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -83,7 +146,7 @@
             color: #3b82f6;
         }
 
-        /* Right Menu */
+        /* Right Menu - No JD avatar */
         .right-menu {
             display: flex;
             align-items: center;
@@ -91,11 +154,12 @@
         }
 
         .flag-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             object-fit: cover;
             cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .balance-amount {
@@ -105,20 +169,6 @@
             background: #f1f5f9;
             padding: 0.3rem 0.8rem;
             border-radius: 30px;
-        }
-
-        .user-avatar {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.7rem;
-            cursor: pointer;
         }
 
         .hamburger-btn {
@@ -290,7 +340,7 @@
             width: 180px;
         }
 
-        /* Market Table - Compressed for Mobile */
+        /* Market Table */
         .table-container {
             background: white;
             border: 1px solid #e2e8f0;
@@ -337,16 +387,11 @@
             font-size: 0.7rem;
         }
 
-        .coin-icon {
-            width: 22px;
-            height: 22px;
-            background: #f1f5f9;
+        .coin-icon-img {
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.65rem;
+            object-fit: contain;
         }
 
         .coin-info {
@@ -380,6 +425,10 @@
             border-radius: 5px;
             font-size: 0.65rem;
             cursor: pointer;
+        }
+
+        .trade-btn:hover {
+            background: #2563eb;
         }
 
         .favorite-star {
@@ -428,7 +477,7 @@
             color: #94a3b8;
         }
 
-        /* Mobile Navigation */
+        /* Mobile */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -477,6 +526,14 @@
             .page-header h1 {
                 font-size: 1.1rem;
             }
+            .flag-icon {
+                width: 24px;
+                height: 24px;
+            }
+            .balance-amount {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.6rem;
+            }
         }
 
         /* Animations */
@@ -518,8 +575,7 @@
         </div>
         <div class="right-menu">
             <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
-            <div class="balance-amount" id="balanceDisplay">$12,450</div>
-            <div class="user-avatar" onclick="showToast('Account settings')">JD</div>
+            <div class="balance-amount" id="balanceDisplay">$0.00</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -615,22 +671,23 @@
     </div>
 
     <script>
+        // Market Data with real icon URLs from CoinCap API
         const marketData = [
-            { rank: 1, name: "Bitcoin", symbol: "BTC", price: 43250, change24h: 2.4, change7d: 5.2, volume: "28500000000", marketCap: "845000000000", icon: "₿" },
-            { rank: 2, name: "Ethereum", symbol: "ETH", price: 2250, change24h: 1.8, change7d: 3.1, volume: "15200000000", marketCap: "270000000000", icon: "Ξ" },
-            { rank: 3, name: "Solana", symbol: "SOL", price: 95.50, change24h: -0.5, change7d: 8.2, volume: "4200000000", marketCap: "42000000000", icon: "◎" },
-            { rank: 4, name: "Ripple", symbol: "XRP", price: 0.62, change24h: -1.2, change7d: -0.8, volume: "2100000000", marketCap: "34000000000", icon: "X" },
-            { rank: 5, name: "Cardano", symbol: "ADA", price: 0.48, change24h: 3.2, change7d: 2.5, volume: "1800000000", marketCap: "17000000000", icon: "₳" },
-            { rank: 6, name: "Avalanche", symbol: "AVAX", price: 38.20, change24h: 4.2, change7d: 12.4, volume: "600000000", marketCap: "14200000000", icon: "A" },
-            { rank: 7, name: "Polygon", symbol: "MATIC", price: 0.85, change24h: -0.3, change7d: -2.1, volume: "400000000", marketCap: "7800000000", icon: "P" },
-            { rank: 8, name: "Chainlink", symbol: "LINK", price: 15.30, change24h: 2.1, change7d: 4.5, volume: "800000000", marketCap: "8500000000", icon: "L" },
-            { rank: 9, name: "Binance Coin", symbol: "BNB", price: 312.50, change24h: 1.2, change7d: 2.8, volume: "1500000000", marketCap: "48000000000", icon: "B" },
-            { rank: 10, name: "Dogecoin", symbol: "DOGE", price: 0.082, change24h: 5.1, change7d: 15.3, volume: "1200000000", marketCap: "11800000000", icon: "D" },
-            { rank: 11, name: "Polkadot", symbol: "DOT", price: 7.25, change24h: 0.8, change7d: 1.2, volume: "500000000", marketCap: "9200000000", icon: "D" },
-            { rank: 12, name: "Litecoin", symbol: "LTC", price: 72.80, change24h: -0.8, change7d: -1.5, volume: "600000000", marketCap: "5400000000", icon: "Ł" },
-            { rank: 13, name: "Uniswap", symbol: "UNI", price: 6.45, change24h: 2.9, change7d: 5.1, volume: "300000000", marketCap: "4800000000", icon: "U" },
-            { rank: 14, name: "Cosmos", symbol: "ATOM", price: 9.15, change24h: 1.5, change7d: 3.2, volume: "200000000", marketCap: "3500000000", icon: "C" },
-            { rank: 15, name: "Near Protocol", symbol: "NEAR", price: 4.20, change24h: 6.2, change7d: 18.5, volume: "350000000", marketCap: "4200000000", icon: "N" }
+            { rank: 1, name: "Bitcoin", symbol: "BTC", price: 43250, change24h: 2.4, change7d: 5.2, volume: "28500000000", marketCap: "845000000000", iconUrl: "https://assets.coincap.io/assets/icons/btc@2x.png" },
+            { rank: 2, name: "Ethereum", symbol: "ETH", price: 2250, change24h: 1.8, change7d: 3.1, volume: "15200000000", marketCap: "270000000000", iconUrl: "https://assets.coincap.io/assets/icons/eth@2x.png" },
+            { rank: 3, name: "Solana", symbol: "SOL", price: 95.50, change24h: -0.5, change7d: 8.2, volume: "4200000000", marketCap: "42000000000", iconUrl: "https://assets.coincap.io/assets/icons/sol@2x.png" },
+            { rank: 4, name: "Ripple", symbol: "XRP", price: 0.62, change24h: -1.2, change7d: -0.8, volume: "2100000000", marketCap: "34000000000", iconUrl: "https://assets.coincap.io/assets/icons/xrp@2x.png" },
+            { rank: 5, name: "Cardano", symbol: "ADA", price: 0.48, change24h: 3.2, change7d: 2.5, volume: "1800000000", marketCap: "17000000000", iconUrl: "https://assets.coincap.io/assets/icons/ada@2x.png" },
+            { rank: 6, name: "Avalanche", symbol: "AVAX", price: 38.20, change24h: 4.2, change7d: 12.4, volume: "600000000", marketCap: "14200000000", iconUrl: "https://assets.coincap.io/assets/icons/avax@2x.png" },
+            { rank: 7, name: "Polygon", symbol: "MATIC", price: 0.85, change24h: -0.3, change7d: -2.1, volume: "400000000", marketCap: "7800000000", iconUrl: "https://assets.coincap.io/assets/icons/matic@2x.png" },
+            { rank: 8, name: "Chainlink", symbol: "LINK", price: 15.30, change24h: 2.1, change7d: 4.5, volume: "800000000", marketCap: "8500000000", iconUrl: "https://assets.coincap.io/assets/icons/link@2x.png" },
+            { rank: 9, name: "Binance Coin", symbol: "BNB", price: 312.50, change24h: 1.2, change7d: 2.8, volume: "1500000000", marketCap: "48000000000", iconUrl: "https://assets.coincap.io/assets/icons/bnb@2x.png" },
+            { rank: 10, name: "Dogecoin", symbol: "DOGE", price: 0.082, change24h: 5.1, change7d: 15.3, volume: "1200000000", marketCap: "11800000000", iconUrl: "https://assets.coincap.io/assets/icons/doge@2x.png" },
+            { rank: 11, name: "Polkadot", symbol: "DOT", price: 7.25, change24h: 0.8, change7d: 1.2, volume: "500000000", marketCap: "9200000000", iconUrl: "https://assets.coincap.io/assets/icons/dot@2x.png" },
+            { rank: 12, name: "Litecoin", symbol: "LTC", price: 72.80, change24h: -0.8, change7d: -1.5, volume: "600000000", marketCap: "5400000000", iconUrl: "https://assets.coincap.io/assets/icons/ltc@2x.png" },
+            { rank: 13, name: "Uniswap", symbol: "UNI", price: 6.45, change24h: 2.9, change7d: 5.1, volume: "300000000", marketCap: "4800000000", iconUrl: "https://assets.coincap.io/assets/icons/uni@2x.png" },
+            { rank: 14, name: "Cosmos", symbol: "ATOM", price: 9.15, change24h: 1.5, change7d: 3.2, volume: "200000000", marketCap: "3500000000", iconUrl: "https://assets.coincap.io/assets/icons/atom@2x.png" },
+            { rank: 15, name: "Near Protocol", symbol: "NEAR", price: 4.20, change24h: 6.2, change7d: 18.5, volume: "350000000", marketCap: "4200000000", iconUrl: "https://assets.coincap.io/assets/icons/near@2x.png" }
         ];
 
         let currentMarkets = [...marketData];
@@ -652,22 +709,12 @@
                     <td class="coin-rank">${coin.rank}</td>
                     <td>
                         <div class="coin-cell">
-                            <div class="coin-icon">${coin.icon}</div>
+                            <img src="${coin.iconUrl}" alt="${coin.symbol}" class="coin-icon-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Crect width=\'24\' height=\'24\' fill=\'%233b82f6\'/%3E%3Ctext x=\'12\' y=\'16\' text-anchor=\'middle\' fill=\'white\' font-size=\'12\'%3E${coin.symbol.charAt(0)}%3C/text%3E%3C/svg%3E'">
                             <div class="coin-info">
                                 <span class="coin-name">${coin.name}</span>
                                 <span class="coin-symbol">${coin.symbol}</span>
                             </div>
                         </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </div>
                     </div>
                     </div>
@@ -689,33 +736,8 @@
                     </div>
                     </div>
                     </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </td>
                     <td class="${coin.change24h >= 0 ? 'positive' : 'negative'}">${coin.change24h >= 0 ? '▲' : '▼'} ${Math.abs(coin.change24h)}%</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </div>
                     </div>
                     </div>
@@ -752,43 +774,8 @@
                     </div>
                     </div>
                     </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </td>
                     <td>$${(parseFloat(coin.volume) / 1000000000).toFixed(1)}B</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </div>
                     </div>
                     </div>
@@ -809,27 +796,7 @@
                     </div>
                     </div>
                     </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
+                    </tr>
                     <td><span class="favorite-star ${favorites.includes(coin.symbol) ? 'active' : ''}" onclick="toggleFavorite('${coin.symbol}')">★</span></div>
                     </div>
                     </div>
@@ -843,48 +810,8 @@
                     </div>
                     </div>
                     </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </td>
-                    <td><button class="trade-btn" onclick="window.location.href='trade.html'">Trade</button></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
+                    <td><button class="trade-btn" onclick="window.location.href='trade.html?pair=${coin.symbol}USD'">Trade</button></div>
                     </div>
                     </div>
                     </div>
@@ -1033,6 +960,7 @@
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
 
+        // Live price updates
         setInterval(() => {
             marketData.forEach(coin => {
                 const change = (Math.random() - 0.5) * 10;
@@ -1061,6 +989,7 @@
             });
         }, 5000);
 
+        // Initialize
         loadMarkets();
     </script>
 </body>
