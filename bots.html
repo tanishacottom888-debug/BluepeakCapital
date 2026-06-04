@@ -3,11 +3,29 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
-    <meta name="description" content="BluepeakCapital - Automated trading bots. Create and deploy algorithmic trading strategies in demo or live mode." />
+    <meta name="description" content="BluepeakCapital - Upload or activate trading bots with passkey" />
     <title>BluepeakCapital | Trading Bots</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                window.location.href = 'login.html'
+            }
+        }
+        
+        checkAuth()
+    </script>
     
     <style>
         * {
@@ -64,7 +82,6 @@
             color: transparent;
         }
 
-        /* Desktop Navigation */
         .nav-links {
             display: flex;
             gap: 1rem;
@@ -82,7 +99,6 @@
             color: #3b82f6;
         }
 
-        /* Right Menu */
         .right-menu {
             display: flex;
             align-items: center;
@@ -90,33 +106,10 @@
         }
 
         .flag-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             object-fit: cover;
-            cursor: pointer;
-        }
-
-        .balance-amount {
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #1a1f36;
-            background: #f1f5f9;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-        }
-
-        .user-avatar {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.7rem;
             cursor: pointer;
         }
 
@@ -207,50 +200,16 @@
             background: #cbd5e1;
         }
 
-        /* Mode Toggle */
-        .mode-toggle {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 30px;
-            padding: 0.2rem;
-            display: inline-flex;
-        }
-
-        .mode-btn {
-            padding: 0.35rem 1rem;
-            border-radius: 25px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.7rem;
-            font-weight: 500;
-            background: transparent;
-        }
-
-        .mode-btn.demo.active {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .mode-btn.live.active {
-            background: #3b82f6;
-            color: white;
-        }
-
         /* Main Container */
         .bots-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
 
         /* Page Header */
         .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 0.8rem;
+            margin-bottom: 1.5rem;
         }
 
         .page-header h1 {
@@ -258,205 +217,211 @@
             font-weight: 600;
         }
 
-        /* Bot Templates Grid - Mobile: 2 columns */
-        .templates-section {
+        /* Two Column Layout */
+        .bots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
             margin-bottom: 1.5rem;
         }
 
-        .section-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.8rem;
-        }
-
-        .templates-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.8rem;
-        }
-
-        .template-card {
+        /* Upload Card */
+        .upload-card, .passkey-card {
             background: white;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 0.8rem;
+            padding: 1.2rem;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
             cursor: pointer;
             transition: all 0.2s;
+            margin-bottom: 0.8rem;
         }
 
-        .template-card:hover {
+        .drop-zone:hover {
             border-color: #3b82f6;
+            background: #f8fafc;
         }
 
-        .template-icon {
-            font-size: 1.2rem;
+        .drop-icon {
+            font-size: 2rem;
             margin-bottom: 0.5rem;
         }
 
-        .template-name {
-            font-weight: 600;
+        .drop-text {
             font-size: 0.8rem;
-            margin-bottom: 0.2rem;
+            color: #64748b;
         }
 
-        .template-desc {
+        .file-types {
             font-size: 0.6rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .upload-btn {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .upload-btn:hover {
+            background: #2563eb;
+        }
+
+        /* Passkey Form */
+        .passkey-input {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .passkey-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .help-text {
+            font-size: 0.6rem;
+            color: #94a3b8;
+            margin-top: 0.8rem;
+            text-align: center;
+        }
+
+        /* Settings Section */
+        .settings-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .setting-field label {
+            display: block;
+            font-size: 0.65rem;
             color: #64748b;
             margin-bottom: 0.3rem;
         }
 
-        .template-stats {
-            font-size: 0.6rem;
-            color: #10b981;
-        }
-
-        /* Active Bots Table */
-        .active-bots-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .bots-table-container {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .bots-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 650px;
-        }
-
-        .bots-table th {
-            text-align: left;
-            padding: 0.5rem 0.6rem;
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 0.6rem;
-            font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .bots-table td {
-            padding: 0.4rem 0.6rem;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 0.7rem;
-        }
-
-        .status-running { color: #10b981; font-weight: 500; }
-        .status-paused { color: #f59e0b; font-weight: 500; }
-        .profit-positive { color: #10b981; }
-        .profit-negative { color: #ef4444; }
-
-        .mode-badge {
-            padding: 0.15rem 0.4rem;
-            border-radius: 10px;
-            font-size: 0.55rem;
-            font-weight: 500;
-        }
-
-        .mode-demo {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .mode-live {
-            background: #dbeafe;
-            color: #2563eb;
-        }
-
-        .action-btn {
-            background: #f1f5f9;
-            border: none;
-            padding: 0.2rem 0.5rem;
-            border-radius: 5px;
-            font-size: 0.6rem;
-            cursor: pointer;
-            margin-right: 0.2rem;
-        }
-
-        .action-btn.danger {
-            color: #ef4444;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 1.2rem;
-            max-width: 450px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .modal-header h3 {
-            font-size: 1.1rem;
-        }
-
-        .close-modal {
-            cursor: pointer;
-            font-size: 1.3rem;
-        }
-
-        .form-group {
-            margin-bottom: 0.8rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.7rem;
-            color: #64748b;
-            margin-bottom: 0.2rem;
-        }
-
-        .form-group input, .form-group select {
+        .setting-field input, .setting-field select {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 0.75rem;
         }
 
-        .modal-btn {
-            width: 100%;
-            padding: 0.5rem;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            margin-top: 0.8rem;
-            cursor: pointer;
+        /* My Bots Section */
+        .bots-list-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-text {
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .empty-subtext {
+            font-size: 0.65rem;
+            color: #cbd5e1;
+        }
+
+        /* Bot Item */
+        .bot-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .bot-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .bot-name {
+            font-weight: 600;
             font-size: 0.8rem;
         }
 
-        /* Mobile Responsive */
+        .bot-details {
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+
+        .bot-status {
+            font-size: 0.6rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .delete-bot {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* Mobile */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -467,42 +432,20 @@
             .bots-container {
                 padding: 0.8rem;
             }
-            .templates-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.6rem;
+            .bots-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
             }
-            .template-card {
-                padding: 0.6rem;
-            }
-            .template-icon {
-                font-size: 1rem;
-            }
-            .template-name {
-                font-size: 0.7rem;
-            }
-            .template-desc {
-                font-size: 0.55rem;
+            .settings-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
             }
             .trust-bar {
                 display: none;
             }
-            .page-header h1 {
-                font-size: 1.1rem;
-            }
-            .mode-btn {
-                padding: 0.25rem 0.8rem;
-                font-size: 0.65rem;
-            }
-            .bots-table {
-                min-width: 550px;
-            }
-            .bots-table th {
-                padding: 0.35rem 0.4rem;
-                font-size: 0.55rem;
-            }
-            .bots-table td {
-                padding: 0.35rem 0.4rem;
-                font-size: 0.6rem;
+            .flag-icon {
+                width: 24px;
+                height: 24px;
             }
         }
     </style>
@@ -526,8 +469,6 @@
         </div>
         <div class="right-menu">
             <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
-            <div class="balance-amount">$12,450</div>
-            <div class="user-avatar" onclick="showToast('Account settings')">JD</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -567,314 +508,236 @@
     <div class="bots-container">
         <div class="page-header">
             <h1>Trading Bots</h1>
-            <div class="mode-toggle">
-                <button class="mode-btn demo active" onclick="setMode('demo')">Demo</button>
-                <button class="mode-btn live" onclick="setMode('live')">Live</button>
-            </div>
         </div>
 
-        <!-- Bot Templates -->
-        <div class="templates-section">
-            <div class="section-title">Bot Templates</div>
-            <div class="templates-grid">
-                <div class="template-card" onclick="openCreateModal('grid')">
-                    <div class="template-icon">📊</div>
-                    <div class="template-name">Grid Bot</div>
-                    <div class="template-desc">Buy low, sell high</div>
-                    <div class="template-stats">ROI: +15%</div>
+        <!-- Upload + Passkey Grid -->
+        <div class="bots-grid">
+            <!-- Upload Bot Card -->
+            <div class="upload-card">
+                <div class="card-title">Upload Trading Bot</div>
+                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="drop-icon">📁</div>
+                    <div class="drop-text">Drag & drop your bot file here</div>
+                    <div class="drop-text">or click to browse</div>
+                    <div class="file-types">Supports .py, .js, .ts, .json, .zip files</div>
                 </div>
-                <div class="template-card" onclick="openCreateModal('dca')">
-                    <div class="template-icon">💧</div>
-                    <div class="template-name">DCA Bot</div>
-                    <div class="template-desc">Dollar cost avg</div>
-                    <div class="template-stats">Accumulate</div>
+                <input type="file" id="fileInput" style="display: none;" accept=".py,.js,.ts,.json,.zip">
+                <button class="upload-btn" onclick="uploadBot()">Upload Trading Bot</button>
+            </div>
+
+            <!-- Activate with Passkey Card -->
+            <div class="passkey-card">
+                <div class="card-title">Activate with Passkey</div>
+                <div class="help-text" style="text-align: left; margin-bottom: 0.5rem;">
+                    Already have a trading bot passkey? Enter it below to activate your bot instantly.
                 </div>
-                <div class="template-card" onclick="openCreateModal('rebalance')">
-                    <div class="template-icon">🔄</div>
-                    <div class="template-name">Rebalance</div>
-                    <div class="template-desc">Portfolio mgmt</div>
-                    <div class="template-stats">Risk control</div>
-                </div>
-                <div class="template-card" onclick="openCreateModal('arbitrage')">
-                    <div class="template-icon">⚡</div>
-                    <div class="template-name">Arbitrage</div>
-                    <div class="template-desc">Price difference</div>
-                    <div class="template-stats">Low risk</div>
+                <input type="text" class="passkey-input" id="passkeyInput" placeholder="Enter passkey (e.g., Ak1234)">
+                <button class="submit-btn" onclick="activateWithPasskey()">Submit Passkey</button>
+                <div class="help-text">
+                    Passkeys are provided by authorized bot developers. Contact support if you need assistance.
                 </div>
             </div>
         </div>
 
-        <!-- Active Bots -->
-        <div class="active-bots-section">
-            <div class="section-title">Active Bots</div>
-            <div class="bots-table-container">
-                <table class="bots-table">
-                    <thead>
-                        <tr><th>Name</th><th>Type</th><th>Pair</th><th>Mode</th><th>Status</th><th>P&L</th><th>ROI</th><th></th></tr>
-                    </thead>
-                    <tbody id="activeBotsBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Bot Modal -->
-    <div id="botModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Create Grid Bot</h3>
-                <span class="close-modal" onclick="closeModal()">&times;</span>
-            </div>
-            <form id="botForm">
-                <div class="form-group">
-                    <label>Bot Name</label>
-                    <input type="text" id="botName" placeholder="My Bot" required>
+        <!-- Bot Settings -->
+        <div class="settings-card">
+            <div class="card-title">Bot Settings</div>
+            <div class="settings-grid">
+                <div class="setting-field">
+                    <label>Trade Amount ($)</label>
+                    <input type="number" id="tradeAmount" value="10" step="1">
                 </div>
-                <div class="form-group">
-                    <label>Trading Pair</label>
-                    <select id="botPair">
+                <div class="setting-field">
+                    <label>Trade Interval</label>
+                    <select id="tradeInterval">
+                        <option value="1m">1 minute</option>
+                        <option value="5m">5 minutes</option>
+                        <option value="15m">15 minutes</option>
+                        <option value="30m">30 minutes</option>
+                        <option value="1h">1 hour</option>
+                    </select>
+                </div>
+                <div class="setting-field">
+                    <label>Trading Asset</label>
+                    <select id="tradingAsset">
                         <option value="BTC/USD">BTC/USD</option>
                         <option value="ETH/USD">ETH/USD</option>
                         <option value="SOL/USD">SOL/USD</option>
-                        <option value="AVAX/USD">AVAX/USD</option>
+                        <option value="EUR/USD">EUR/USD</option>
+                        <option value="GBP/USD">GBP/USD</option>
                     </select>
                 </div>
-                <div class="form-group" id="gridFields">
-                    <label>Lower Price (USD)</label>
-                    <input type="number" id="lowerPrice" placeholder="40000">
-                    <label style="margin-top: 0.5rem;">Upper Price (USD)</label>
-                    <input type="number" id="upperPrice" placeholder="45000">
-                    <label style="margin-top: 0.5rem;">Grids</label>
-                    <input type="number" id="grids" placeholder="10">
+            </div>
+        </div>
+
+        <!-- My Bots List -->
+        <div class="bots-list-card">
+            <div class="card-title">My Bots (<span id="botsCount">0</span>)</div>
+            <div id="botsList">
+                <div class="empty-state">
+                    <div class="empty-icon">🤖</div>
+                    <div class="empty-text">No bots added yet</div>
+                    <div class="empty-subtext">Enter a passkey above to add a trading bot</div>
                 </div>
-                <div class="form-group" id="dcaFields" style="display: none;">
-                    <label>Investment per Order (USD)</label>
-                    <input type="number" id="investment" placeholder="100">
-                    <label style="margin-top: 0.5rem;">Interval (hours)</label>
-                    <input type="number" id="interval" placeholder="6">
-                </div>
-                <div class="form-group" id="rebalanceFields" style="display: none;">
-                    <label>Target Allocation (%)</label>
-                    <input type="text" id="allocation" placeholder="BTC:50, ETH:30">
-                    <label style="margin-top: 0.5rem;">Threshold (%)</label>
-                    <input type="number" id="threshold" placeholder="5">
-                </div>
-                <div class="form-group">
-                    <label>Total Investment (USD)</label>
-                    <input type="number" id="totalInvestment" placeholder="1000" required>
-                </div>
-                <button type="submit" class="modal-btn">Create Bot</button>
-            </form>
+            </div>
         </div>
     </div>
 
     <script>
-        let currentMode = 'demo';
-        let currentBotType = 'grid';
-        let botCounter = 3;
+        // Store bots in localStorage
+        let userBots = JSON.parse(localStorage.getItem('tradingBots') || '[]')
 
-        let activeBots = [
-            { id: 1, name: "BTC Grid Bot", type: "Grid", pair: "BTC/USD", mode: "demo", status: "running", pnl: 245.50, roi: 8.2 },
-            { id: 2, name: "ETH DCA Bot", type: "DCA", pair: "ETH/USD", mode: "demo", status: "running", pnl: 128.30, roi: 5.4 }
-        ];
-
-        function loadActiveBots() {
-            const tbody = document.getElementById('activeBotsBody');
-            const filteredBots = activeBots.filter(bot => bot.mode === currentMode);
+        function renderBots() {
+            const container = document.getElementById('botsList')
+            const countSpan = document.getElementById('botsCount')
             
-            if (filteredBots.length === 0) {
-                tbody.innerHTML = '<td><td colspan="8" style="text-align: center; padding: 1.5rem;">No bots创建';
-                return;
+            if (userBots.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🤖</div>
+                        <div class="empty-text">No bots added yet</div>
+                        <div class="empty-subtext">Enter a passkey above to add a trading bot</div>
+                    </div>
+                `
+                countSpan.textContent = '0'
+                return
             }
             
-            tbody.innerHTML = filteredBots.map(bot => `
-                <tr>
-                    <td>${bot.name}</td>
-                    <td>${bot.type}</td>
-                    <td>${bot.pair}</td>
-                    <td><span class="mode-badge ${bot.mode === 'demo' ? 'mode-demo' : 'mode-live'}">${bot.mode === 'demo' ? 'Demo' : 'Live'}</span></td>
-                    <td class="status-running">${bot.status}</td>
-                    <td class="${bot.pnl >= 0 ? 'profit-positive' : 'profit-negative'}">$${Math.abs(bot.pnl).toFixed(2)}</div>
+            countSpan.textContent = userBots.length
+            container.innerHTML = userBots.map((bot, index) => `
+                <div class="bot-item">
+                    <div class="bot-info">
+                        <span class="bot-name">${bot.name}</span>
+                        <span class="bot-details">${bot.asset} • $${bot.amount} • ${bot.interval}</span>
                     </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="bot-status">Active</span>
+                        <button class="delete-bot" onclick="deleteBot(${index})">🗑️</button>
                     </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td class="${bot.roi >= 0 ? 'profit-positive' : 'profit-negative'}">${bot.roi >= 0 ? '+' : ''}${bot.roi}%</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td>
-                        <button class="action-btn" onclick="pauseBot(${bot.id})">Pause</button>
-                        <button class="action-btn danger" onclick="deleteBot(${bot.id})">Del</button>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                </tr>
-            `).join('');
+                </div>
+            `).join('')
         }
 
-        function setMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.mode-btn.${mode}`).classList.add('active');
-            loadActiveBots();
-        }
-
-        function openCreateModal(type) {
-            currentBotType = type;
-            const modal = document.getElementById('botModal');
-            const modalTitle = document.getElementById('modalTitle');
+        function uploadBot() {
+            const fileInput = document.getElementById('fileInput')
+            const tradeAmount = document.getElementById('tradeAmount').value
+            const tradeInterval = document.getElementById('tradeInterval').options[document.getElementById('tradeInterval').selectedIndex].text
+            const tradingAsset = document.getElementById('tradingAsset').value
             
-            document.getElementById('gridFields').style.display = 'none';
-            document.getElementById('dcaFields').style.display = 'none';
-            document.getElementById('rebalanceFields').style.display = 'none';
-            
-            if (type === 'grid') {
-                modalTitle.textContent = 'Create Grid Bot';
-                document.getElementById('gridFields').style.display = 'block';
-            } else if (type === 'dca') {
-                modalTitle.textContent = 'Create DCA Bot';
-                document.getElementById('dcaFields').style.display = 'block';
-            } else if (type === 'rebalance') {
-                modalTitle.textContent = 'Create Rebalance Bot';
-                document.getElementById('rebalanceFields').style.display = 'block';
-            } else if (type === 'arbitrage') {
-                modalTitle.textContent = 'Create Arbitrage Bot';
-                document.getElementById('gridFields').style.display = 'block';
+            if (fileInput.files.length === 0) {
+                showToast('Please select a file to upload')
+                return
             }
             
-            modal.classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('botModal').classList.remove('active');
-            document.getElementById('botForm').reset();
-        }
-
-        document.getElementById('botForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const botName = document.getElementById('botName').value;
-            const pair = document.getElementById('botPair').value;
-            const totalInvestment = parseFloat(document.getElementById('totalInvestment').value);
+            const file = fileInput.files[0]
+            const botName = file.name.replace(/\.[^/.]+$/, '') // Remove extension
             
-            if (!botName || !totalInvestment) {
-                alert('Please fill required fields');
-                return;
-            }
-            
-            botCounter++;
             const newBot = {
-                id: botCounter,
                 name: botName,
-                type: currentBotType === 'grid' ? 'Grid' : currentBotType === 'dca' ? 'DCA' : currentBotType === 'rebalance' ? 'Rebalance' : 'Arbitrage',
-                pair: pair,
-                mode: currentMode,
-                status: 'running',
-                pnl: 0,
-                roi: 0
-            };
+                asset: tradingAsset,
+                amount: tradeAmount,
+                interval: tradeInterval,
+                created: new Date().toISOString()
+            }
             
-            activeBots.push(newBot);
-            loadActiveBots();
-            closeModal();
-            showToast(`Bot "${botName}" created in ${currentMode === 'demo' ? 'Demo' : 'Live'} mode`);
-        });
+            userBots.push(newBot)
+            localStorage.setItem('tradingBots', JSON.stringify(userBots))
+            renderBots()
+            fileInput.value = ''
+            showToast(`Bot "${botName}" uploaded successfully!`)
+        }
 
-        function pauseBot(botId) {
-            const bot = activeBots.find(b => b.id === botId);
-            if (bot) {
-                bot.status = bot.status === 'running' ? 'paused' : 'running';
-                loadActiveBots();
-                showToast(`Bot ${bot.name} ${bot.status}`);
+        function activateWithPasskey() {
+            const passkey = document.getElementById('passkeyInput').value.trim()
+            const tradeAmount = document.getElementById('tradeAmount').value
+            const tradeInterval = document.getElementById('tradeInterval').options[document.getElementById('tradeInterval').selectedIndex].text
+            const tradingAsset = document.getElementById('tradingAsset').value
+            
+            if (!passkey) {
+                showToast('Please enter a passkey')
+                return
+            }
+            
+            // Demo passkeys for testing
+            const validPasskeys = ['Ak1234', 'BOT2024', 'TRADE123']
+            
+            if (validPasskeys.includes(passkey)) {
+                // Extract bot name from passkey or use default
+                let botName = ''
+                if (passkey === 'Ak1234') botName = 'Advanced Trading Bot'
+                else if (passkey === 'BOT2024') botName = 'Grid Trading Bot'
+                else if (passkey === 'TRADE123') botName = 'DCA Bot'
+                else botName = `Bot-${passkey}`
+                
+                const newBot = {
+                    name: botName,
+                    asset: tradingAsset,
+                    amount: tradeAmount,
+                    interval: tradeInterval,
+                    passkey: passkey,
+                    created: new Date().toISOString()
+                }
+                
+                userBots.push(newBot)
+                localStorage.setItem('tradingBots', JSON.stringify(userBots))
+                renderBots()
+                document.getElementById('passkeyInput').value = ''
+                showToast(`Bot activated successfully! Welcome ${botName}`)
+            } else {
+                showToast('Invalid passkey. Please check and try again.')
             }
         }
 
-        function deleteBot(botId) {
-            if (confirm('Delete this bot?')) {
-                activeBots = activeBots.filter(b => b.id !== botId);
-                loadActiveBots();
-                showToast('Bot deleted');
+        function deleteBot(index) {
+            if (confirm('Are you sure you want to remove this bot?')) {
+                userBots.splice(index, 1)
+                localStorage.setItem('tradingBots', JSON.stringify(userBots))
+                renderBots()
+                showToast('Bot removed successfully')
             }
         }
+
+        // Drag and drop functionality
+        const dropZone = document.getElementById('dropZone')
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault()
+            dropZone.style.borderColor = '#3b82f6'
+            dropZone.style.background = '#f8fafc'
+        })
+        
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault()
+            dropZone.style.borderColor = '#cbd5e1'
+            dropZone.style.background = 'transparent'
+        })
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault()
+            dropZone.style.borderColor = '#cbd5e1'
+            dropZone.style.background = 'transparent'
+            
+            const files = e.dataTransfer.files
+            if (files.length > 0) {
+                const fileInput = document.getElementById('fileInput')
+                fileInput.files = files
+                showToast(`File "${files[0].name}" selected`)
+            }
+        })
 
         function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;';
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
+            const toast = document.createElement('div')
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;'
+            toast.textContent = msg
+            document.body.appendChild(toast)
+            setTimeout(() => toast.remove(), 2000)
         }
 
-        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
-        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
+        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
+        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
 
-        setInterval(() => {
-            activeBots.forEach(bot => {
-                if (bot.status === 'running') {
-                    const change = (Math.random() - 0.5) * 20;
-                    bot.pnl += change;
-                    bot.roi = (bot.pnl / 1000) * 100;
-                    bot.roi = Math.max(-50, Math.min(50, bot.roi));
-                }
-            });
-            loadActiveBots();
-        }, 10000);
-
-        loadActiveBots();
+        // Initialize
+        renderBots()
     </script>
 </body>
 </html>
