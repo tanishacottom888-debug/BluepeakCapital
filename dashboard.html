@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
     <meta name="description" content="BluepeakCapital - Institutional-grade cryptocurrency trading platform dashboard" />
     <title>BluepeakCapital | Institutional Dashboard</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
@@ -20,7 +20,6 @@
 
         let currentUser = null;
 
-        // Check authentication and load user data
         async function checkAuthAndLoadUser() {
             const { data: { session } } = await supabase.auth.getSession()
             
@@ -31,7 +30,6 @@
             
             currentUser = session.user
             
-            // Fetch user profile from profiles table
             const { data: profile, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -40,7 +38,6 @@
             
             if (error) {
                 console.error('Error fetching profile:', error)
-                // Use auth user data as fallback
                 updateUserDisplay({
                     full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
                     email: session.user.email
@@ -50,24 +47,20 @@
             }
         }
         
-        // Update UI with real user data
         function updateUserDisplay(user) {
             const fullName = user.full_name || user.email?.split('@')[0] || 'User'
             const firstName = fullName.split(' ')[0]
             
-            // Update welcome message
             const welcomeH1 = document.querySelector('.welcome-section h1')
             if (welcomeH1) {
                 welcomeH1.textContent = `Welcome back, ${firstName}`
             }
             
-            // Update user name in top bar
             const userNameSpan = document.querySelector('.user-menu span')
             if (userNameSpan) {
                 userNameSpan.textContent = fullName
             }
             
-            // Update avatar with initials
             const userAvatar = document.querySelector('.user-avatar')
             if (userAvatar) {
                 const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
@@ -75,7 +68,6 @@
             }
         }
         
-        // Logout function
         window.logout = async function() {
             const { error } = await supabase.auth.signOut()
             if (!error) {
@@ -91,7 +83,6 @@
             alert(msg)
         }
         
-        // Run auth check when page loads
         checkAuthAndLoadUser()
     </script>
     
@@ -181,7 +172,6 @@
             color: #3b82f6;
         }
 
-        /* Mobile Menu Button */
         .mobile-menu-btn {
             display: none;
             background: none;
@@ -191,7 +181,6 @@
             cursor: pointer;
         }
 
-        /* Mobile Menu Dropdown */
         .mobile-menu {
             display: none;
             position: absolute;
@@ -217,10 +206,6 @@
             padding: 0.5rem;
             font-size: 0.9rem;
             font-weight: 500;
-        }
-
-        .mobile-menu a:hover {
-            color: #3b82f6;
         }
 
         .user-menu {
@@ -258,7 +243,6 @@
             color: white;
         }
 
-        /* Main Layout */
         .main-container {
             margin-top: 65px;
             padding: 1.5rem;
@@ -267,7 +251,6 @@
             margin-right: auto;
         }
 
-        /* Welcome Section */
         .welcome-section {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border-radius: 16px;
@@ -281,7 +264,6 @@
             margin-bottom: 0.25rem;
         }
 
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -318,7 +300,6 @@
         .positive { color: #10b981; }
         .negative { color: #ef4444; }
 
-        /* Three Column Layout */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1.5fr 1fr;
@@ -326,7 +307,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Trading Chart Container */
         .chart-container {
             background: white;
             border-radius: 16px;
@@ -359,7 +339,6 @@
             width: 100%;
         }
 
-        /* Order Book Panel */
         .orderbook-container {
             background: white;
             border-radius: 16px;
@@ -395,7 +374,6 @@
         .bid { color: #10b981; }
         .ask { color: #ef4444; }
 
-        /* Price Alerts Section */
         .alerts-section {
             background: white;
             border-radius: 16px;
@@ -462,7 +440,6 @@
             font-size: 0.7rem;
         }
 
-        /* Portfolio Table */
         .portfolio-container {
             background: white;
             border-radius: 16px;
@@ -492,7 +469,6 @@
             font-size: 0.85rem;
         }
 
-        /* Mobile App Section */
         .mobile-app-section {
             background: linear-gradient(135deg, #1a1f36, #0f172a);
             border-radius: 16px;
@@ -532,7 +508,6 @@
             cursor: pointer;
         }
 
-        /* News Feed */
         .news-section {
             background: white;
             border-radius: 16px;
@@ -571,35 +546,6 @@
             color: #94a3b8;
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-            .mobile-menu-btn {
-                display: block;
-            }
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .mobile-app-section {
-                flex-direction: column;
-                text-align: center;
-            }
-            .alert-form {
-                flex-direction: column;
-            }
-            .user-menu span {
-                display: none;
-            }
-        }
-
         .btn-small {
             background: #3b82f6;
             color: white;
@@ -608,6 +554,224 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.7rem;
+        }
+
+        /* ============================================ */
+        /* IMPROVED MOBILE LAYOUT - ONLY CHANGES HERE */
+        /* ============================================ */
+        
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* Navigation */
+            .nav-links {
+                display: none;
+            }
+            .mobile-menu-btn {
+                display: block;
+            }
+            .user-menu span {
+                display: none;
+            }
+            
+            /* Main container padding reduced */
+            .main-container {
+                padding: 1rem;
+                margin-top: 60px;
+            }
+            
+            /* Welcome section */
+            .welcome-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .welcome-section h1 {
+                font-size: 1.2rem;
+            }
+            .welcome-section p {
+                font-size: 0.8rem;
+            }
+            
+            /* Stats Grid - 2 columns */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1rem;
+            }
+            .stat-card {
+                padding: 0.75rem;
+            }
+            .stat-value {
+                font-size: 1.2rem;
+            }
+            .stat-label {
+                font-size: 0.6rem;
+            }
+            .stat-change {
+                font-size: 0.6rem;
+            }
+            
+            /* Chart */
+            .chart-container {
+                border-radius: 12px;
+            }
+            .chart-header {
+                padding: 0.75rem;
+                flex-wrap: wrap;
+            }
+            .chart-header h3 {
+                font-size: 0.85rem;
+            }
+            .pair-selector {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+            #tradingview_chart {
+                height: 280px;
+            }
+            
+            /* Order Book */
+            .orderbook-container {
+                border-radius: 12px;
+            }
+            .orderbook-header {
+                padding: 0.75rem;
+            }
+            .orderbook-header h3 {
+                font-size: 0.85rem;
+            }
+            .orderbook-table {
+                font-size: 0.7rem;
+            }
+            .orderbook-table th, .orderbook-table td {
+                padding: 0.35rem 0.75rem;
+            }
+            
+            /* Price Alerts */
+            .alerts-section {
+                border-radius: 12px;
+            }
+            .alerts-header {
+                padding: 0.75rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.3rem;
+            }
+            .alerts-header h3 {
+                font-size: 0.85rem;
+            }
+            .alerts-header span {
+                font-size: 0.6rem;
+            }
+            .alert-form {
+                flex-direction: column;
+                padding: 0.75rem;
+                gap: 0.5rem;
+            }
+            .alert-form select, .alert-form input {
+                width: 100%;
+                padding: 0.4rem;
+                font-size: 0.7rem;
+            }
+            .alert-form button {
+                width: 100%;
+                padding: 0.4rem;
+                font-size: 0.7rem;
+            }
+            .alert-list {
+                padding: 0 0.75rem 0.75rem;
+            }
+            .alert-item {
+                font-size: 0.7rem;
+                padding: 0.4rem 0;
+            }
+            
+            /* Portfolio Table */
+            .portfolio-container {
+                border-radius: 12px;
+                margin-bottom: 1rem;
+            }
+            .portfolio-table th {
+                padding: 0.6rem;
+                font-size: 0.6rem;
+            }
+            .portfolio-table td {
+                padding: 0.6rem;
+                font-size: 0.7rem;
+            }
+            .btn-small {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.6rem;
+            }
+            
+            /* Mobile App Section */
+            .mobile-app-section {
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .mobile-app-section h3 {
+                font-size: 0.9rem;
+            }
+            .mobile-app-section p {
+                font-size: 0.7rem;
+            }
+            .app-buttons {
+                justify-content: center;
+            }
+            .app-btn {
+                padding: 0.35rem 0.8rem;
+                font-size: 0.7rem;
+            }
+            .qr-code {
+                width: 70px;
+                height: 70px;
+                font-size: 0.6rem;
+            }
+            
+            /* News Feed */
+            .news-section {
+                border-radius: 12px;
+            }
+            .news-header {
+                padding: 0.75rem;
+            }
+            .news-header h3 {
+                font-size: 0.85rem;
+            }
+            .news-item {
+                padding: 0.75rem;
+            }
+            .news-title {
+                font-size: 0.75rem;
+            }
+            .news-time {
+                font-size: 0.6rem;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .main-container {
+                padding: 0.75rem;
+            }
+            .stats-grid {
+                gap: 0.5rem;
+            }
+            .stat-card {
+                padding: 0.5rem;
+            }
+            .stat-value {
+                font-size: 1rem;
+            }
+            .portfolio-table th, .portfolio-table td {
+                padding: 0.4rem;
+            }
         }
     </style>
 </head>
@@ -636,7 +800,6 @@
         </div>
     </nav>
 
-    <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <a href="#" class="active">Dashboard</a>
         <a href="trade.html">Trade</a>
@@ -650,13 +813,11 @@
     </div>
 
     <div class="main-container">
-        <!-- Welcome Section -->
         <div class="welcome-section">
             <h1>Welcome back, User</h1>
             <p>Your portfolio is up +2.4% today</p>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total Balance</div>
@@ -680,7 +841,6 @@
             </div>
         </div>
 
-        <!-- Dashboard Grid: Chart + Order Book -->
         <div class="dashboard-grid">
             <div class="chart-container">
                 <div class="chart-header">
@@ -707,7 +867,6 @@
             </div>
         </div>
 
-        <!-- Price Alerts System -->
         <div class="alerts-section">
             <div class="alerts-header">
                 <h3>Price Alerts</h3>
@@ -730,7 +889,6 @@
             <div class="alert-list" id="alertList"></div>
         </div>
 
-        <!-- Portfolio Table -->
         <div class="portfolio-container">
             <table class="portfolio-table">
                 <thead>
@@ -740,7 +898,6 @@
             </table>
         </div>
 
-        <!-- Mobile App Section -->
         <div class="mobile-app-section">
             <div>
                 <h3>Trade on the Go</h3>
@@ -755,7 +912,6 @@
             </div>
         </div>
 
-        <!-- News Feed -->
         <div class="news-section">
             <div class="news-header">
                 <h3>Latest Crypto News</h3>
@@ -765,7 +921,6 @@
     </div>
 
     <script>
-        // Portfolio Data
         const portfolioData = [
             { asset: "Bitcoin", symbol: "BTC", holdings: 2.5, avgPrice: 38500, currentPrice: 43250, value: 108125, pnl: 11875, pnlPercent: 12.3 },
             { asset: "Ethereum", symbol: "ETH", holdings: 15, avgPrice: 1850, currentPrice: 2250, value: 33750, pnl: 6000, pnlPercent: 21.6 },
@@ -773,10 +928,8 @@
             { asset: "Avalanche", symbol: "AVAX", holdings: 50, avgPrice: 32, currentPrice: 38.20, value: 1910, pnl: 310, pnlPercent: 19.4 }
         ];
 
-        // Price Alerts Array
         let priceAlerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
 
-        // News Data
         const newsData = [
             { title: "Bitcoin surges past $43,000 as institutional inflows continue", time: "2 hours ago", source: "CoinDesk" },
             { title: "Ethereum futures ETF launch expected next week", time: "4 hours ago", source: "Bloomberg" },
@@ -787,7 +940,6 @@
             { title: "Institutional crypto trading volume up 40%", time: "2 days ago", source: "FT" }
         ];
 
-        // TradingView Chart
         let tvWidget = null;
 
         function initTradingView() {
@@ -812,36 +964,24 @@
             });
         }
 
-        function changeChartPair() {
-            initTradingView();
-        }
+        function changeChartPair() { initTradingView(); }
 
-        // Order Book Simulation
         function updateOrderBook() {
             const basePrice = portfolioData[0].currentPrice;
-            const asks = [];
-            const bids = [];
-            
+            const asks = [], bids = [];
             for (let i = 1; i <= 5; i++) {
                 asks.push({ price: basePrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice + (i * 5)) * Math.random() * 2).toFixed(0) });
                 bids.push({ price: basePrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice - (i * 5)) * Math.random() * 2).toFixed(0) });
             }
-            
             document.getElementById('askOrders').innerHTML = asks.map(a => `<td><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></div> </div>`).join('');
             document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></div> </div>`).join('');
         }
 
-        // Price Alerts Functions
         function addPriceAlert() {
             const coin = document.getElementById('alertCoin').value;
             const condition = document.getElementById('alertCondition').value;
             const price = parseFloat(document.getElementById('alertPrice').value);
-            
-            if (!price || price <= 0) {
-                alert('Please enter a valid price');
-                return;
-            }
-            
+            if (!price || price <= 0) { alert('Please enter a valid price'); return; }
             priceAlerts.push({ coin, condition, price, triggered: false });
             localStorage.setItem('priceAlerts', JSON.stringify(priceAlerts));
             renderAlerts();
@@ -861,7 +1001,6 @@
                 alertList.innerHTML = '<p style="padding: 1rem; color: #718096; font-size: 0.8rem;">No alerts set. Create one above.</p>';
                 return;
             }
-            
             alertList.innerHTML = priceAlerts.map((alert, i) => `
                 <div class="alert-item">
                     <span>${alert.coin} ${alert.condition === 'above' ? '↑' : '↓'} $${alert.price.toLocaleString()}</span>
@@ -871,21 +1010,13 @@
         }
         
         function checkPriceAlerts() {
-            const prices = {
-                BTC: portfolioData[0].currentPrice,
-                ETH: portfolioData[1].currentPrice,
-                SOL: portfolioData[2].currentPrice,
-                AVAX: portfolioData[3].currentPrice
-            };
-            
+            const prices = { BTC: portfolioData[0].currentPrice, ETH: portfolioData[1].currentPrice, SOL: portfolioData[2].currentPrice, AVAX: portfolioData[3].currentPrice };
             priceAlerts.forEach((alert, i) => {
                 if (!alert.triggered) {
                     const currentPrice = prices[alert.coin];
                     let triggered = false;
-                    
                     if (alert.condition === 'above' && currentPrice >= alert.price) triggered = true;
                     else if (alert.condition === 'below' && currentPrice <= alert.price) triggered = true;
-                    
                     if (triggered) {
                         alert.triggered = true;
                         showMessage(`ALERT: ${alert.coin} is ${alert.condition} $${alert.price}! Current: $${currentPrice}`);
@@ -896,7 +1027,6 @@
             });
         }
 
-        // Load Portfolio
         function loadPortfolio() {
             const tbody = document.getElementById('portfolioBody');
             tbody.innerHTML = portfolioData.map(asset => `
@@ -952,7 +1082,6 @@
             document.getElementById('totalPnl').innerHTML = `${totalPnl >= 0 ? '+' : '-'}$${Math.abs(totalPnl).toLocaleString()}`;
         }
 
-        // Load News Feed
         function loadNews() {
             const newsFeed = document.getElementById('newsFeed');
             newsFeed.innerHTML = newsData.map(news => `
@@ -963,22 +1092,15 @@
             `).join('');
         }
 
-        function showMessage(msg) {
-            alert(msg);
-        }
+        function showMessage(msg) { alert(msg); }
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('active'); }
 
-        function toggleMobileMenu() {
-            document.getElementById('mobileMenu').classList.toggle('active');
-        }
-
-        // Initialize Everything
         function init() {
             loadPortfolio();
             updateOrderBook();
             renderAlerts();
             loadNews();
             setTimeout(() => initTradingView(), 500);
-            
             setInterval(() => {
                 portfolioData.forEach(asset => {
                     const change = (Math.random() - 0.5) * 100;
