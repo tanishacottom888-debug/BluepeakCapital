@@ -3,396 +3,173 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <meta name="description" content="BluepeakCapital - Login to your institutional trading account" />
     <title>BluepeakCapital | Login</title>
-    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
-    
-    <!-- Supabase SDK -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-        // Supabase Configuration
         const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
         const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
-        
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-        const loginForm = document.getElementById('loginForm');
-        const errorDiv = document.getElementById('errorMessage');
-        const successDiv = document.getElementById('successMessage');
-        
-        // Track the last attempted email for resend
-        let lastAttemptedEmail = '';
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Toggle Password Visibility (Professional Eye Icons)
+        window.togglePassword = function() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
             
+            if (input.type === 'password') {
+                input.type = 'text';
+                // Slashed eye (password visible)
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                input.type = 'password';
+                // Open eye (password hidden)
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+
+        // Handle Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            lastAttemptedEmail = email;
 
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
-
-            if (!email || !password) {
-                showError('Please fill in all fields');
-                return;
-            }
-
-            const submitBtn = loginForm.querySelector('.btn-primary');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Signing in...';
-            submitBtn.disabled = true;
-
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                })
-
-                if (error) {
-                    // Handle email not confirmed error
-                    if (error.message.includes('Email not confirmed')) {
-                        showErrorWithResend('Email not confirmed. Please check your inbox or click below to resend the confirmation email.');
-                        document.getElementById('resendContainer').style.display = 'block';
-                    } else {
-                        showError(error.message);
-                    }
-                } else {
-                    showSuccess('Login successful! Redirecting to dashboard...');
-                    
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    localStorage.setItem('session', JSON.stringify(data.session));
-                    
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
-                }
-            } catch (err) {
-                showError('Network error. Please try again.');
-            } finally {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        });
-        
-        // Resend confirmation email
-        window.resendConfirmation = async function() {
-            if (!lastAttemptedEmail) {
-                const email = document.getElementById('email').value;
-                if (!email) {
-                    showError('Please enter your email address first');
-                    return;
-                }
-                lastAttemptedEmail = email;
-            }
-            
-            const resendBtn = document.getElementById('resendBtn');
-            const originalText = resendBtn.textContent;
-            resendBtn.textContent = 'Sending...';
-            resendBtn.disabled = true;
-            
-            try {
-                const { error } = await supabase.auth.resend({
-                    type: 'signup',
-                    email: lastAttemptedEmail,
-                })
-                
-                if (error) {
-                    showError(error.message);
-                } else {
-                    showSuccess(`Confirmation email sent to ${lastAttemptedEmail}. Please check your inbox.`);
-                    document.getElementById('resendContainer').style.display = 'none';
-                }
-            } catch (err) {
-                showError('Network error. Please try again.');
-            } finally {
-                resendBtn.textContent = originalText;
-                resendBtn.disabled = false;
-            }
-        };
-
-        function showError(message) {
-            errorDiv.innerHTML = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-        
-        function showErrorWithResend(message) {
-            errorDiv.innerHTML = message;
-            errorDiv.style.display = 'block';
-        }
-
-        function showSuccess(message) {
-            successDiv.innerHTML = message;
-            successDiv.style.display = 'block';
-            setTimeout(() => {
-                successDiv.style.display = 'none';
-            }, 3000);
-        }
-
-        async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (session) {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                alert(error.message);
+            } else {
+                localStorage.setItem('user', JSON.stringify(data.user));
                 window.location.href = 'dashboard.html';
             }
-        }
-        
-        checkSession();
-    </script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        });
 
+        // Redirect if already logged in
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) window.location.href = 'dashboard.html';
+        });
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f5f7fb 0%, #ffffff 50%, #f0f4f9 100%);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fb 0%, #ffffff 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
-        .login-container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 480px;
-            margin: 2rem;
-        }
-
         .login-card {
             background: white;
             border-radius: 24px;
             padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.1);
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+            border: 1px solid #eef2f6;
         }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
+        .logo { text-align: center; margin-bottom: 2rem; }
         .logo-icon {
-            width: 48px;
-            height: 48px;
+            width: 48px; height: 48px;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border-radius: 14px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
             font-size: 1.5rem;
             color: white;
             margin-bottom: 1rem;
         }
-
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+        h1 { font-size: 1.75rem; font-weight: 600; text-align: center; margin-bottom: 0.5rem; }
+        .subtitle { text-align: center; color: #5b677b; margin-bottom: 2rem; font-size: 0.9rem; }
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.5rem; color: #1e293b; }
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
-
-        .logo-text span {
-            color: #3b82f6;
-        }
-
-        h1 {
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: #1a1f36;
-            margin-bottom: 0.5rem;
-            text-align: center;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #718096;
-            font-size: 0.875rem;
-            margin-bottom: 2rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #1a1f36;
-            margin-bottom: 0.5rem;
-        }
-
         input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.85rem 1rem;
             border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 0.875rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
             transition: all 0.2s;
-            font-family: inherit;
+            background: #fff;
         }
-
         input:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
-
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-
-        .success-message {
-            background: #d1fae5;
-            color: #059669;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-
-        .resend-container {
-            display: none;
-            margin-top: 1rem;
-            text-align: center;
-        }
-
-        .resend-btn {
+        .toggle-btn {
+            position: absolute;
+            right: 12px;
             background: transparent;
-            border: 1px solid #3b82f6;
-            color: #3b82f6;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
+            border: none;
             cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            padding: 0;
+            color: #64748b;
         }
-
-        .resend-btn:hover {
-            background: #3b82f6;
-            color: white;
+        .toggle-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: #64748b;
+            stroke-width: 2;
+            fill: none;
         }
-
-        .btn-primary {
+        button[type="submit"] {
             width: 100%;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border: none;
-            padding: 0.875rem;
-            border-radius: 10px;
+            padding: 0.9rem;
+            border-radius: 12px;
             color: white;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.2s;
             margin-top: 0.5rem;
+            transition: all 0.2s;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .signup-link {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.875rem;
-            color: #4a5568;
-        }
-
-        .signup-link a {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .signup-link a:hover {
-            text-decoration: underline;
-        }
-
-        .back-home {
-            text-align: center;
-            margin-top: 1.5rem;
-        }
-
-        .back-home a {
-            color: #718096;
-            text-decoration: none;
-            font-size: 0.8rem;
-        }
-
-        .back-home a:hover {
-            color: #3b82f6;
-        }
-
-        @media (max-width: 768px) {
-            .login-card {
-                padding: 1.5rem;
-            }
-        }
+        button[type="submit"]:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(59,130,246,0.3); }
+        .footer-links { text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: #5b677b; }
+        .footer-links a { color: #3b82f6; text-decoration: none; font-weight: 500; }
+        @media (max-width: 500px) { .login-card { padding: 1.5rem; margin: 1rem; } }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="logo">
-                <div class="logo-icon">⛰️</div>
-                <div class="logo-text">Bluepeak<span>Capital</span></div>
+    <div class="login-card">
+        <div class="logo">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text" style="font-size: 1.5rem; font-weight: 700;">Bluepeak<span style="color:#3b82f6">Capital</span></div>
+        </div>
+        <h1>Welcome back</h1>
+        <p class="subtitle">Sign in to your account</p>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Email address</label>
+                <input type="email" id="email" placeholder="john@example.com" required>
             </div>
-            
-            <h1>Welcome back</h1>
-            <p class="subtitle">Sign in to your account</p>
-
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
-
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>Email address</label>
-                    <input type="email" id="email" placeholder="john@example.com" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Password</label>
+            <div class="input-group">
+                <label>Password</label>
+                <div class="password-wrapper">
                     <input type="password" id="password" placeholder="Enter your password" required>
+                    <button type="button" class="toggle-btn" onclick="togglePassword()">
+                        <svg id="togglePasswordIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
                 </div>
-
-                <button type="submit" class="btn-primary">Sign In →</button>
-            </form>
-
-            <div class="resend-container" id="resendContainer">
-                <button class="resend-btn" id="resendBtn" onclick="resendConfirmation()">Resend Confirmation Email</button>
             </div>
-
-            <div class="signup-link">
-                Don't have an account? <a href="signup.html">Get started →</a>
-            </div>
-
-            <div class="back-home">
-                <a href="index.html">← Back to homepage</a>
-            </div>
+            <button type="submit">Sign In →</button>
+        </form>
+        <div class="footer-links">
+            <p>Don't have an account? <a href="signup.html">Get started →</a></p>
+            <p style="margin-top: 0.8rem;"><a href="index.html">← Back to homepage</a></p>
         </div>
     </div>
 </body>
