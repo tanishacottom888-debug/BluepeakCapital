@@ -221,8 +221,24 @@
         .bots-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            gap: 2rem;
+            position: relative;
             margin-bottom: 1.5rem;
+        }
+
+        /* OR Divider */
+        .or-divider {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f5f7fb;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #64748b;
+            z-index: 1;
         }
 
         /* Upload Card */
@@ -343,12 +359,37 @@
             margin-bottom: 0.3rem;
         }
 
-        .setting-field input, .setting-field select {
+        .setting-field input {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             font-size: 0.75rem;
+        }
+
+        /* Custom Select with Icons */
+        .asset-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .asset-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .asset-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 0.3rem;
         }
 
         /* My Bots Section */
@@ -434,7 +475,16 @@
             }
             .bots-grid {
                 grid-template-columns: 1fr;
-                gap: 0.8rem;
+                gap: 1rem;
+            }
+            .or-divider {
+                position: relative;
+                top: auto;
+                left: auto;
+                transform: none;
+                text-align: center;
+                margin: 0.5rem 0;
+                background: transparent;
             }
             .settings-grid {
                 grid-template-columns: 1fr;
@@ -510,7 +560,7 @@
             <h1>Trading Bots</h1>
         </div>
 
-        <!-- Upload + Passkey Grid -->
+        <!-- Upload + Passkey Grid with OR divider -->
         <div class="bots-grid">
             <!-- Upload Bot Card -->
             <div class="upload-card">
@@ -524,6 +574,9 @@
                 <input type="file" id="fileInput" style="display: none;" accept=".py,.js,.ts,.json,.zip">
                 <button class="upload-btn" onclick="uploadBot()">Upload Trading Bot</button>
             </div>
+
+            <!-- OR Divider -->
+            <div class="or-divider">OR</div>
 
             <!-- Activate with Passkey Card -->
             <div class="passkey-card">
@@ -559,12 +612,52 @@
                 </div>
                 <div class="setting-field">
                     <label>Trading Asset</label>
-                    <select id="tradingAsset">
-                        <option value="BTC/USD">BTC/USD</option>
-                        <option value="ETH/USD">ETH/USD</option>
-                        <option value="SOL/USD">SOL/USD</option>
-                        <option value="EUR/USD">EUR/USD</option>
-                        <option value="GBP/USD">GBP/USD</option>
+                    <select id="tradingAsset" class="asset-select">
+                        <option value="BTC/USD">
+                            <img src="https://assets.coincap.io/assets/icons/btc@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Bitcoin (BTC/USD)
+                        </option>
+                        <option value="ETH/USD">
+                            <img src="https://assets.coincap.io/assets/icons/eth@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Ethereum (ETH/USD)
+                        </option>
+                        <option value="SOL/USD">
+                            <img src="https://assets.coincap.io/assets/icons/sol@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Solana (SOL/USD)
+                        </option>
+                        <option value="XRP/USD">
+                            <img src="https://assets.coincap.io/assets/icons/xrp@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Ripple (XRP/USD)
+                        </option>
+                        <option value="ADA/USD">
+                            <img src="https://assets.coincap.io/assets/icons/ada@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Cardano (ADA/USD)
+                        </option>
+                        <option value="AVAX/USD">
+                            <img src="https://assets.coincap.io/assets/icons/avax@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Avalanche (AVAX/USD)
+                        </option>
+                        <option value="DOGE/USD">
+                            <img src="https://assets.coincap.io/assets/icons/doge@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Dogecoin (DOGE/USD)
+                        </option>
+                        <option value="DOT/USD">
+                            <img src="https://assets.coincap.io/assets/icons/dot@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Polkadot (DOT/USD)
+                        </option>
+                        <option value="LINK/USD">
+                            <img src="https://assets.coincap.io/assets/icons/link@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Chainlink (LINK/USD)
+                        </option>
+                        <option value="MATIC/USD">
+                            <img src="https://assets.coincap.io/assets/icons/matic@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Polygon (MATIC/USD)
+                        </option>
+                        <option value="LTC/USD">
+                            <img src="https://assets.coincap.io/assets/icons/ltc@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Litecoin (LTC/USD)
+                        </option>
+                        <option value="BNB/USD">
+                            <img src="https://assets.coincap.io/assets/icons/bnb@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Binance Coin (BNB/USD)
+                        </option>
+                        <option value="UNI/USD">
+                            <img src="https://assets.coincap.io/assets/icons/uni@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Uniswap (UNI/USD)
+                        </option>
+                        <option value="ATOM/USD">
+                            <img src="https://assets.coincap.io/assets/icons/atom@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Cosmos (ATOM/USD)
+                        </option>
+                        <option value="NEAR/USD">
+                            <img src="https://assets.coincap.io/assets/icons/near@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Near Protocol (NEAR/USD)
+                        </option>
                     </select>
                 </div>
             </div>
@@ -622,7 +715,8 @@
             const fileInput = document.getElementById('fileInput')
             const tradeAmount = document.getElementById('tradeAmount').value
             const tradeInterval = document.getElementById('tradeInterval').options[document.getElementById('tradeInterval').selectedIndex].text
-            const tradingAsset = document.getElementById('tradingAsset').value
+            const tradingAssetSelect = document.getElementById('tradingAsset')
+            const tradingAsset = tradingAssetSelect.options[tradingAssetSelect.selectedIndex].text
             
             if (fileInput.files.length === 0) {
                 showToast('Please select a file to upload')
@@ -651,7 +745,8 @@
             const passkey = document.getElementById('passkeyInput').value.trim()
             const tradeAmount = document.getElementById('tradeAmount').value
             const tradeInterval = document.getElementById('tradeInterval').options[document.getElementById('tradeInterval').selectedIndex].text
-            const tradingAsset = document.getElementById('tradingAsset').value
+            const tradingAssetSelect = document.getElementById('tradingAsset')
+            const tradingAsset = tradingAssetSelect.options[tradingAssetSelect.selectedIndex].text
             
             if (!passkey) {
                 showToast('Please enter a passkey')
@@ -662,7 +757,6 @@
             const validPasskeys = ['Ak1234', 'BOT2024', 'TRADE123']
             
             if (validPasskeys.includes(passkey)) {
-                // Extract bot name from passkey or use default
                 let botName = ''
                 if (passkey === 'Ak1234') botName = 'Advanced Trading Bot'
                 else if (passkey === 'BOT2024') botName = 'Grid Trading Bot'
