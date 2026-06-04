@@ -9,6 +9,113 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        // Supabase Configuration
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        const signupForm = document.getElementById('signupForm');
+        const errorDiv = document.getElementById('errorMessage');
+        const successDiv = document.getElementById('successMessage');
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const accountType = document.getElementById('accountType').value;
+            const country = document.getElementById('country').value;
+
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            if (!firstName || !lastName || !email || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+
+            const submitBtn = signupForm.querySelector('.btn-primary');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Creating account...';
+            submitBtn.disabled = true;
+
+            try {
+                // Sign up with Supabase
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName,
+                            account_type: accountType,
+                            country: country,
+                            full_name: `${firstName} ${lastName}`
+                        }
+                    }
+                })
+
+                if (error) {
+                    showError(error.message);
+                } else {
+                    // Create profile record
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .insert([
+                            {
+                                id: data.user.id,
+                                email: email,
+                                full_name: `${firstName} ${lastName}`,
+                                account_type: accountType,
+                                country: country,
+                                created_at: new Date().toISOString()
+                            }
+                        ])
+
+                    if (profileError) {
+                        console.error('Profile creation error:', profileError);
+                    }
+
+                    showSuccess('Account created successfully! Please check your email to verify your account.');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 3000);
+                }
+            } catch (err) {
+                showError('Network error. Please try again.');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 4000);
+        }
+
+        function showSuccess(message) {
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -120,6 +227,26 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #059669;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
         .btn-primary {
             width: 100%;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -152,10 +279,6 @@
             font-weight: 500;
         }
 
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
         @media (max-width: 768px) {
             .signup-card {
                 padding: 1.5rem;
@@ -178,26 +301,29 @@
             <h1>Create account</h1>
             <p class="subtitle">Start trading with institutional-grade infrastructure</p>
 
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
             <form id="signupForm">
                 <div class="form-row">
                     <div class="form-group">
                         <label>First name</label>
-                        <input type="text" id="firstName" placeholder="John">
+                        <input type="text" id="firstName" placeholder="John" required>
                     </div>
                     <div class="form-group">
                         <label>Last name</label>
-                        <input type="text" id="lastName" placeholder="Doe">
+                        <input type="text" id="lastName" placeholder="Doe" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Email address</label>
-                    <input type="email" id="email" placeholder="john@example.com">
+                    <input type="email" id="email" placeholder="john@example.com" required>
                 </div>
 
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="password" placeholder="Create a password">
+                    <input type="password" id="password" placeholder="Create a strong password" required>
                 </div>
 
                 <div class="form-row">
@@ -229,24 +355,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        const signupForm = document.getElementById('signupForm');
-
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            if (firstName && lastName && email && password) {
-                window.location.href = 'dashboard.html';
-            } else {
-                alert('Please fill in all fields');
-            }
-        });
-    </script>
 </body>
 </html>
