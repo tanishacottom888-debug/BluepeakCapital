@@ -9,6 +9,130 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        let currentUserId = null
+
+        async function loadUserProfile() {
+            const { data: { session } } = await supabase.auth.getSession()
+            
+            if (!session) {
+                window.location.href = 'login.html'
+                return
+            }
+            
+            currentUserId = session.user.id
+            
+            // Fetch user profile
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUserId)
+                .single()
+            
+            if (profile) {
+                // Update profile summary
+                const fullName = profile.full_name || session.user.email?.split('@')[0] || 'User'
+                const firstName = fullName.split(' ')[0] || fullName
+                const lastName = fullName.split(' ')[1] || ''
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                
+                document.getElementById('profileAvatar').textContent = initials
+                document.getElementById('profileName').textContent = fullName
+                document.getElementById('profileEmail').textContent = session.user.email
+                
+                // Update form fields
+                document.getElementById('firstName').value = firstName
+                document.getElementById('lastName').value = lastName
+                document.getElementById('email').value = session.user.email
+                document.getElementById('phone').value = profile.phone || ''
+                document.getElementById('country').value = profile.country || 'US'
+            }
+        }
+        
+        // Save profile changes
+        window.saveProfile = async function() {
+            const firstName = document.getElementById('firstName').value
+            const lastName = document.getElementById('lastName').value
+            const phone = document.getElementById('phone').value
+            const country = document.getElementById('country').value
+            
+            const fullName = `${firstName} ${lastName}`.trim()
+            
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    full_name: fullName,
+                    phone: phone,
+                    country: country,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', currentUserId)
+            
+            if (error) {
+                showToast('Error updating profile: ' + error.message)
+            } else {
+                showToast('Profile updated successfully')
+                // Update sidebar
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                document.getElementById('profileAvatar').textContent = initials
+                document.getElementById('profileName').textContent = fullName
+            }
+        }
+        
+        // Update password
+        window.updatePassword = async function() {
+            const currentPassword = document.getElementById('currentPassword').value
+            const newPassword = document.getElementById('newPassword').value
+            const confirmPassword = document.getElementById('confirmPassword').value
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('Please fill in all password fields')
+                return
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('New passwords do not match')
+                return
+            }
+            
+            if (newPassword.length < 6) {
+                showToast('Password must be at least 6 characters')
+                return
+            }
+            
+            // Update password via Supabase
+            const { error } = await supabase.auth.updateUser({
+                password: newPassword
+            })
+            
+            if (error) {
+                showToast('Error: ' + error.message)
+            } else {
+                showToast('Password updated successfully')
+                document.getElementById('currentPassword').value = ''
+                document.getElementById('newPassword').value = ''
+                document.getElementById('confirmPassword').value = ''
+            }
+        }
+        
+        function showToast(msg) {
+            const toast = document.createElement('div')
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;'
+            toast.textContent = msg
+            document.body.appendChild(toast)
+            setTimeout(() => toast.remove(), 2000)
+        }
+        
+        loadUserProfile()
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -82,7 +206,7 @@
             color: #3b82f6;
         }
 
-        /* Right Menu */
+        /* Right Menu - No balance, no JD avatar, only flag and hamburger */
         .right-menu {
             display: flex;
             align-items: center;
@@ -90,33 +214,10 @@
         }
 
         .flag-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             object-fit: cover;
-            cursor: pointer;
-        }
-
-        .balance-amount {
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #1a1f36;
-            background: #f1f5f9;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-        }
-
-        .user-avatar {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.7rem;
             cursor: pointer;
         }
 
@@ -349,6 +450,11 @@
             font-family: inherit;
         }
 
+        .form-group input:disabled {
+            background: #f8fafc;
+            color: #94a3b8;
+        }
+
         .btn-primary {
             background: #3b82f6;
             color: white;
@@ -360,6 +466,10 @@
             cursor: pointer;
         }
 
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
         .btn-outline {
             background: transparent;
             border: 1px solid #e2e8f0;
@@ -367,6 +477,10 @@
             border-radius: 8px;
             font-size: 0.75rem;
             cursor: pointer;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
         }
 
         .btn-danger {
@@ -377,6 +491,10 @@
             border-radius: 8px;
             font-size: 0.75rem;
             cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
         }
 
         /* 2FA Section */
@@ -500,6 +618,10 @@
                 padding: 0.4rem 0.6rem;
                 font-size: 0.7rem;
             }
+            .flag-icon {
+                width: 24px;
+                height: 24px;
+            }
         }
     </style>
 </head>
@@ -522,8 +644,6 @@
         </div>
         <div class="right-menu">
             <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
-            <div class="balance-amount">$12,450</div>
-            <div class="user-avatar" onclick="showToast('Account settings')">JD</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -570,9 +690,9 @@
             <!-- Sidebar -->
             <aside class="settings-sidebar">
                 <div class="profile-summary">
-                    <div class="profile-avatar">JD</div>
-                    <div class="profile-name">John Doe</div>
-                    <div class="profile-email">john.doe@bluepeak.com</div>
+                    <div class="profile-avatar" id="profileAvatar">U</div>
+                    <div class="profile-name" id="profileName">User</div>
+                    <div class="profile-email" id="profileEmail">user@example.com</div>
                 </div>
                 <ul class="sidebar-menu">
                     <li><a href="#" class="active" onclick="switchSection('profile')">Profile</a></li>
@@ -593,38 +713,39 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>First Name</label>
-                            <input type="text" value="John" disabled>
+                            <input type="text" id="firstName">
                         </div>
                         <div class="form-group">
                             <label>Last Name</label>
-                            <input type="text" value="Doe" disabled>
+                            <input type="text" id="lastName">
                         </div>
                         <div class="form-group">
                             <label>Email Address</label>
-                            <input type="email" value="john.doe@bluepeak.com" disabled>
+                            <input type="email" id="email" disabled>
                         </div>
                         <div class="form-group">
                             <label>Phone Number</label>
-                            <input type="tel" value="+1 (555) 123-4567">
+                            <input type="tel" id="phone" placeholder="+1 (555) 123-4567">
                         </div>
                         <div class="form-group">
                             <label>Country</label>
-                            <select>
-                                <option>United States</option>
-                                <option>United Kingdom</option>
-                                <option>Singapore</option>
+                            <select id="country">
+                                <option value="US">United States</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="SG">Singapore</option>
+                                <option value="AE">UAE</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Time Zone</label>
-                            <select>
+                            <select id="timezone">
                                 <option>EST (UTC -5)</option>
                                 <option>GMT (UTC +0)</option>
                                 <option>SGT (UTC +8)</option>
                             </select>
                         </div>
                     </div>
-                    <button class="btn-primary" onclick="showToast('Profile updated')">Save Changes</button>
+                    <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
                 </div>
 
                 <!-- Security Section -->
@@ -635,30 +756,30 @@
                         <span>Two-Factor Authentication</span>
                         <span class="twofa-disabled">Disabled</span>
                     </div>
-                    <button class="btn-primary" onclick="showToast('2FA setup')">Enable 2FA</button>
+                    <button class="btn-primary" onclick="showToast('2FA setup coming soon')">Enable 2FA</button>
                     
                     <div style="margin-top: 1.2rem;">
                         <h3 style="font-size: 0.85rem; margin-bottom: 0.8rem;">Change Password</h3>
                         <div class="form-group">
                             <label>Current Password</label>
-                            <input type="password" placeholder="Enter current password">
+                            <input type="password" id="currentPassword" placeholder="Enter current password">
                         </div>
                         <div class="form-group">
                             <label>New Password</label>
-                            <input type="password" placeholder="Enter new password">
+                            <input type="password" id="newPassword" placeholder="Enter new password">
                         </div>
                         <div class="form-group">
                             <label>Confirm Password</label>
-                            <input type="password" placeholder="Confirm new password">
+                            <input type="password" id="confirmPassword" placeholder="Confirm new password">
                         </div>
-                        <button class="btn-primary" onclick="showToast('Password changed')">Update</button>
+                        <button class="btn-primary" onclick="updatePassword()">Update Password</button>
                     </div>
                 </div>
 
                 <!-- API Keys Section -->
                 <div id="apiSection" class="section" style="display: none;">
                     <h2 class="section-title">API Keys</h2>
-                    <button class="btn-primary" style="margin-bottom: 0.8rem;" onclick="showToast('Create API key')">+ New API Key</button>
+                    <button class="btn-primary" style="margin-bottom: 0.8rem;" onclick="showToast('Create API key coming soon')">+ New API Key</button>
                     
                     <div class="api-key-item">
                         <div class="api-key-info">
@@ -759,17 +880,17 @@
                     
                     <div class="form-group">
                         <label>Full Legal Name</label>
-                        <input type="text" value="John Michael Doe" disabled>
+                        <input type="text" id="legalName" value="John Michael Doe" disabled>
                     </div>
                     
                     <div class="form-group">
                         <label>Date of Birth</label>
-                        <input type="text" value="1990-05-15" disabled>
+                        <input type="text" id="dob" value="1990-05-15" disabled>
                     </div>
                     
                     <div class="form-group">
                         <label>Address</label>
-                        <input type="text" value="123 Wall Street, New York, NY" disabled>
+                        <input type="text" id="address" value="123 Wall Street, New York, NY" disabled>
                     </div>
                     
                     <button class="btn-outline" onclick="showToast('KYC upgrade submitted')">Upgrade to Institutional</button>
