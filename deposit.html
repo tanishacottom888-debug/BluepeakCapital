@@ -310,27 +310,11 @@
             padding: 0.5rem;
             background: white;
             border-radius: 12px;
-            margin-bottom: 0.5rem;
-            position: relative;
         }
 
         .qr-code img {
             width: 150px;
             height: 150px;
-            display: block;
-        }
-
-        .copy-qr-btn {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 10px;
-            cursor: pointer;
         }
 
         .address-box {
@@ -345,6 +329,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .copy-address-btn {
@@ -475,33 +460,35 @@
         <div class="deposit-card">
             <div class="card-title">Deposit Instructions</div>
 
+            <!-- Step 1: Enter Amount -->
             <div class="amount-section">
                 <label class="amount-label">Step 1: Enter Amount (USD)</label>
                 <input type="number" class="amount-input" id="depositAmount" placeholder="Enter amount in USD" value="100">
             </div>
 
+            <!-- Step 2: Select Asset -->
             <div>
                 <label class="asset-label">Step 2: Select Asset</label>
                 <div class="asset-buttons" id="assetButtons">
                     <button class="asset-btn active" data-asset="BTC">₿ Bitcoin (BTC)</button>
                     <button class="asset-btn" data-asset="ETH">Ξ Ethereum (ETH)</button>
                     <button class="asset-btn" data-asset="SOL">◎ Solana (SOL)</button>
-                    <button class="asset-btn" data-asset="USDT">💵 Tether (USDT)</button>
+                    <button class="asset-btn" data-asset="BNB">🔶 Binance (BNB)</button>
+                    <button class="asset-btn" data-asset="USDT_TRX">💵 Tether TRX (USDT)</button>
                     <button class="asset-btn" data-asset="USDC">💵 USD Coin (USDC)</button>
-                    <button class="asset-btn" data-asset="XRP">X Ripple (XRP)</button>
-                    <button class="asset-btn" data-asset="ADA">₳ Cardano (ADA)</button>
+                    <button class="asset-btn" data-asset="DOGE">🐕 Dogecoin (DOGE)</button>
                 </div>
             </div>
 
+            <!-- Step 3: QR Code and Address -->
             <div id="depositInfo">
                 <div class="qr-section">
                     <div class="qr-code" id="qrCodeContainer">
-                        <img id="qrImage" src="images/btc-qr.png" alt="QR Code">
-                        <button class="copy-qr-btn" onclick="copyQRCode()">Copy QR</button>
+                        <img id="qrImage" src="" alt="QR Code">
                     </div>
                 </div>
                 <div class="address-box">
-                    <span id="depositAddress">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>
+                    <span id="depositAddress"></span>
                     <button class="copy-address-btn" onclick="copyAddress()">Copy Address</button>
                 </div>
 
@@ -532,16 +519,14 @@
 
     <script>
         // ============================================
-        // REPLACE THESE WITH YOUR ACTUAL ADDRESSES
-        // AND QR CODE IMAGE PATHS
+        // YOUR ACTUAL DEPOSIT ADDRESSES
         // ============================================
         
         const assets = {
             BTC: {
                 name: "Bitcoin",
                 symbol: "BTC",
-                address: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-                qrImage: "images/btc-qr.png",
+                address: "112NvxwyYBycQwhuKboLstQQMWjm8qk88W",
                 minDeposit: "0.001 BTC",
                 network: "Bitcoin Network",
                 confirmations: "3",
@@ -551,8 +536,7 @@
             ETH: {
                 name: "Ethereum",
                 symbol: "ETH",
-                address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
-                qrImage: "images/eth-qr.png",
+                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4",
                 minDeposit: "0.01 ETH",
                 network: "ERC-20",
                 confirmations: "12",
@@ -562,57 +546,52 @@
             SOL: {
                 name: "Solana",
                 symbol: "SOL",
-                address: "7Ec5eJ3oVvLpJwQxNkLAvXLpM5YLZqVgXQZKQ7zVpXqZ",
-                qrImage: "images/sol-qr.png",
+                address: "6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w",
                 minDeposit: "0.1 SOL",
                 network: "Solana Network",
                 confirmations: "1",
                 processingTime: "2-5 minutes",
                 warning: "Send only SOL to this address"
             },
-            USDT: {
+            BNB: {
+                name: "Binance Coin",
+                symbol: "BNB",
+                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4",
+                minDeposit: "0.01 BNB",
+                network: "BSC (BEP-20)",
+                confirmations: "15",
+                processingTime: "3-8 minutes",
+                warning: "Send only BNB (BEP-20) to this address"
+            },
+            USDT_TRX: {
                 name: "Tether",
                 symbol: "USDT",
-                address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
-                qrImage: "images/usdt-qr.png",
+                address: "TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae",
                 minDeposit: "50 USDT",
-                network: "ERC-20",
-                confirmations: "12",
-                processingTime: "5-15 minutes",
-                warning: "Send only USDT (ERC-20) to this address"
+                network: "TRC-20",
+                confirmations: "19",
+                processingTime: "5-10 minutes",
+                warning: "Send only USDT (TRC-20) to this address"
             },
             USDC: {
                 name: "USD Coin",
                 symbol: "USDC",
-                address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
-                qrImage: "images/usdc-qr.png",
+                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4",
                 minDeposit: "50 USDC",
                 network: "ERC-20",
                 confirmations: "12",
                 processingTime: "5-15 minutes",
                 warning: "Send only USDC (ERC-20) to this address"
             },
-            XRP: {
-                name: "Ripple",
-                symbol: "XRP",
-                address: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
-                qrImage: "images/xrp-qr.png",
-                minDeposit: "20 XRP",
-                network: "XRP Ledger",
-                confirmations: "4",
-                processingTime: "3-8 minutes",
-                warning: "Send only XRP to this address"
-            },
-            ADA: {
-                name: "Cardano",
-                symbol: "ADA",
-                address: "addr1q9z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z5q7z",
-                qrImage: "images/ada-qr.png",
-                minDeposit: "10 ADA",
-                network: "Cardano Network",
-                confirmations: "15",
-                processingTime: "5-10 minutes",
-                warning: "Send only ADA to this address"
+            DOGE: {
+                name: "Dogecoin",
+                symbol: "DOGE",
+                address: "DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm",
+                minDeposit: "50 DOGE",
+                network: "Dogecoin Network",
+                confirmations: "40",
+                processingTime: "10-30 minutes",
+                warning: "Send only DOGE to this address"
             }
         };
 
@@ -624,8 +603,9 @@
             // Update address
             document.getElementById('depositAddress').innerHTML = asset.address;
             
-            // Update QR Code image
-            document.getElementById('qrImage').src = asset.qrImage;
+            // Update QR Code using API (automatically generates from address)
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(asset.address)}`;
+            document.getElementById('qrImage').src = qrUrl;
             
             // Update info
             document.getElementById('minDeposit').innerHTML = asset.minDeposit;
@@ -641,25 +621,6 @@
             const address = document.getElementById('depositAddress').innerHTML;
             navigator.clipboard.writeText(address);
             showToast('Address copied to clipboard');
-        }
-
-        function copyQRCode() {
-            const qrImage = document.getElementById('qrImage');
-            
-            // Create a canvas to copy the image
-            fetch(qrImage.src)
-                .then(response => response.blob())
-                .then(blob => {
-                    navigator.clipboard.write([
-                        new ClipboardItem({
-                            [blob.type]: blob
-                        })
-                    ]);
-                    showToast('QR code copied to clipboard');
-                })
-                .catch(() => {
-                    showToast('Right-click on QR code and select "Copy Image"');
-                });
         }
 
         function showToast(message) {
