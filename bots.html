@@ -17,11 +17,76 @@
         const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+        let currentUser = null
+
         async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) {
                 window.location.href = 'login.html'
+                return
             }
+            currentUser = session.user
+            await loadUserBots()
+        }
+        
+        // Load user's bots from Supabase
+        async function loadUserBots() {
+            const { data, error } = await supabase
+                .from('user_bots')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+            
+            if (error) {
+                console.error('Error loading bots:', error)
+                return
+            }
+            
+            window.userBots = data || []
+            if (typeof renderBots === 'function') renderBots()
+        }
+        
+        // Save bot to Supabase
+        window.saveBotToDatabase = async function(botData) {
+            const { data, error } = await supabase
+                .from('user_bots')
+                .insert({
+                    user_id: currentUser.id,
+                    bot_name: botData.name,
+                    bot_type: botData.type,
+                    asset: botData.asset,
+                    amount: botData.amount,
+                    interval: botData.interval,
+                    passkey_used: botData.passkey,
+                    status: 'active',
+                    created_at: new Date().toISOString()
+                })
+                .select()
+            
+            if (error) {
+                console.error('Error saving bot:', error)
+                return null
+            }
+            
+            await loadUserBots()
+            return data?.[0]
+        }
+        
+        // Delete bot from Supabase
+        window.deleteBotFromDatabase = async function(botId) {
+            const { error } = await supabase
+                .from('user_bots')
+                .delete()
+                .eq('id', botId)
+                .eq('user_id', currentUser.id)
+            
+            if (error) {
+                console.error('Error deleting bot:', error)
+                return false
+            }
+            
+            await loadUserBots()
+            return true
         }
         
         checkAuth()
@@ -367,7 +432,7 @@
             font-size: 0.75rem;
         }
 
-        /* Custom Select with Icons */
+        /* Asset Select */
         .asset-select {
             width: 100%;
             padding: 0.5rem;
@@ -582,12 +647,12 @@
             <div class="passkey-card">
                 <div class="card-title">Activate with Passkey</div>
                 <div class="help-text" style="text-align: left; margin-bottom: 0.5rem;">
-                    Already have a trading bot passkey? Enter it below to activate your bot instantly.
+                    Enter your passkey to activate your trading bot instantly.
                 </div>
-                <input type="text" class="passkey-input" id="passkeyInput" placeholder="Enter passkey (e.g., Ak1234)">
-                <button class="submit-btn" onclick="activateWithPasskey()">Submit Passkey</button>
+                <input type="text" class="passkey-input" id="passkeyInput" placeholder="Enter your passkey">
+                <button class="submit-btn" onclick="activateWithPasskey()">Activate Bot</button>
                 <div class="help-text">
-                    Passkeys are provided by authorized bot developers. Contact support if you need assistance.
+                    Passkeys are provided after purchase. Contact support if you need assistance.
                 </div>
             </div>
         </div>
@@ -603,61 +668,30 @@
                 <div class="setting-field">
                     <label>Trade Interval</label>
                     <select id="tradeInterval">
-                        <option value="1m">1 minute</option>
-                        <option value="5m">5 minutes</option>
-                        <option value="15m">15 minutes</option>
-                        <option value="30m">30 minutes</option>
-                        <option value="1h">1 hour</option>
+                        <option value="1 minute">1 minute</option>
+                        <option value="5 minutes">5 minutes</option>
+                        <option value="15 minutes">15 minutes</option>
+                        <option value="30 minutes">30 minutes</option>
+                        <option value="1 hour">1 hour</option>
+                        <option value="4 hours">4 hours</option>
+                        <option value="1 day">1 day</option>
                     </select>
                 </div>
                 <div class="setting-field">
                     <label>Trading Asset</label>
                     <select id="tradingAsset" class="asset-select">
-                        <option value="BTC/USD">
-                            <img src="https://assets.coincap.io/assets/icons/btc@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Bitcoin (BTC/USD)
-                        </option>
-                        <option value="ETH/USD">
-                            <img src="https://assets.coincap.io/assets/icons/eth@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Ethereum (ETH/USD)
-                        </option>
-                        <option value="SOL/USD">
-                            <img src="https://assets.coincap.io/assets/icons/sol@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Solana (SOL/USD)
-                        </option>
-                        <option value="XRP/USD">
-                            <img src="https://assets.coincap.io/assets/icons/xrp@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Ripple (XRP/USD)
-                        </option>
-                        <option value="ADA/USD">
-                            <img src="https://assets.coincap.io/assets/icons/ada@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Cardano (ADA/USD)
-                        </option>
-                        <option value="AVAX/USD">
-                            <img src="https://assets.coincap.io/assets/icons/avax@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Avalanche (AVAX/USD)
-                        </option>
-                        <option value="DOGE/USD">
-                            <img src="https://assets.coincap.io/assets/icons/doge@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Dogecoin (DOGE/USD)
-                        </option>
-                        <option value="DOT/USD">
-                            <img src="https://assets.coincap.io/assets/icons/dot@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Polkadot (DOT/USD)
-                        </option>
-                        <option value="LINK/USD">
-                            <img src="https://assets.coincap.io/assets/icons/link@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Chainlink (LINK/USD)
-                        </option>
-                        <option value="MATIC/USD">
-                            <img src="https://assets.coincap.io/assets/icons/matic@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Polygon (MATIC/USD)
-                        </option>
-                        <option value="LTC/USD">
-                            <img src="https://assets.coincap.io/assets/icons/ltc@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Litecoin (LTC/USD)
-                        </option>
-                        <option value="BNB/USD">
-                            <img src="https://assets.coincap.io/assets/icons/bnb@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Binance Coin (BNB/USD)
-                        </option>
-                        <option value="UNI/USD">
-                            <img src="https://assets.coincap.io/assets/icons/uni@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Uniswap (UNI/USD)
-                        </option>
-                        <option value="ATOM/USD">
-                            <img src="https://assets.coincap.io/assets/icons/atom@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Cosmos (ATOM/USD)
-                        </option>
-                        <option value="NEAR/USD">
-                            <img src="https://assets.coincap.io/assets/icons/near@2x.png" class="asset-icon" style="width: 16px; height: 16px;"> Near Protocol (NEAR/USD)
-                        </option>
+                        <option value="BTC/USD">₿ Bitcoin (BTC/USD)</option>
+                        <option value="ETH/USD">Ξ Ethereum (ETH/USD)</option>
+                        <option value="SOL/USD">◎ Solana (SOL/USD)</option>
+                        <option value="XRP/USD">X Ripple (XRP/USD)</option>
+                        <option value="ADA/USD">₳ Cardano (ADA/USD)</option>
+                        <option value="AVAX/USD">A Avalanche (AVAX/USD)</option>
+                        <option value="DOGE/USD">Ð Dogecoin (DOGE/USD)</option>
+                        <option value="DOT/USD">● Polkadot (DOT/USD)</option>
+                        <option value="LINK/USD">L Chainlink (LINK/USD)</option>
+                        <option value="MATIC/USD">P Polygon (MATIC/USD)</option>
+                        <option value="LTC/USD">Ł Litecoin (LTC/USD)</option>
+                        <option value="BNB/USD">B Binance Coin (BNB/USD)</option>
                     </select>
                 </div>
             </div>
@@ -670,15 +704,75 @@
                 <div class="empty-state">
                     <div class="empty-icon">🤖</div>
                     <div class="empty-text">No bots added yet</div>
-                    <div class="empty-subtext">Enter a passkey above to add a trading bot</div>
+                    <div class="empty-subtext">Enter a passkey above to activate a trading bot</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Store bots in localStorage
-        let userBots = JSON.parse(localStorage.getItem('tradingBots') || '[]')
+        // ============================================
+        // PRE-DEFINED PASSKEYS FOR YOUR BOTS
+        // You can add/edit these passkeys as needed
+        // ============================================
+        
+        const VALID_PASSKEYS = {
+            // Bot Passkeys - Give these to your users
+            "BOT-GRID-2024": {
+                name: "Grid Trading Bot Pro",
+                type: "Grid Trading",
+                description: "Automated grid trading strategy"
+            },
+            "BOT-DCA-2024": {
+                name: "DCA Accumulator Bot",
+                type: "DCA Trading",
+                description: "Dollar cost averaging strategy"
+            },
+            "BOT-ARB-2024": {
+                name: "Arbitrage Scanner Bot",
+                type: "Arbitrage",
+                description: "Cross-exchange arbitrage detection"
+            },
+            "BOT-SCALP-2024": {
+                name: "Scalping Pro Bot",
+                type: "Scalping",
+                description: "High-frequency scalping strategy"
+            },
+            "BOT-MOM-2024": {
+                name: "Momentum Trader Bot",
+                type: "Momentum",
+                description: "Trend following strategy"
+            },
+            "BOT-MEAN-2024": {
+                name: "Mean Reversion Bot",
+                type: "Mean Reversion",
+                description: "Buy low, sell high strategy"
+            },
+            // Premium Bots
+            "PREMIUM-AI-001": {
+                name: "AI Smart Trader",
+                type: "AI Trading",
+                description: "Machine learning based predictions"
+            },
+            "PREMIUM-PORT-002": {
+                name: "Portfolio Rebalancer",
+                type: "Rebalancing",
+                description: "Auto portfolio management"
+            },
+            // Test passkeys (for demo)
+            "DEMO123": {
+                name: "Demo Trading Bot",
+                type: "Demo",
+                description: "Practice trading bot"
+            },
+            "TEST456": {
+                name: "Test Bot",
+                type: "Test",
+                description: "Testing purposes only"
+            }
+        }
+
+        let userBots = []
 
         function renderBots() {
             const container = document.getElementById('botsList')
@@ -689,7 +783,7 @@
                     <div class="empty-state">
                         <div class="empty-icon">🤖</div>
                         <div class="empty-text">No bots added yet</div>
-                        <div class="empty-subtext">Enter a passkey above to add a trading bot</div>
+                        <div class="empty-subtext">Enter a valid passkey above to activate a trading bot</div>
                     </div>
                 `
                 countSpan.textContent = '0'
@@ -702,6 +796,7 @@
                     <div class="bot-info">
                         <span class="bot-name">${bot.name}</span>
                         <span class="bot-details">${bot.asset} • $${bot.amount} • ${bot.interval}</span>
+                        <span class="bot-details">Passkey: ${bot.passkey}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <span class="bot-status">Active</span>
@@ -714,9 +809,8 @@
         function uploadBot() {
             const fileInput = document.getElementById('fileInput')
             const tradeAmount = document.getElementById('tradeAmount').value
-            const tradeInterval = document.getElementById('tradeInterval').options[document.getElementById('tradeInterval').selectedIndex].text
-            const tradingAssetSelect = document.getElementById('tradingAsset')
-            const tradingAsset = tradingAssetSelect.options[tradingAssetSelect.selectedIndex].text
+            const tradeInterval = document.getElementById('tradeInterval').value
+            const tradingAsset = document.getElementById('tradingAsset').value
             
             if (fileInput.files.length === 0) {
                 showToast('Please select a file to upload')
@@ -724,18 +818,20 @@
             }
             
             const file = fileInput.files[0]
-            const botName = file.name.replace(/\.[^/.]+$/, '') // Remove extension
+            const botName = file.name.replace(/\.[^/.]+$/, '')
             
             const newBot = {
                 name: botName,
+                type: 'Custom Upload',
                 asset: tradingAsset,
                 amount: tradeAmount,
                 interval: tradeInterval,
+                passkey: 'N/A (Uploaded)',
                 created: new Date().toISOString()
             }
             
             userBots.push(newBot)
-            localStorage.setItem('tradingBots', JSON.stringify(userBots))
+            saveBotsToLocalStorage()
             renderBots()
             fileInput.value = ''
             showToast(`Bot "${botName}" uploaded successfully!`)
@@ -744,51 +840,68 @@
         function activateWithPasskey() {
             const passkey = document.getElementById('passkeyInput').value.trim()
             const tradeAmount = document.getElementById('tradeAmount').value
-            const tradeInterval = document.getElementById('tradeInterval').options[document.getElementById('tradeInterval').selectedIndex].text
-            const tradingAssetSelect = document.getElementById('tradingAsset')
-            const tradingAsset = tradingAssetSelect.options[tradingAssetSelect.selectedIndex].text
+            const tradeInterval = document.getElementById('tradeInterval').value
+            const tradingAsset = document.getElementById('tradingAsset').value
             
             if (!passkey) {
                 showToast('Please enter a passkey')
                 return
             }
             
-            // Demo passkeys for testing
-            const validPasskeys = ['Ak1234', 'BOT2024', 'TRADE123']
+            // Check if passkey is valid
+            const botInfo = VALID_PASSKEYS[passkey]
             
-            if (validPasskeys.includes(passkey)) {
-                let botName = ''
-                if (passkey === 'Ak1234') botName = 'Advanced Trading Bot'
-                else if (passkey === 'BOT2024') botName = 'Grid Trading Bot'
-                else if (passkey === 'TRADE123') botName = 'DCA Bot'
-                else botName = `Bot-${passkey}`
+            if (botInfo) {
+                // Check if bot already exists for this user
+                const existingBot = userBots.find(bot => bot.passkey === passkey)
+                if (existingBot) {
+                    showToast('This bot has already been activated!')
+                    document.getElementById('passkeyInput').value = ''
+                    return
+                }
                 
                 const newBot = {
-                    name: botName,
+                    name: botInfo.name,
+                    type: botInfo.type,
                     asset: tradingAsset,
                     amount: tradeAmount,
                     interval: tradeInterval,
                     passkey: passkey,
+                    description: botInfo.description,
                     created: new Date().toISOString()
                 }
                 
                 userBots.push(newBot)
-                localStorage.setItem('tradingBots', JSON.stringify(userBots))
+                saveBotsToLocalStorage()
                 renderBots()
                 document.getElementById('passkeyInput').value = ''
-                showToast(`Bot activated successfully! Welcome ${botName}`)
+                showToast(`✅ Bot activated successfully! Welcome ${botInfo.name}`)
             } else {
-                showToast('Invalid passkey. Please check and try again.')
+                showToast('❌ Invalid passkey. Please check and try again.')
             }
         }
 
         function deleteBot(index) {
             if (confirm('Are you sure you want to remove this bot?')) {
                 userBots.splice(index, 1)
-                localStorage.setItem('tradingBots', JSON.stringify(userBots))
+                saveBotsToLocalStorage()
                 renderBots()
                 showToast('Bot removed successfully')
             }
+        }
+
+        function saveBotsToLocalStorage() {
+            localStorage.setItem('tradingBots', JSON.stringify(userBots))
+        }
+
+        function loadBotsFromLocalStorage() {
+            const saved = localStorage.getItem('tradingBots')
+            if (saved) {
+                userBots = JSON.parse(saved)
+            } else {
+                userBots = []
+            }
+            renderBots()
         }
 
         // Drag and drop functionality
@@ -824,14 +937,14 @@
             toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;'
             toast.textContent = msg
             document.body.appendChild(toast)
-            setTimeout(() => toast.remove(), 2000)
+            setTimeout(() => toast.remove(), 3000)
         }
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
 
         // Initialize
-        renderBots()
+        loadBotsFromLocalStorage()
     </script>
 </body>
 </html>
