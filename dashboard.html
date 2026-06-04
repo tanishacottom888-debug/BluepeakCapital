@@ -56,18 +56,16 @@
                 welcomeH1.textContent = `Welcome back, ${firstName}`
             }
             
-            const userNameSpan = document.querySelector('.user-menu span')
-            if (userNameSpan) {
-                userNameSpan.textContent = fullName
-            }
-            
+            // Update avatar with initials
             const userAvatar = document.querySelector('.user-avatar')
             if (userAvatar) {
                 const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
                 userAvatar.textContent = initials
+                userAvatar.title = fullName
             }
         }
         
+        // Logout function for sidebar menu
         window.logout = async function() {
             const { error } = await supabase.auth.signOut()
             if (!error) {
@@ -173,6 +171,13 @@
             color: #3b82f6;
         }
 
+        /* Right side menu - JD and Hamburger */
+        .right-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
         .mobile-menu-btn {
             display: none;
             background: none;
@@ -180,39 +185,7 @@
             color: #1a1f36;
             font-size: 1.5rem;
             cursor: pointer;
-        }
-
-        .mobile-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            flex-direction: column;
-            padding: 1rem;
-            gap: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border-bottom: 1px solid #e2e8f0;
-            z-index: 999;
-        }
-
-        .mobile-menu.active {
-            display: flex;
-        }
-
-        .mobile-menu a {
-            color: #4a5568;
-            text-decoration: none;
-            padding: 0.5rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+            padding: 0.3rem;
         }
 
         .user-avatar {
@@ -225,23 +198,124 @@
             justify-content: center;
             color: white;
             font-weight: 600;
+            font-size: 0.8rem;
             cursor: pointer;
         }
 
-        .logout-btn {
-            background: transparent;
-            border: 1px solid #ef4444;
-            color: #ef4444;
-            padding: 0.3rem 0.8rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            margin-left: 0.5rem;
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
         }
 
-        .logout-btn:hover {
-            background: #ef4444;
+        .sidebar-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .sidebar-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+            z-index: 2001;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-overlay.active .sidebar-menu {
+            right: 0;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .sidebar-header .avatar-large {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-header .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header .user-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .sidebar-header .user-email {
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem 0;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 0.8rem 1.5rem;
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .sidebar-nav a:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+        }
+
+        .sidebar-nav .logout-item {
+            margin-top: auto;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 1rem;
+            color: #ef4444;
+        }
+
+        .sidebar-nav .logout-item:hover {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .close-sidebar {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #64748b;
         }
 
         .main-container {
@@ -559,10 +633,14 @@
             font-size: 0.7rem;
         }
 
-        /* ============================================ */
-        /* MOBILE LAYOUT - NO PAGE DRAGGING, EDGE TO EDGE */
-        /* ============================================ */
-        
+        /* Desktop navigation */
+        @media (min-width: 769px) {
+            .mobile-menu-btn {
+                display: none;
+            }
+        }
+
+        /* Mobile styles */
         @media (max-width: 1024px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -581,22 +659,17 @@
             .mobile-menu-btn {
                 display: block;
             }
-            .user-menu span {
-                display: none;
-            }
             nav {
                 padding: 0.8rem 1rem;
             }
             
-            /* Main container - edge to edge */
+            /* Main container */
             .main-container {
                 padding: 1rem;
                 margin-top: 60px;
-                width: 100%;
                 overflow-x: hidden;
             }
             
-            /* Welcome section */
             .welcome-section {
                 padding: 1rem;
                 margin-bottom: 1rem;
@@ -609,7 +682,6 @@
                 font-size: 0.75rem;
             }
             
-            /* Stats Grid - 2 columns, no overflow */
             .stats-grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -630,10 +702,8 @@
                 font-size: 0.55rem;
             }
             
-            /* Chart - edge to edge */
             .chart-container {
                 border-radius: 12px;
-                margin-bottom: 0;
             }
             .chart-header {
                 padding: 0.75rem;
@@ -647,10 +717,8 @@
             }
             #tradingview_chart {
                 height: 280px;
-                width: 100%;
             }
             
-            /* Order Book */
             .orderbook-container {
                 border-radius: 12px;
             }
@@ -667,7 +735,6 @@
                 padding: 0.35rem 0.6rem;
             }
             
-            /* Price Alerts - full width */
             .alerts-section {
                 border-radius: 12px;
             }
@@ -696,15 +763,7 @@
                 padding: 0.45rem;
                 font-size: 0.75rem;
             }
-            .alert-list {
-                padding: 0 0.75rem 0.75rem;
-            }
-            .alert-item {
-                font-size: 0.7rem;
-                padding: 0.4rem 0;
-            }
             
-            /* Portfolio Table - horizontal scroll inside container only */
             .portfolio-container {
                 border-radius: 12px;
                 margin-bottom: 1rem;
@@ -722,17 +781,11 @@
                 padding: 0.6rem;
                 font-size: 0.7rem;
             }
-            .btn-small {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.6rem;
-            }
             
-            /* Mobile App Section */
             .mobile-app-section {
                 flex-direction: column;
                 text-align: center;
                 padding: 1rem;
-                margin-bottom: 1rem;
                 border-radius: 12px;
             }
             .mobile-app-section h3 {
@@ -754,7 +807,6 @@
                 font-size: 0.6rem;
             }
             
-            /* News Feed */
             .news-section {
                 border-radius: 12px;
             }
@@ -773,27 +825,9 @@
             .news-time {
                 font-size: 0.6rem;
             }
-        }
-
-        /* Small phones */
-        @media (max-width: 480px) {
-            .main-container {
-                padding: 0.75rem;
-            }
-            .stats-grid {
-                gap: 0.5rem;
-            }
-            .stat-card {
-                padding: 0.5rem;
-            }
-            .stat-value {
-                font-size: 0.95rem;
-            }
-            .portfolio-table {
-                min-width: 500px;
-            }
-            .portfolio-table th, .portfolio-table td {
-                padding: 0.4rem;
+            .btn-small {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.6rem;
             }
         }
     </style>
@@ -815,24 +849,36 @@
             <a href="settings.html">Settings</a>
             <a href="support.html">Support</a>
         </div>
-        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-        <div class="user-menu">
-            <span style="font-size: 0.8rem;">Loading...</span>
-            <div class="user-avatar">JD</div>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+        <div class="right-menu">
+            <div class="user-avatar" id="userAvatar" onclick="showMessage('Account settings')">JD</div>
+            <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
 
-    <div class="mobile-menu" id="mobileMenu">
-        <a href="#" class="active">Dashboard</a>
-        <a href="trade.html">Trade</a>
-        <a href="markets.html">Markets</a>
-        <a href="orders.html">Orders</a>
-        <a href="bots.html">Bots</a>
-        <a href="deposit.html">Deposit</a>
-        <a href="withdraw.html">Withdraw</a>
-        <a href="settings.html">Settings</a>
-        <a href="support.html">Support</a>
+    <!-- Sidebar Menu -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
+        <div class="sidebar-menu" onclick="event.stopPropagation()">
+            <div class="sidebar-header">
+                <div class="avatar-large" id="sidebarAvatar">JD</div>
+                <div class="user-info">
+                    <span class="user-name" id="sidebarName">User</span>
+                    <span class="user-email" id="sidebarEmail">user@example.com</span>
+                </div>
+                <button class="close-sidebar" onclick="closeSidebar()">✕</button>
+            </div>
+            <div class="sidebar-nav">
+                <a href="#" onclick="closeSidebar()">Dashboard</a>
+                <a href="trade.html" onclick="closeSidebar()">Trade</a>
+                <a href="markets.html" onclick="closeSidebar()">Markets</a>
+                <a href="orders.html" onclick="closeSidebar()">Orders</a>
+                <a href="bots.html" onclick="closeSidebar()">Bots</a>
+                <a href="deposit.html" onclick="closeSidebar()">Deposit</a>
+                <a href="withdraw.html" onclick="closeSidebar()">Withdraw</a>
+                <a href="settings.html" onclick="closeSidebar()">Settings</a>
+                <a href="support.html" onclick="closeSidebar()">Support</a>
+                <a href="#" class="logout-item" onclick="logout(); closeSidebar();">Logout</a>
+            </div>
+        </div>
     </div>
 
     <div class="main-container">
@@ -918,7 +964,7 @@
                     <tr><th>Asset</th><th>Holdings</th><th>Avg. Price</th><th>Current Price</th><th>Value</th><th>P&L</th><th></th></tr>
                 </thead>
                 <tbody id="portfolioBody"></tbody>
-            </table>
+            <tr>
         </div>
 
         <div class="mobile-app-section">
@@ -944,6 +990,37 @@
     </div>
 
     <script>
+        // Update sidebar with user data
+        async function updateSidebarUser() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single()
+                
+                const fullName = profile?.full_name || session.user.email?.split('@')[0] || 'User'
+                const email = session.user.email || 'user@example.com'
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                
+                document.getElementById('sidebarName').textContent = fullName
+                document.getElementById('sidebarEmail').textContent = email
+                document.getElementById('sidebarAvatar').textContent = initials
+            }
+        }
+        
+        function openSidebar() {
+            document.getElementById('sidebarOverlay').classList.add('active')
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebarOverlay').classList.remove('active')
+        }
+        
+        // Call this after auth loads
+        setTimeout(updateSidebarUser, 1000)
+        
         const portfolioData = [
             { asset: "Bitcoin", symbol: "BTC", holdings: 2.5, avgPrice: 38500, currentPrice: 43250, value: 108125, pnl: 11875, pnlPercent: 12.3 },
             { asset: "Ethereum", symbol: "ETH", holdings: 15, avgPrice: 1850, currentPrice: 2250, value: 33750, pnl: 6000, pnlPercent: 21.6 },
@@ -1116,7 +1193,6 @@
         }
 
         function showMessage(msg) { alert(msg); }
-        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('active'); }
 
         function init() {
             loadPortfolio();
