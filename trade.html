@@ -9,9 +9,269 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        let currentUserId = null
+        let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, AVAX: 0 }
+        let userOrders = []
+        let userTrades = []
+
+        // Check authentication and load user data
+        async function checkAuthAndLoadData() {
+            const { data: { session } } = await supabase.auth.getSession()
+            
+            if (!session) {
+                window.location.href = 'login.html'
+                return
+            }
+            
+            currentUserId = session.user.id
+            await loadUserBalances()
+            await loadUserOrders()
+            await loadUserTrades()
+            
+            // Update UI with real balances
+            updateBalanceDisplay()
+        }
+        
+        // Load user balances from Supabase
+        async function loadUserBalances() {
+            const { data, error } = await supabase
+                .from('balances')
+                .select('*')
+                .eq('user_id', currentUserId)
+            
+            if (error) {
+                console.error('Error loading balances:', error)
+                return
+            }
+            
+            if (data && data.length > 0) {
+                data.forEach(balance => {
+                    userBalances[balance.asset] = parseFloat(balance.balance) || 0
+                })
+            }
+            
+            // Ensure USD balance exists (for display)
+            if (!userBalances.USD) userBalances.USD = 0
+        }
+        
+        // Load user's open orders
+        async function loadUserOrders() {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false })
+            
+            if (error) {
+                console.error('Error loading orders:', error)
+                return
+            }
+            
+            userOrders = data || []
+            renderOpenOrders()
+        }
+        
+        // Load user's trade history
+        async function loadUserTrades() {
+            const { data, error } = await supabase
+                .from('trades')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .order('created_at', { ascending: false })
+                .limit(20)
+            
+            if (error) {
+                console.error('Error loading trades:', error)
+                return
+            }
+            
+            userTrades = data || []
+            renderRecentTrades()
+        }
+        
+        // Update balance display in UI
+        function updateBalanceDisplay() {
+            const availableSpan = document.getElementById('availableBalance')
+            if (availableSpan) {
+                const pairAsset = currentPair.split('/')[0]
+                const balance = userBalances[pairAsset] || 0
+                availableSpan.innerHTML = `${balance.toFixed(4)} ${pairAsset}`
+            }
+            
+            // Also update USD balance in order total calculation
+            updateCalculations()
+        }
+        
+        // Save order to Supabase
+        async function saveOrderToDatabase(pair, type, orderType, price, amount, status = 'pending') {
+            const { data, error } = await supabase
+                .from('orders')
+                .insert({
+                    user_id: currentUserId,
+                    pair: pair,
+                    type: type,
+                    order_type: orderType,
+                    price: price,
+                    amount: amount,
+                    filled: 0,
+                    status: status,
+                    created_at: new Date().toISOString()
+                })
+                .select()
+            
+            if (error) {
+                console.error('Error saving order:', error)
+                showToast('Failed to place order')
+                return null
+            }
+            
+            return data?.[0]
+        }
+        
+        // Update user balances after trade
+        async function updateUserBalances(asset, amount, isBuy) {
+            const currentBalance = userBalances[asset] || 0
+            const newBalance = isBuy ? currentBalance + amount : currentBalance - amount
+            
+            const { error } = await supabase
+                .from('balances')
+                .upsert({
+                    user_id: currentUserId,
+                    asset: asset,
+                    balance: newBalance,
+                    updated_at: new Date().toISOString()
+                })
+            
+            if (error) {
+                console.error('Error updating balance:', error)
+                return false
+            }
+            
+            userBalances[asset] = newBalance
+            return true
+        }
+        
+        // Save trade to history
+        async function saveTradeToHistory(pair, type, price, amount, total, fee) {
+            const { error } = await supabase
+                .from('trades')
+                .insert({
+                    user_id: currentUserId,
+                    pair: pair,
+                    type: type,
+                    price: price,
+                    amount: amount,
+                    total: total,
+                    fee: fee,
+                    created_at: new Date().toISOString()
+                })
+            
+            if (error) {
+                console.error('Error saving trade:', error)
+            }
+        }
+        
+        // Execute market order
+        async function executeMarketOrder(amount, price, total) {
+            const pairAsset = currentPair.split('/')[0]
+            
+            if (currentOrderType === 'buy') {
+                // Check if user has enough USD
+                if (total > userBalances.USD) {
+                    showToast(`Insufficient USD balance. Available: $${userBalances.USD.toFixed(2)}`)
+                    return false
+                }
+                
+                // Update balances
+                await updateUserBalances('USD', total, false) // Remove USD
+                await updateUserBalances(pairAsset, amount, true) // Add crypto
+                
+            } else {
+                // Sell
+                if (amount > (userBalances[pairAsset] || 0)) {
+                    showToast(`Insufficient ${pairAsset} balance. Available: ${(userBalances[pairAsset] || 0).toFixed(4)}`)
+                    return false
+                }
+                
+                // Update balances
+                await updateUserBalances(pairAsset, amount, false) // Remove crypto
+                await updateUserBalances('USD', total, true) // Add USD
+            }
+            
+            const fee = total * 0.001
+            await saveTradeToHistory(currentPair, currentOrderType, price, amount, total, fee)
+            await loadUserTrades() // Refresh trade history
+            
+            return true
+        }
+        
+        // Save limit order
+        async function saveLimitOrder(amount, price) {
+            const order = await saveOrderToDatabase(
+                currentPair,
+                currentOrderType,
+                document.getElementById('orderType').value,
+                price,
+                amount,
+                'pending'
+            )
+            
+            if (order) {
+                userOrders.unshift(order)
+                renderOpenOrders()
+                showToast(`${currentOrderType.toUpperCase()} limit order placed for ${amount} ${currentPair.split('/')[0]} at $${price}`)
+                return true
+            }
+            return false
+        }
+        
+        // Cancel order
+        window.cancelOrder = async function(orderId) {
+            const { error } = await supabase
+                .from('orders')
+                .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+                .eq('id', orderId)
+                .eq('user_id', currentUserId)
+            
+            if (error) {
+                console.error('Error cancelling order:', error)
+                showToast('Failed to cancel order')
+                return
+            }
+            
+            userOrders = userOrders.filter(o => o.id !== orderId)
+            renderOpenOrders()
+            showToast('Order cancelled')
+        }
+        
+        // Update UI after order
+        function updateUIAfterOrder() {
+            updateBalanceDisplay()
+            updateCalculations()
+        }
+        
+        // Expose global functions for onclick handlers
+        window.setOrderType = setOrderType
+        window.setPercentage = setPercentage
+        window.submitOrder = submitOrder
+        window.switchBottomTab = switchBottomTab
+        window.addIndicator = addIndicator
+        window.mobilePairChange = mobilePairChange
+    </script>
+    
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     
     <style>
+        /* Your existing styles remain the same */
         * {
             margin: 0;
             padding: 0;
@@ -67,7 +327,7 @@
             color: transparent;
         }
 
-        /* Desktop Navigation - No Trade tab active */
+        /* Desktop Navigation */
         .nav-links {
             display: flex;
             gap: 1rem;
@@ -85,12 +345,28 @@
             color: #3b82f6;
         }
 
-        /* No active tab on Trade page - just like Dashboard */
-
         /* Right Menu */
         .right-menu {
             display: flex;
             align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flag-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .balance-display {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
         }
 
         .hamburger-btn {
@@ -440,6 +716,17 @@
             .hamburger-btn {
                 display: block;
             }
+            .right-menu {
+                gap: 0.3rem;
+            }
+            .balance-display {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.6rem;
+            }
+            .flag-icon {
+                width: 24px;
+                height: 24px;
+            }
         }
 
         @media (min-width: 769px) {
@@ -480,6 +767,8 @@
             <a href="support.html">Support</a>
         </div>
         <div class="right-menu">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
+            <div class="balance-display" id="topBalanceDisplay">$0.00</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -555,7 +844,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Amount (BTC)</label>
+                    <label id="amountLabel">Amount (BTC)</label>
                     <input type="number" id="amount" placeholder="0.000" step="0.001" value="0.01">
                     <div class="percentage-buttons">
                         <button class="perc-btn" onclick="setPercentage(25)">25%</button>
@@ -579,7 +868,7 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 0.25rem;">
                         <span>Available:</span>
-                        <span id="availableBalance">0.250 BTC</span>
+                        <span id="availableBalance">0.000 BTC</span>
                     </div>
                 </div>
                 <button class="submit-btn buy" id="submitBtn" onclick="submitOrder()">BUY BTC</button>
@@ -623,23 +912,23 @@
     </div>
 
     <script>
+        // Global variables
+        let currentPair = "BTC/USD"
+        let currentPrice = 43250
+        let currentOrderType = "buy"
+        let tvWidget = null
+        
+        // Market data
         const markets = [
             { symbol: "BTC/USD", name: "Bitcoin", price: 43250, change: 2.4 },
             { symbol: "ETH/USD", name: "Ethereum", price: 2250, change: 1.8 },
             { symbol: "SOL/USD", name: "Solana", price: 95.50, change: -0.5 },
             { symbol: "AVAX/USD", name: "Avalanche", price: 38.20, change: 4.2 }
-        ];
-
-        let currentPair = "BTC/USD";
-        let currentPrice = 43250;
-        let currentOrderType = "buy";
-        let balance = { BTC: 0.25, USD: 12450 };
-        let openOrders = [];
-        let trades = [];
-        let tvWidget = null;
-
+        ]
+        
+        // TradingView Chart
         function initTradingView() {
-            if (tvWidget) tvWidget.remove();
+            if (tvWidget) tvWidget.remove()
             tvWidget = new TradingView.widget({
                 symbol: currentPair.replace("/", ""),
                 interval: "60",
@@ -653,195 +942,207 @@
                 allow_symbol_change: true,
                 theme: "light",
                 style: "1"
-            });
+            })
         }
-
-        function mobilePairChange() {
-            const select = document.getElementById('mobilePairSelect');
-            currentPair = select.value;
-            document.getElementById('currentPairDisplay').innerHTML = currentPair;
-            const market = markets.find(m => m.symbol === currentPair);
-            if (market) currentPrice = market.price;
-            initTradingView();
-            updateOrderBook();
-            updateCalculations();
-            showToast(`Switched to ${currentPair}`);
+        
+        // Mobile pair change
+        window.mobilePairChange = function() {
+            const select = document.getElementById('mobilePairSelect')
+            currentPair = select.value
+            document.getElementById('currentPairDisplay').innerHTML = currentPair
+            document.getElementById('amountLabel').innerHTML = `Amount (${currentPair.split('/')[0]})`
+            
+            const market = markets.find(m => m.symbol === currentPair)
+            if (market) currentPrice = market.price
+            
+            initTradingView()
+            updateOrderBook()
+            updateCalculations()
+            updateBalanceDisplay()
+            showToast(`Switched to ${currentPair}`)
         }
-
+        
+        // Order Book Simulation
         function updateOrderBook() {
-            const asks = [], bids = [];
+            const asks = [], bids = []
             for (let i = 1; i <= 6; i++) {
-                asks.push({ price: currentPrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((currentPrice + (i * 5)) * Math.random() * 1.5).toFixed(0) });
-                bids.push({ price: currentPrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((currentPrice - (i * 5)) * Math.random() * 1.5).toFixed(0) });
+                asks.push({ price: currentPrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((currentPrice + (i * 5)) * Math.random() * 1.5).toFixed(0) })
+                bids.push({ price: currentPrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((currentPrice - (i * 5)) * Math.random() * 1.5).toFixed(0) })
             }
-            const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2);
-            document.getElementById('spreadDisplay').innerHTML = `Spread: ${spread}%`;
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}<td>${a.size}<td>$${parseInt(a.total).toLocaleString()}</tr>`).join('');
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}<td>${b.size}<td>$${parseInt(b.total).toLocaleString()}</tr>`).join('');
+            const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2)
+            document.getElementById('spreadDisplay').innerHTML = `Spread: ${spread}%`
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}<td>${a.size}<td>$${parseInt(a.total).toLocaleString()}</tr>`).join('')
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}<td>${b.size}<td>$${parseInt(b.total).toLocaleString()}<tr>`).join('')
         }
-
-        function addTrade(price, size, type) {
-            trades.unshift({ time: new Date().toLocaleTimeString(), price: price, size: size, type: type });
-            if (trades.length > 15) trades.pop();
-            document.getElementById('tradesList').innerHTML = trades.map(t => `
-                <tr>
-                    <td>${t.time}</td>
-                    <td class="${t.type === 'buy' ? 'positive' : 'negative'}">$${t.price.toLocaleString()}</td>
-                    <td>${t.size}</td>
-                </tr>
-            `).join('');
+        
+        // Order Form Logic
+        window.setOrderType = function(type) {
+            currentOrderType = type
+            document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'))
+            document.querySelector(`.order-tab.${type}`).classList.add('active')
+            const btn = document.getElementById('submitBtn')
+            btn.className = `submit-btn ${type}`
+            btn.textContent = `${type.toUpperCase()} ${currentPair.split('/')[0]}`
         }
-
-        function addOpenOrder(pair, type, price, amount) {
-            openOrders.push({ id: Date.now(), pair: pair, type: type, price: price, amount: amount, filled: 0 });
-            renderOpenOrders();
+        
+        window.setPercentage = function(perc) {
+            // For new users with 0 balance, percentage buttons will show 0
+            const pairAsset = currentPair.split('/')[0]
+            const maxAmount = window.userBalances ? (window.userBalances[pairAsset] || 0) : 0
+            const amount = (maxAmount * perc / 100).toFixed(4)
+            document.getElementById('amount').value = amount
+            updateCalculations()
         }
-
-        function renderOpenOrders() {
-            document.getElementById('openOrdersList').innerHTML = openOrders.map(o => `
-                <tr>
-                    <td>${o.pair}</td>
-                    <td class="${o.type === 'buy' ? 'positive' : 'negative'}">${o.type.toUpperCase()}</td>
-                    <td>$${o.price.toLocaleString()}</td>
-                    <td>${o.amount}</td>
-                    <td>${o.filled}%</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td><button class="cancel-btn" onclick="cancelOrder(${o.id})">Cancel</button></td>
-                </tr>
-            `).join('');
-        }
-
-        function cancelOrder(id) {
-            openOrders = openOrders.filter(o => o.id !== id);
-            renderOpenOrders();
-            showToast('Order cancelled');
-        }
-
-        function setOrderType(type) {
-            currentOrderType = type;
-            document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelector(`.order-tab.${type}`).classList.add('active');
-            document.getElementById('submitBtn').className = `submit-btn ${type}`;
-            document.getElementById('submitBtn').textContent = `${type.toUpperCase()} ${currentPair.split('/')[0]}`;
-        }
-
-        function setPercentage(perc) {
-            const maxAmount = balance[currentPair.split('/')[0]] || 0.25;
-            document.getElementById('amount').value = (maxAmount * perc / 100).toFixed(4);
-            updateCalculations();
-        }
-
+        
         function updateCalculations() {
-            const amount = parseFloat(document.getElementById('amount').value) || 0;
-            const price = parseFloat(document.getElementById('price').value) || currentPrice;
-            const total = amount * price;
-            const fee = total * 0.001;
-            document.getElementById('totalValue').innerHTML = `$${total.toFixed(2)}`;
-            document.getElementById('feeValue').innerHTML = `$${fee.toFixed(2)}`;
+            const amount = parseFloat(document.getElementById('amount').value) || 0
+            const price = parseFloat(document.getElementById('price').value) || currentPrice
+            const total = amount * price
+            const fee = total * 0.001
+            document.getElementById('totalValue').innerHTML = `$${total.toFixed(2)}`
+            document.getElementById('feeValue').innerHTML = `$${fee.toFixed(2)}`
         }
-
-        function submitOrder() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            const price = parseFloat(document.getElementById('price').value);
-            const orderType = document.getElementById('orderType').value;
-            if (!amount || amount <= 0) { showToast('Enter valid amount'); return; }
-            const total = amount * price;
-            if (currentOrderType === 'buy' && total > balance.USD) { showToast('Insufficient USD balance'); return; }
-            if (currentOrderType === 'sell' && amount > balance.BTC) { showToast('Insufficient BTC balance'); return; }
-            if (orderType === 'market') {
-                if (currentOrderType === 'buy') { balance.USD -= total; balance.BTC += amount; }
-                else { balance.BTC -= amount; balance.USD += total; }
-                addTrade(price, amount, currentOrderType);
-                showToast(`${currentOrderType.toUpperCase()} order executed! ${amount} ${currentPair.split('/')[0]} at $${price}`);
-                updateBalanceDisplay();
-            } else {
-                addOpenOrder(currentPair, currentOrderType, price, amount);
-                showToast(`${currentOrderType.toUpperCase()} limit order placed`);
-            }
-            document.getElementById('amount').value = '0.01';
-            updateCalculations();
-        }
-
+        
         function updateBalanceDisplay() {
-            document.getElementById('availableBalance').innerHTML = `${balance.BTC.toFixed(4)} BTC`;
+            const pairAsset = currentPair.split('/')[0]
+            const balance = window.userBalances ? (window.userBalances[pairAsset] || 0) : 0
+            document.getElementById('availableBalance').innerHTML = `${balance.toFixed(4)} ${pairAsset}`
+            
+            // Update top balance display
+            const usdBalance = window.userBalances ? (window.userBalances.USD || 0) : 0
+            document.getElementById('topBalanceDisplay').innerHTML = `$${usdBalance.toFixed(2)}`
         }
-
+        
+        window.submitOrder = async function() {
+            const amount = parseFloat(document.getElementById('amount').value)
+            const price = parseFloat(document.getElementById('price').value)
+            const orderType = document.getElementById('orderType').value
+            
+            if (!amount || amount <= 0) { showToast('Enter valid amount'); return }
+            
+            const total = amount * price
+            const pairAsset = currentPair.split('/')[0]
+            
+            // Check balance for market orders
+            if (orderType === 'market') {
+                if (currentOrderType === 'buy') {
+                    if (total > (window.userBalances?.USD || 0)) {
+                        showToast(`Insufficient USD balance. Available: $${(window.userBalances?.USD || 0).toFixed(2)}`)
+                        return
+                    }
+                } else {
+                    if (amount > (window.userBalances?.[pairAsset] || 0)) {
+                        showToast(`Insufficient ${pairAsset} balance. Available: ${(window.userBalances?.[pairAsset] || 0).toFixed(4)}`)
+                        return
+                    }
+                }
+            }
+            
+            // Execute or save order
+            if (orderType === 'market') {
+                const fee = total * 0.001
+                
+                // Update balances (will be handled by the parent module)
+                if (window.executeMarketOrder) {
+                    const success = await window.executeMarketOrder(amount, price, total)
+                    if (success) {
+                        showToast(`${currentOrderType.toUpperCase()} order executed! ${amount} ${pairAsset} at $${price}`)
+                        updateBalanceDisplay()
+                        updateCalculations()
+                        document.getElementById('amount').value = '0.01'
+                    }
+                } else {
+                    // Fallback for demo
+                    showToast(`${currentOrderType.toUpperCase()} order executed (Demo)! ${amount} ${pairAsset} at $${price}`)
+                }
+            } else {
+                if (window.saveLimitOrder) {
+                    await window.saveLimitOrder(amount, price)
+                } else {
+                    showToast(`${currentOrderType.toUpperCase()} limit order placed (Demo)`)
+                }
+                document.getElementById('amount').value = '0.01'
+                updateCalculations()
+            }
+        }
+        
+        // Timeframe change
         document.querySelectorAll('.timeframe-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                if (tvWidget) tvWidget.setInterval(this.dataset.tf);
-            });
-        });
-
-        function addIndicator() {
-            const select = document.getElementById('indicatorSelect');
-            const indicator = select.value;
+                document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'))
+                this.classList.add('active')
+                if (tvWidget) tvWidget.setInterval(this.dataset.tf)
+            })
+        })
+        
+        window.addIndicator = function() {
+            const select = document.getElementById('indicatorSelect')
+            const indicator = select.value
             if (indicator && tvWidget) {
-                tvWidget.chart().createStudy(indicator, false, false);
-                showToast(`Added ${indicator}`);
+                tvWidget.chart().createStudy(indicator, false, false)
+                showToast(`Added ${indicator}`)
             }
-            select.value = '';
+            select.value = ''
         }
-
-        function switchBottomTab(tab) {
-            document.querySelectorAll('.bottom-tab').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('orderbookPanel').classList.remove('active');
-            document.getElementById('tradesPanel').classList.remove('active');
-            document.getElementById('ordersPanel').classList.remove('active');
-            if (tab === 'orderbook') document.getElementById('orderbookPanel').classList.add('active');
-            else if (tab === 'trades') document.getElementById('tradesPanel').classList.add('active');
-            else if (tab === 'orders') document.getElementById('ordersPanel').classList.add('active');
+        
+        window.switchBottomTab = function(tab) {
+            document.querySelectorAll('.bottom-tab').forEach(btn => btn.classList.remove('active'))
+            event.target.classList.add('active')
+            document.getElementById('orderbookPanel').classList.remove('active')
+            document.getElementById('tradesPanel').classList.remove('active')
+            document.getElementById('ordersPanel').classList.remove('active')
+            if (tab === 'orderbook') document.getElementById('orderbookPanel').classList.add('active')
+            else if (tab === 'trades') document.getElementById('tradesPanel').classList.add('active')
+            else if (tab === 'orders') document.getElementById('ordersPanel').classList.add('active')
         }
-
+        
         function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
+            const toast = document.createElement('div')
+            toast.className = 'toast'
+            toast.textContent = msg
+            document.body.appendChild(toast)
+            setTimeout(() => toast.remove(), 2500)
         }
-
-        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
-        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
-
-        document.getElementById('amount').addEventListener('input', updateCalculations);
-        document.getElementById('price').addEventListener('input', updateCalculations);
+        
+        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
+        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
+        
+        // Event listeners
+        document.getElementById('amount').addEventListener('input', updateCalculations)
+        document.getElementById('price').addEventListener('input', updateCalculations)
         document.getElementById('orderType').addEventListener('change', function() {
-            document.getElementById('priceGroup').style.display = this.value === 'market' ? 'none' : 'block';
-        });
-
-        initTradingView();
-        updateOrderBook();
-        updateBalanceDisplay();
-        updateCalculations();
-        addTrade(43250, 0.05, 'buy');
-        addTrade(43248, 0.03, 'sell');
-        addTrade(43252, 0.08, 'buy');
-
+            document.getElementById('priceGroup').style.display = this.value === 'market' ? 'none' : 'block'
+        })
+        
+        // Initialize
+        function init() {
+            initTradingView()
+            updateOrderBook()
+            updateCalculations()
+            
+            // Add some demo trades for visual
+            const tradesList = document.getElementById('tradesList')
+            if (tradesList && tradesList.children.length === 0) {
+                tradesList.innerHTML = `
+                    <tr><td>14:30:25</td><td class="positive">$43,250</td><td>0.050</td></tr>
+                    <tr><td>14:28:12</td><td class="negative">$43,248</td><td>0.030</td></tr>
+                    <tr><td>14:25:45</td><td class="positive">$43,252</td><td>0.080</td></tr>
+                `
+            }
+        }
+        
+        init()
+        
+        // Expose functions and data to the module scope
+        window.updateBalanceDisplay = updateBalanceDisplay
+        window.showToast = showToast
+        
+        // Listen for balance updates from main module
         setInterval(() => {
-            const change = (Math.random() - 0.5) * 20;
-            currentPrice = Math.max(1, currentPrice + change);
-            updateOrderBook();
-            document.getElementById('price').value = currentPrice.toFixed(0);
-            updateCalculations();
-        }, 5000);
+            if (window.userBalances) {
+                updateBalanceDisplay()
+            }
+        }, 1000)
     </script>
 </body>
 </html>
