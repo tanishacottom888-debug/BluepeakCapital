@@ -112,6 +112,15 @@
             cursor: pointer;
         }
 
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+        }
+
         .hamburger-btn {
             background: none;
             border: none;
@@ -198,43 +207,37 @@
         }
 
         .withdraw-container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 1rem;
         }
 
         .page-header {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .page-header h1 {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 0.3rem;
         }
 
         .page-header p {
             color: #64748b;
-            font-size: 0.75rem;
-        }
-
-        .withdraw-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            font-size: 0.8rem;
         }
 
         .withdraw-card {
             background: white;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1rem;
+            border-radius: 16px;
+            padding: 1.5rem;
         }
 
         .card-title {
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #e2e8f0;
         }
@@ -244,7 +247,7 @@
         }
 
         .asset-label {
-            font-size: 0.65rem;
+            font-size: 0.75rem;
             color: #64748b;
             margin-bottom: 0.3rem;
             display: block;
@@ -252,18 +255,23 @@
 
         .asset-buttons {
             display: flex;
-            gap: 0.4rem;
+            gap: 0.5rem;
             flex-wrap: wrap;
         }
 
         .asset-btn {
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
-            padding: 0.35rem 0.8rem;
-            border-radius: 6px;
+            padding: 0.4rem 1rem;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .asset-btn:hover {
+            background: #e2e8f0;
         }
 
         .asset-btn.active {
@@ -273,148 +281,110 @@
         }
 
         .form-group {
-            margin-bottom: 0.8rem;
+            margin-bottom: 1rem;
         }
 
         .form-group label {
             display: block;
-            font-size: 0.65rem;
+            font-size: 0.75rem;
             color: #64748b;
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.3rem;
         }
 
         .form-group input {
             width: 100%;
-            padding: 0.5rem;
+            padding: 0.7rem;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
 
         .balance-info {
-            font-size: 0.6rem;
-            color: #64748b;
-            margin-top: 0.2rem;
-        }
-
-        .fee-breakdown {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 0.6rem;
-            margin: 0.8rem 0;
-        }
-
-        .fee-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.3rem;
             font-size: 0.65rem;
-        }
-
-        .fee-row.total {
+            color: #64748b;
             margin-top: 0.3rem;
-            padding-top: 0.3rem;
-            border-top: 1px solid #e2e8f0;
-            font-weight: 600;
         }
 
         .submit-btn {
             width: 100%;
-            background: #3b82f6;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
             border: none;
-            padding: 0.5rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
+            padding: 0.7rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             margin-top: 0.5rem;
+            transition: all 0.2s;
         }
 
         .submit-btn:hover {
-            background: #2563eb;
-        }
-
-        .warning-box {
-            background: #fef2f2;
-            border: 1px solid #fee2e2;
-            border-radius: 8px;
-            padding: 0.6rem;
-            margin-top: 0.8rem;
-        }
-
-        .warning-text {
-            font-size: 0.6rem;
-            color: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .info-card {
             background: white;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1rem;
+            border-radius: 16px;
+            padding: 1.2rem;
         }
 
         .info-item {
-            margin-bottom: 0.6rem;
-            padding-bottom: 0.6rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.8rem;
             border-bottom: 1px solid #f1f5f9;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         .info-label {
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             color: #64748b;
-            margin-bottom: 0.2rem;
         }
 
         .info-value {
-            font-size: 0.7rem;
-            font-weight: 500;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1a1f36;
         }
 
-        .recent-section {
-            margin-top: 1.5rem;
-        }
-
-        .recent-title {
+        /* Toast notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
             font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 0.8rem;
+            font-weight: 500;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
         }
 
-        .recent-table {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            overflow-x: auto;
+        .toast-notification.show {
+            opacity: 1;
         }
-
-        .recent-table table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 550px;
-        }
-
-        .recent-table th {
-            text-align: left;
-            padding: 0.5rem 0.6rem;
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 0.55rem;
-            font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .recent-table td {
-            padding: 0.4rem 0.6rem;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 0.65rem;
-        }
-
-        .status-pending { color: #f59e0b; }
-        .status-approved { color: #3b82f6; }
-        .status-completed { color: #10b981; }
-        .status-rejected { color: #ef4444; }
 
         @media (max-width: 768px) {
             .nav-links {
@@ -422,10 +392,6 @@
             }
             .hamburger-btn {
                 display: block;
-            }
-            .withdraw-grid {
-                grid-template-columns: 1fr;
-                gap: 0.8rem;
             }
             .withdraw-container {
                 padding: 0.8rem;
@@ -437,12 +403,13 @@
                 gap: 0.3rem;
             }
             .asset-btn {
-                padding: 0.25rem 0.6rem;
-                font-size: 0.65rem;
+                padding: 0.3rem 0.7rem;
+                font-size: 0.7rem;
             }
-            .flag-icon {
-                width: 24px;
-                height: 24px;
+            .toast-notification {
+                white-space: nowrap;
+                font-size: 0.75rem;
+                padding: 8px 18px;
             }
         }
     </style>
@@ -465,7 +432,8 @@
             <a href="support.html">Support</a>
         </div>
         <div class="right-menu">
-            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount" id="balanceDisplay">$0.00</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -500,130 +468,80 @@
         <span>$500M Insurance</span>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toastMessage" class="toast-notification">✓ Withdrawal request submitted!</div>
+
     <div class="withdraw-container">
         <div class="page-header">
             <h1>Withdraw Funds</h1>
-            <p>Submit withdrawal request for admin approval</p>
+            <p>Enter amount and wallet address to withdraw</p>
         </div>
 
-        <div class="withdraw-grid">
-            <div class="withdraw-card">
-                <div class="card-title">Withdrawal Request</div>
-                
-                <div class="asset-selector">
-                    <label class="asset-label">Select Asset</label>
-                    <div class="asset-buttons" id="assetButtons">
-                        <button class="asset-btn active" data-asset="BTC">BTC</button>
-                        <button class="asset-btn" data-asset="ETH">ETH</button>
-                        <button class="asset-btn" data-asset="USDT">USDT</button>
-                        <button class="asset-btn" data-asset="SOL">SOL</button>
-                        <button class="asset-btn" data-asset="USDC">USDC</button>
-                        <button class="asset-btn" data-asset="DOGE">DOGE</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Withdrawal Address</label>
-                    <input type="text" id="withdrawAddress" placeholder="Enter wallet address">
-                    <div class="balance-info">Double-check address before submitting</div>
-                </div>
-
-                <div class="form-group">
-                    <label>Amount</label>
-                    <input type="number" id="withdrawAmount" placeholder="0.000" step="0.001">
-                    <div class="balance-info" id="availableBalance">Available: 0.000 BTC</div>
-                </div>
-
-                <div class="fee-breakdown">
-                    <div class="fee-row">
-                        <span>Amount</span>
-                        <span id="displayAmount">0 BTC</span>
-                    </div>
-                    <div class="fee-row">
-                        <span>Network Fee</span>
-                        <span id="networkFee">0.0005 BTC</span>
-                    </div>
-                    <div class="fee-row total">
-                        <span>Total to Deduct</span>
-                        <span id="totalDeduct">0.0005 BTC</span>
-                    </div>
-                </div>
-
-                <button class="submit-btn" onclick="submitWithdrawal()">Submit Request</button>
-
-                <div class="warning-box">
-                    <div class="warning-text">
-                        Withdrawals require admin approval. Processing within 24 hours.
-                    </div>
+        <div class="withdraw-card">
+            <div class="card-title">Withdrawal Request</div>
+            
+            <div class="asset-selector">
+                <label class="asset-label">Select Asset</label>
+                <div class="asset-buttons" id="assetButtons">
+                    <button class="asset-btn active" data-asset="BTC">Bitcoin (BTC)</button>
+                    <button class="asset-btn" data-asset="ETH">Ethereum (ETH)</button>
+                    <button class="asset-btn" data-asset="USDT">Tether (USDT)</button>
+                    <button class="asset-btn" data-asset="SOL">Solana (SOL)</button>
+                    <button class="asset-btn" data-asset="USDC">USD Coin (USDC)</button>
+                    <button class="asset-btn" data-asset="DOGE">Dogecoin (DOGE)</button>
                 </div>
             </div>
 
-            <div>
-                <div class="info-card">
-                    <div class="card-title">Withdrawal Info</div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Minimum</div>
-                        <div class="info-value" id="minWithdrawal">0.001 BTC</div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Processing Time</div>
-                        <div class="info-value">24 hours (after approval)</div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Approval Required</div>
-                        <div class="info-value">Yes - Admin review</div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Status Tracking</div>
-                        <div class="info-value">Request ID provided</div>
-                    </div>
-                </div>
-
-                <div class="info-card" style="margin-top: 0.8rem;">
-                    <div class="card-title">Security</div>
-                    <div class="info-item">
-                        <div class="info-label">2FA Required</div>
-                        <div class="info-value">Enabled</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Email Confirmation</div>
-                        <div class="info-value">Required</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Admin Approval</div>
-                        <div class="info-value">24h review</div>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>Withdrawal Address</label>
+                <input type="text" id="withdrawAddress" placeholder="Enter wallet address">
+                <div class="balance-info">Double-check address before submitting</div>
             </div>
+
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="withdrawAmount" placeholder="0.000" step="0.001">
+                <div class="balance-info" id="availableBalance">Available: 0.000 BTC</div>
+            </div>
+
+            <button class="submit-btn" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
         </div>
 
-        <div class="recent-section">
-            <div class="recent-title">Withdrawal Requests</div>
-            <div class="recent-table">
-                <table>
-                    <thead>
-                        <tr><th>Request ID</th><th>Date</th><th>Asset</th><th>Amount</th><th>Address</th><th>Status</th></tr>
-                    </thead>
-                    <tbody id="recentWithdrawalsBody"></tbody>
-                </table>
+        <!-- Info Cards -->
+        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="info-card">
+                <div class="info-item">
+                    <span class="info-label">Minimum Withdrawal</span>
+                    <span class="info-value" id="minWithdrawal">0.001 BTC</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Processing Time</span>
+                    <span class="info-value">1-2 business days</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Network Fee</span>
+                    <span class="info-value" id="networkFee">0.0005 BTC</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-item">
+                    <span class="info-label">Security Check</span>
+                    <span class="info-value">2FA Enabled ✓</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email Notification</span>
+                    <span class="info-value">On by default</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Support</span>
+                    <span class="info-value">24/7 Live Chat</span>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        let withdrawalRequests = [
-            { id: "WDR-001", date: "2024-01-14", asset: "ETH", amount: "1.500", address: "0x742d...bEb5", status: "approved" },
-            { id: "WDR-002", date: "2024-01-12", asset: "BTC", amount: "0.100", address: "1A1zP...vfNa", status: "completed" },
-            { id: "WDR-003", date: "2024-01-10", asset: "SOL", amount: "50.00", address: "7Ec5e...XqZ", status: "pending" },
-            { id: "WDR-004", date: "2024-01-08", asset: "USDT", amount: "500.00", address: "0x742d...bEb5", status: "rejected" }
-        ];
-
-        let requestCounter = 100;
-
         const assetBalances = {
             BTC: { balance: 0, minWithdraw: 0.001, networkFee: 0.0005, symbol: "BTC" },
             ETH: { balance: 0, minWithdraw: 0.01, networkFee: 0.005, symbol: "ETH" },
@@ -640,16 +558,14 @@
             document.getElementById('availableBalance').innerHTML = `Available: ${asset.balance} ${asset.symbol}`;
             document.getElementById('minWithdrawal').innerHTML = `${asset.minWithdraw} ${asset.symbol}`;
             document.getElementById('networkFee').innerHTML = `${asset.networkFee} ${asset.symbol}`;
-            calculateTotal();
         }
 
-        function calculateTotal() {
-            const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
-            const asset = assetBalances[currentAsset];
-            const fee = asset.networkFee;
-            const total = amount + fee;
-            document.getElementById('displayAmount').innerHTML = `${amount} ${asset.symbol}`;
-            document.getElementById('totalDeduct').innerHTML = `${total.toFixed(4)} ${asset.symbol}`;
+        function showCopiedToast() {
+            const toast = document.getElementById('toastMessage');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
         }
 
         function submitWithdrawal() {
@@ -657,69 +573,19 @@
             const amount = parseFloat(document.getElementById('withdrawAmount').value);
             const asset = assetBalances[currentAsset];
             
-            if (!address) { showToast('Enter withdrawal address'); return; }
-            if (!amount || amount <= 0) { showToast('Enter valid amount'); return; }
-            if (amount < asset.minWithdraw) { showToast(`Minimum: ${asset.minWithdraw} ${asset.symbol}`); return; }
+            if (!address) { alert('Enter withdrawal address'); return; }
+            if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
+            if (amount < asset.minWithdraw) { alert(`Minimum: ${asset.minWithdraw} ${asset.symbol}`); return; }
             
-            requestCounter++;
-            const requestId = `WDR-${requestCounter}`;
-            
-            const newRequest = {
-                id: requestId,
-                date: new Date().toLocaleDateString(),
-                asset: asset.symbol,
-                amount: amount,
-                address: address.substring(0, 10) + '...',
-                status: 'pending'
-            };
-            
-            withdrawalRequests.unshift(newRequest);
-            loadWithdrawalRequests();
-            
+            // Clear form
             document.getElementById('withdrawAddress').value = '';
             document.getElementById('withdrawAmount').value = '';
-            calculateTotal();
             
-            showToast(`Withdrawal request ${requestId} submitted. Pending admin approval.`);
+            // Show success toast
+            showCopiedToast();
         }
 
-        function loadWithdrawalRequests() {
-            const tbody = document.getElementById('recentWithdrawalsBody');
-            
-            const statusText = {
-                'pending': 'Pending',
-                'approved': 'Approved',
-                'completed': 'Completed',
-                'rejected': 'Rejected'
-            };
-            
-            const statusClass = {
-                'pending': 'status-pending',
-                'approved': 'status-approved',
-                'completed': 'status-completed',
-                'rejected': 'status-rejected'
-            };
-            
-            tbody.innerHTML = withdrawalRequests.map(w => `
-                <tr>
-                    <td>${w.id}</td>
-                    <td>${w.date}</td>
-                    <td>${w.asset}</td>
-                    <td>${w.amount} ${w.asset}</td>
-                    <td>${w.address}</td>
-                    <td class="${statusClass[w.status]}">${statusText[w.status]}</td>
-                </tr>
-            `).join('');
-        }
-
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;';
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-        }
-
+        // Asset Button Handlers
         document.querySelectorAll('.asset-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
@@ -727,18 +593,14 @@
                 currentAsset = this.dataset.asset;
                 updateWithdrawInterface();
                 document.getElementById('withdrawAmount').value = '';
-                calculateTotal();
             });
         });
-
-        document.getElementById('withdrawAmount').addEventListener('input', calculateTotal);
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
 
         // Initialize
         updateWithdrawInterface();
-        loadWithdrawalRequests();
     </script>
 </body>
 </html>
