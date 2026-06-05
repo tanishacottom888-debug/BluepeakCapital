@@ -9,7 +9,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
-    <!-- Supabase SDK -->
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
@@ -207,7 +206,7 @@
         }
 
         .withdraw-container {
-            max-width: 900px;
+            max-width: 600px;
             margin: 0 auto;
             padding: 1rem;
         }
@@ -330,39 +329,6 @@
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
-        .info-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1.2rem;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.8rem;
-            padding-bottom: 0.8rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .info-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .info-label {
-            font-size: 0.7rem;
-            color: #64748b;
-        }
-
-        .info-value {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #1a1f36;
-        }
-
         /* Toast notification */
         .toast-notification {
             position: fixed;
@@ -483,12 +449,12 @@
             <div class="asset-selector">
                 <label class="asset-label">Select Asset</label>
                 <div class="asset-buttons" id="assetButtons">
-                    <button class="asset-btn active" data-asset="BTC">Bitcoin (BTC)</button>
-                    <button class="asset-btn" data-asset="ETH">Ethereum (ETH)</button>
-                    <button class="asset-btn" data-asset="USDT">Tether (USDT)</button>
-                    <button class="asset-btn" data-asset="SOL">Solana (SOL)</button>
-                    <button class="asset-btn" data-asset="USDC">USD Coin (USDC)</button>
-                    <button class="asset-btn" data-asset="DOGE">Dogecoin (DOGE)</button>
+                    <button class="asset-btn active" data-asset="BTC">BTC</button>
+                    <button class="asset-btn" data-asset="ETH">ETH</button>
+                    <button class="asset-btn" data-asset="USDT">USDT</button>
+                    <button class="asset-btn" data-asset="SOL">SOL</button>
+                    <button class="asset-btn" data-asset="USDC">USDC</button>
+                    <button class="asset-btn" data-asset="DOGE">DOGE</button>
                 </div>
             </div>
 
@@ -501,66 +467,31 @@
             <div class="form-group">
                 <label>Amount</label>
                 <input type="number" id="withdrawAmount" placeholder="0.000" step="0.001">
-                <div class="balance-info" id="availableBalance">Available: 0.000 BTC</div>
+                <div class="balance-info" id="availableBalance">Available: 0.000</div>
             </div>
 
             <button class="submit-btn" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
-        </div>
-
-        <!-- Info Cards -->
-        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="info-card">
-                <div class="info-item">
-                    <span class="info-label">Minimum Withdrawal</span>
-                    <span class="info-value" id="minWithdrawal">0.001 BTC</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Processing Time</span>
-                    <span class="info-value">1-2 business days</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Network Fee</span>
-                    <span class="info-value" id="networkFee">0.0005 BTC</span>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <div class="info-item">
-                    <span class="info-label">Security Check</span>
-                    <span class="info-value">2FA Enabled ✓</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Email Notification</span>
-                    <span class="info-value">On by default</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Support</span>
-                    <span class="info-value">24/7 Live Chat</span>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
         const assetBalances = {
-            BTC: { balance: 0, minWithdraw: 0.001, networkFee: 0.0005, symbol: "BTC" },
-            ETH: { balance: 0, minWithdraw: 0.01, networkFee: 0.005, symbol: "ETH" },
-            USDT: { balance: 0, minWithdraw: 50, networkFee: 5, symbol: "USDT" },
-            SOL: { balance: 0, minWithdraw: 0.1, networkFee: 0.01, symbol: "SOL" },
-            USDC: { balance: 0, minWithdraw: 50, networkFee: 5, symbol: "USDC" },
-            DOGE: { balance: 0, minWithdraw: 50, networkFee: 2, symbol: "DOGE" }
+            BTC: { balance: 0, minWithdraw: 0.001, symbol: "BTC" },
+            ETH: { balance: 0, minWithdraw: 0.01, symbol: "ETH" },
+            USDT: { balance: 0, minWithdraw: 50, symbol: "USDT" },
+            SOL: { balance: 0, minWithdraw: 0.1, symbol: "SOL" },
+            USDC: { balance: 0, minWithdraw: 50, symbol: "USDC" },
+            DOGE: { balance: 0, minWithdraw: 50, symbol: "DOGE" }
         };
 
         let currentAsset = "BTC";
 
         function updateWithdrawInterface() {
             const asset = assetBalances[currentAsset];
-            document.getElementById('availableBalance').innerHTML = `Available: ${asset.balance} ${asset.symbol}`;
-            document.getElementById('minWithdrawal').innerHTML = `${asset.minWithdraw} ${asset.symbol}`;
-            document.getElementById('networkFee').innerHTML = `${asset.networkFee} ${asset.symbol}`;
+            document.getElementById('availableBalance').innerHTML = `Available: ${asset.balance}`;
         }
 
-        function showCopiedToast() {
+        function showToast() {
             const toast = document.getElementById('toastMessage');
             toast.classList.add('show');
             setTimeout(() => {
@@ -582,7 +513,7 @@
             document.getElementById('withdrawAmount').value = '';
             
             // Show success toast
-            showCopiedToast();
+            showToast();
         }
 
         // Asset Button Handlers
