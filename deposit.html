@@ -112,15 +112,6 @@
             cursor: pointer;
         }
 
-        .balance-amount {
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #1a1f36;
-            background: #f1f5f9;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-        }
-
         .hamburger-btn {
             background: none;
             border: none;
@@ -207,189 +198,264 @@
         }
 
         .deposit-container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
 
         .page-header {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .page-header h1 {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 600;
             margin-bottom: 0.3rem;
         }
 
         .page-header p {
             color: #64748b;
+            font-size: 0.75rem;
+        }
+
+        .deposit-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Vertical Asset List - Scrollable */
+        .asset-list-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .asset-list-header {
+            padding: 0.8rem 1rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .asset-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .asset-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .asset-item:hover {
+            background: #f8fafc;
+        }
+
+        .asset-item.active {
+            background: #eff6ff;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .asset-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .asset-info {
+            flex: 1;
+        }
+
+        .asset-name {
+            font-weight: 600;
             font-size: 0.8rem;
         }
 
-        .deposit-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1.5rem;
+        .asset-symbol {
+            font-size: 0.6rem;
+            color: #64748b;
         }
 
-        .card-title {
-            font-size: 1rem;
+        .asset-balance {
+            text-align: right;
+        }
+
+        .asset-balance-value {
             font-weight: 600;
-            margin-bottom: 1.2rem;
-            padding-bottom: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .asset-balance-label {
+            font-size: 0.55rem;
+            color: #64748b;
+        }
+
+        /* Deposit Form */
+        .deposit-form-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+
+        .selected-asset-display {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .selected-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            background: white;
+        }
+
+        .selected-details h3 {
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .selected-details p {
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-bottom: 0.4rem;
+            color: #1a1f36;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+        }
+
+        .min-deposit-warning {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 0.6rem;
+            margin: 0.8rem 0;
+            font-size: 0.65rem;
+            color: #92400e;
+        }
+
+        .deposit-btn {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.7rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .deposit-btn:hover {
+            background: #2563eb;
+        }
+
+        .info-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .info-box p {
+            font-size: 0.65rem;
+            color: #166534;
+            margin-bottom: 0.3rem;
+        }
+
+        .deposit-history {
+            margin-top: 1.5rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .history-header {
+            padding: 0.8rem 1rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .history-table {
+            overflow-x: auto;
+        }
+
+        .history-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 0.6rem 1rem;
+            font-size: 0.6rem;
+            color: #64748b;
             border-bottom: 1px solid #e2e8f0;
         }
 
-        .amount-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .amount-label {
-            display: block;
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-bottom: 0.3rem;
-        }
-
-        .amount-input {
-            width: 100%;
-            padding: 0.8rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 1rem;
-        }
-
-        .asset-label {
-            display: block;
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-bottom: 0.3rem;
-        }
-
-        .asset-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-
-        .asset-btn {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
+        .history-table td {
             padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-        }
-
-        .asset-btn:hover {
-            background: #e2e8f0;
-        }
-
-        .asset-btn.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: white;
-        }
-
-        .generate-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-            border: none;
-            padding: 0.8rem;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 1.5rem;
-            transition: all 0.2s;
-        }
-
-        .generate-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .generate-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .timer {
-            text-align: center;
-            margin-bottom: 1rem;
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
-        .countdown {
-            font-weight: 700;
-            color: #3b82f6;
-            font-size: 1.1rem;
-        }
-
-        .qr-section {
-            text-align: center;
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-
-        .qr-section.active {
-            display: block;
-        }
-
-        .qr-code {
-            display: inline-block;
-            padding: 0.5rem;
-            background: white;
-            border-radius: 12px;
-        }
-
-        .qr-code img {
-            width: 150px;
-            height: 150px;
-        }
-
-        .address-box {
-            background: #f1f5f9;
-            padding: 0.8rem;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 0.75rem;
-            word-break: break-all;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .copy-address-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 0.3rem 0.8rem;
-            border-radius: 6px;
             font-size: 0.7rem;
-            cursor: pointer;
-            white-space: nowrap;
+            border-bottom: 1px solid #f1f5f9;
         }
 
-        .info-note {
-            text-align: center;
-            font-size: 0.65rem;
-            color: #94a3b8;
-            margin-top: 1rem;
+        .status-completed {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            color: #f59e0b;
+            font-weight: 500;
         }
 
         @media (max-width: 768px) {
@@ -399,24 +465,15 @@
             .hamburger-btn {
                 display: block;
             }
-            .deposit-container {
-                padding: 0.8rem;
+            .deposit-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .asset-list {
+                max-height: 250px;
             }
             .trust-bar {
                 display: none;
-            }
-            .asset-buttons {
-                gap: 0.3rem;
-            }
-            .asset-btn {
-                padding: 0.4rem 0.7rem;
-                font-size: 0.7rem;
-            }
-            .address-box {
-                flex-direction: column;
-            }
-            .copy-address-btn {
-                width: 100%;
             }
         }
     </style>
@@ -439,8 +496,7 @@
             <a href="support.html">Support</a>
         </div>
         <div class="right-menu">
-            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
-            <div class="balance-amount" id="balanceDisplay">$0.00</div>
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -478,205 +534,210 @@
     <div class="deposit-container">
         <div class="page-header">
             <h1>Deposit Funds</h1>
-            <p>Enter amount, select asset, and generate your deposit address</p>
+            <p>Minimum deposit $50 USD equivalent per transaction</p>
         </div>
 
-        <div class="deposit-card">
-            <!-- Amount Input -->
-            <div class="amount-section">
-                <label class="amount-label">Amount (USD)</label>
-                <input type="number" class="amount-input" id="depositAmount" placeholder="Enter amount" value="100">
+        <div class="deposit-grid">
+            <!-- Vertical Scrollable Asset List -->
+            <div class="asset-list-container">
+                <div class="asset-list-header">Select Cryptocurrency</div>
+                <div class="asset-list" id="assetList"></div>
             </div>
 
-            <!-- Asset Selection -->
-            <div>
-                <label class="asset-label">Asset</label>
-                <div class="asset-buttons" id="assetButtons">
-                    <button class="asset-btn active" data-asset="BTC">Bitcoin (BTC)</button>
-                    <button class="asset-btn" data-asset="ETH">Ethereum (ETH)</button>
-                    <button class="asset-btn" data-asset="SOL">Solana (SOL)</button>
-                    <button class="asset-btn" data-asset="BNB">Binance (BNB)</button>
-                    <button class="asset-btn" data-asset="USDT_TRX">Tether TRX (USDT)</button>
-                    <button class="asset-btn" data-asset="USDC">USD Coin (USDC)</button>
-                    <button class="asset-btn" data-asset="DOGE">Dogecoin (DOGE)</button>
+            <!-- Deposit Form -->
+            <div class="deposit-form-card">
+                <div class="selected-asset-display" id="selectedAssetDisplay">
+                    <div class="selected-icon" id="selectedIcon">💰</div>
+                    <div class="selected-details">
+                        <h3 id="selectedName">Bitcoin</h3>
+                        <p id="selectedSymbol">BTC</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Deposit Amount (USD)</label>
+                    <input type="number" id="depositAmountUSD" placeholder="Enter amount in USD" step="1">
+                    <div style="font-size: 0.6rem; color: #64748b; margin-top: 0.3rem;">Minimum: $50 USD</div>
+                </div>
+
+                <div class="min-deposit-warning" id="minDepositWarning" style="display: none;">
+                    ⚠️ Minimum deposit is $50 USD
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="crypto">Cryptocurrency Transfer</option>
+                        <option value="bank">Bank Wire (USD)</option>
+                        <option value="card">Credit/Debit Card</option>
+                    </select>
+                </div>
+
+                <div class="info-box" id="cryptoAddressBox">
+                    <p>📤 Send to this address:</p>
+                    <code style="font-size: 0.7rem; word-break: break-all;" id="depositAddress">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</code>
+                    <button onclick="copyAddress()" style="margin-top: 0.5rem; background: none; border: 1px solid #bbf7d0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.6rem; cursor: pointer;">Copy Address</button>
+                </div>
+
+                <button class="deposit-btn" onclick="createDepositRequest()">Generate Deposit Request</button>
+
+                <div class="info-box" style="background: #eff6ff; border-color: #bfdbfe;">
+                    <p>💡 Important:</p>
+                    <p>• Minimum deposit: $50 USD (any asset)</p>
+                    <p>• Deposits credited after 1 confirmation</p>
+                    <p>• No deposit fees for crypto transfers</p>
                 </div>
             </div>
+        </div>
 
-            <!-- Generate Button -->
-            <button class="generate-btn" id="generateBtn" onclick="generateDeposit()">Generate Deposit Address</button>
-
-            <!-- Timer -->
-            <div class="timer" id="timerDisplay" style="display: none;">
-                Address expires in: <span class="countdown" id="countdown">02:00</span>
-            </div>
-
-            <!-- QR Code and Address (Hidden until Generate clicked) -->
-            <div id="depositInfo" class="qr-section">
-                <div class="qr-code">
-                    <img id="qrImage" src="" alt="QR Code">
-                </div>
-                <div class="address-box">
-                    <span id="depositAddress"></span>
-                    <button class="copy-address-btn" onclick="copyAddress()">Copy Address</button>
-                </div>
-                <div class="info-note">
-                    Send the exact amount shown above to this address
-                </div>
+        <!-- Deposit History -->
+        <div class="deposit-history">
+            <div class="history-header">Recent Deposits</div>
+            <div class="history-table">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Asset</th><th>Amount (USD)</th><th>Status</th><th>Tx ID</th></tr>
+                    </thead>
+                    <tbody id="depositHistory"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        // ============================================
-        // YOUR ACTUAL DEPOSIT ADDRESSES
-        // ============================================
-        
-        const assets = {
-            BTC: {
-                name: "Bitcoin",
-                symbol: "BTC",
-                address: "112NvxwyYBycQwhuKboLstQQMWjm8qk88W"
-            },
-            ETH: {
-                name: "Ethereum",
-                symbol: "ETH",
-                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4"
-            },
-            SOL: {
-                name: "Solana",
-                symbol: "SOL",
-                address: "6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w"
-            },
-            BNB: {
-                name: "Binance Coin",
-                symbol: "BNB",
-                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4"
-            },
-            USDT_TRX: {
-                name: "Tether",
-                symbol: "USDT",
-                address: "TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae"
-            },
-            USDC: {
-                name: "USD Coin",
-                symbol: "USDC",
-                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4"
-            },
-            DOGE: {
-                name: "Dogecoin",
-                symbol: "DOGE",
-                address: "DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm"
+        // Assets with real icons (emoji + symbol)
+        const assets = [
+            { name: "Bitcoin", symbol: "BTC", icon: "₿", color: "#f7931a", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", minUSD: 50 },
+            { name: "Ethereum", symbol: "ETH", icon: "Ξ", color: "#627eea", address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5", minUSD: 50 },
+            { name: "Tether", symbol: "USDT", icon: "₮", color: "#26a17b", address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", minUSD: 50 },
+            { name: "Solana", symbol: "SOL", icon: "◎", color: "#00ffbd", address: "7Ec5e3xYtMvkcRZqNroP8pLpWJkHqXvLz3BcNqWpLxM", minUSD: 50 },
+            { name: "USD Coin", symbol: "USDC", icon: "💵", color: "#2775ca", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", minUSD: 50 },
+            { name: "Dogecoin", symbol: "DOGE", icon: "🐕", color: "#c2a633", address: "D8k7eTZq2n0yrf2493p83kkfjhx0wlhxYtMv", minUSD: 50 },
+            { name: "Cardano", symbol: "ADA", icon: "₳", color: "#0033ad", address: "addr1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", minUSD: 50 },
+            { name: "Ripple", symbol: "XRP", icon: "✕", color: "#23292f", address: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh", minUSD: 50 },
+            { name: "Polkadot", symbol: "DOT", icon: "●", color: "#e6007a", address: "1x2k3gdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", minUSD: 50 },
+            { name: "Litecoin", symbol: "LTC", icon: "Ł", color: "#345d9d", address: "ltc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", minUSD: 50 }
+        ];
+
+        let selectedAsset = assets[0];
+        let depositHistory = [
+            { date: "2024-01-15", asset: "BTC", amount: 500, status: "completed", txid: "0x1a2b..." },
+            { date: "2024-01-10", asset: "ETH", amount: 250, status: "completed", txid: "0x3c4d..." },
+            { date: "2024-01-05", asset: "USDT", amount: 1000, status: "pending", txid: "0x5e6f..." }
+        ];
+
+        function renderAssetList() {
+            const container = document.getElementById('assetList');
+            container.innerHTML = assets.map(asset => `
+                <div class="asset-item ${selectedAsset.symbol === asset.symbol ? 'active' : ''}" onclick="selectAsset('${asset.symbol}')">
+                    <div class="asset-icon" style="background: ${asset.color}20; color: ${asset.color};">${asset.icon}</div>
+                    <div class="asset-info">
+                        <div class="asset-name">${asset.name}</div>
+                        <div class="asset-symbol">${asset.symbol}</div>
+                    </div>
+                    <div class="asset-balance">
+                        <div class="asset-balance-value">Min $50</div>
+                        <div class="asset-balance-label">USD equivalent</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectAsset(symbol) {
+            selectedAsset = assets.find(a => a.symbol === symbol);
+            updateSelectedDisplay();
+            renderAssetList();
+            checkMinimumDeposit();
+        }
+
+        function updateSelectedDisplay() {
+            document.getElementById('selectedIcon').innerHTML = selectedAsset.icon;
+            document.getElementById('selectedName').innerHTML = selectedAsset.name;
+            document.getElementById('selectedSymbol').innerHTML = selectedAsset.symbol;
+            document.getElementById('depositAddress').innerHTML = selectedAsset.address;
+        }
+
+        function checkMinimumDeposit() {
+            const amount = parseFloat(document.getElementById('depositAmountUSD').value);
+            const warning = document.getElementById('minDepositWarning');
+            if (amount && amount < 50) {
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'none';
             }
-        };
+        }
 
-        let currentAsset = "BTC";
-        let countdownInterval = null;
-        let depositInfoVisible = false;
-
-        function generateDeposit() {
-            const asset = assets[currentAsset];
-            const amount = document.getElementById('depositAmount').value;
+        function createDepositRequest() {
+            const amount = parseFloat(document.getElementById('depositAmountUSD').value);
             
             if (!amount || amount <= 0) {
                 showToast('Please enter a valid amount');
                 return;
             }
             
-            // Show QR code section
-            const depositInfo = document.getElementById('depositInfo');
-            depositInfo.classList.add('active');
+            if (amount < 50) {
+                showToast('Minimum deposit is $50 USD');
+                return;
+            }
+
+            const txid = '0x' + Math.random().toString(36).substring(2, 10) + '...';
+            const newDeposit = {
+                date: new Date().toLocaleDateString(),
+                asset: selectedAsset.symbol,
+                amount: amount,
+                status: 'pending',
+                txid: txid
+            };
             
-            // Update address
-            document.getElementById('depositAddress').innerHTML = asset.address;
+            depositHistory.unshift(newDeposit);
+            renderDepositHistory();
             
-            // Update QR Code
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(asset.address)}`;
-            document.getElementById('qrImage').src = qrUrl;
+            showToast(`Deposit request created! Send ${selectedAsset.symbol} to the provided address.`);
             
-            // Start timer
-            startTimer();
-            
-            // Show timer display
-            document.getElementById('timerDisplay').style.display = 'block';
-            
-            // Disable generate button during timer
-            const generateBtn = document.getElementById('generateBtn');
-            generateBtn.disabled = true;
-            generateBtn.style.opacity = '0.5';
-            
-            showToast(`Deposit address generated for ${asset.name}`);
+            // Simulate auto-completion after 3 seconds (demo)
+            setTimeout(() => {
+                newDeposit.status = 'completed';
+                renderDepositHistory();
+                showToast(`Deposit of $${amount} ${selectedAsset.symbol} confirmed!`);
+            }, 3000);
         }
 
-        function startTimer() {
-            let seconds = 120; // 2 minutes = 120 seconds
-            
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-            }
-            
-            countdownInterval = setInterval(() => {
-                const minutes = Math.floor(seconds / 60);
-                const remainingSeconds = seconds % 60;
-                
-                const countdownElement = document.getElementById('countdown');
-                countdownElement.innerHTML = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-                
-                if (seconds <= 0) {
-                    clearInterval(countdownInterval);
-                    // Hide QR code after timer expires
-                    document.getElementById('depositInfo').classList.remove('active');
-                    document.getElementById('timerDisplay').style.display = 'none';
-                    
-                    // Re-enable generate button
-                    const generateBtn = document.getElementById('generateBtn');
-                    generateBtn.disabled = false;
-                    generateBtn.style.opacity = '1';
-                    
-                    showToast('Deposit address expired. Please generate a new one.');
-                }
-                
-                seconds--;
-            }, 1000);
+        function renderDepositHistory() {
+            const tbody = document.getElementById('depositHistory');
+            tbody.innerHTML = depositHistory.map(d => `
+                <tr>
+                    <td>${d.date}</td>
+                    <td><strong>${d.asset}</strong></td>
+                    <td>$${d.amount}</td>
+                    <td class="status-${d.status}">${d.status === 'completed' ? '✅ Completed' : '⏳ Pending'}</td>
+                    <td><code style="font-size: 0.6rem;">${d.txid}</code></td>
+                </tr>
+            `).join('');
         }
 
         function copyAddress() {
-            const address = document.getElementById('depositAddress').innerHTML;
-            navigator.clipboard.writeText(address);
-            showToast('Address copied to clipboard');
+            navigator.clipboard.writeText(selectedAsset.address);
+            showToast('Address copied to clipboard!');
         }
 
-        function showToast(message) {
+        function showToast(msg) {
             const toast = document.createElement('div');
             toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;';
-            toast.textContent = message;
+            toast.textContent = msg;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 2000);
         }
 
-        // Asset Button Handlers
-        document.querySelectorAll('.asset-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentAsset = this.dataset.asset;
-                
-                // If QR is visible, reset it (user needs to generate again)
-                if (depositInfoVisible) {
-                    document.getElementById('depositInfo').classList.remove('active');
-                    document.getElementById('timerDisplay').style.display = 'none';
-                    if (countdownInterval) {
-                        clearInterval(countdownInterval);
-                    }
-                    const generateBtn = document.getElementById('generateBtn');
-                    generateBtn.disabled = false;
-                    generateBtn.style.opacity = '1';
-                    depositInfoVisible = false;
-                }
-            });
-        });
-
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
+
+        // Event listeners
+        document.getElementById('depositAmountUSD').addEventListener('input', checkMinimumDeposit);
+
+        // Initialize
+        renderAssetList();
+        updateSelectedDisplay();
+        renderDepositHistory();
     </script>
 </body>
 </html>
