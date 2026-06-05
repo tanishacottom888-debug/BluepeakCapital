@@ -472,8 +472,8 @@
             <a href="support.html">Support</a>
         </div>
         <div class="right-menu">
-            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
-            <div class="balance-amount" id="balanceDisplay">$12,450.00</div>
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount" id="balanceDisplay">$0.00</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
@@ -526,7 +526,7 @@
                 <!-- Amount Input -->
                 <div class="amount-section">
                     <label class="amount-label">Amount (USD)</label>
-                    <input type="number" class="amount-input" id="depositAmount" placeholder="Enter amount" value="100">
+                    <input type="number" class="amount-input" id="depositAmount" placeholder="Enter amount">
                     <div class="min-deposit-note">⚠️ Minimum deposit: $50 USD</div>
                 </div>
 
@@ -606,20 +606,18 @@
             const generateBtn = document.getElementById('generateBtn');
             generateBtn.disabled = false;
             generateBtn.style.opacity = '1';
-            
-            showToast(`${currentAsset.name} selected`);
         }
 
         function generateDeposit() {
             const amount = document.getElementById('depositAmount').value;
             
             if (!amount || amount <= 0) {
-                showToast('Please enter a valid amount');
+                alert('Please enter a valid amount');
                 return;
             }
             
             if (amount < 50) {
-                showToast('Minimum deposit is $50 USD');
+                alert('Minimum deposit is $50 USD');
                 return;
             }
             
@@ -644,8 +642,6 @@
             const generateBtn = document.getElementById('generateBtn');
             generateBtn.disabled = true;
             generateBtn.style.opacity = '0.5';
-            
-            showToast(`Deposit address generated for ${currentAsset.name}. Send $${amount} worth of ${currentAsset.symbol}`);
         }
 
         function startTimer() {
@@ -671,7 +667,7 @@
                     generateBtn.disabled = false;
                     generateBtn.style.opacity = '1';
                     
-                    showToast('Deposit address expired. Please generate a new one.');
+                    alert('Deposit address expired. Please generate a new one.');
                 }
                 
                 seconds--;
@@ -681,15 +677,7 @@
         function copyAddress() {
             const address = document.getElementById('depositAddress').innerHTML;
             navigator.clipboard.writeText(address);
-            showToast('Address copied to clipboard');
-        }
-
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
+            alert('Address copied to clipboard');
         }
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
