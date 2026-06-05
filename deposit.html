@@ -207,7 +207,7 @@
         }
 
         .deposit-container {
-            max-width: 1000px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 1rem;
         }
@@ -232,7 +232,6 @@
             border: 1px solid #e2e8f0;
             border-radius: 16px;
             padding: 1.5rem;
-            margin-bottom: 1.5rem;
         }
 
         .card-title {
@@ -297,12 +296,55 @@
             color: white;
         }
 
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .timer {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .countdown {
+            font-weight: 700;
+            color: #3b82f6;
+            font-size: 1.1rem;
+        }
+
         .qr-section {
             text-align: center;
             padding: 1rem;
             background: #f8fafc;
             border-radius: 12px;
             margin-bottom: 1rem;
+            display: none;
+        }
+
+        .qr-section.active {
+            display: block;
         }
 
         .qr-code {
@@ -343,29 +385,11 @@
             white-space: nowrap;
         }
 
-        .info-box {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 1rem;
+        .info-note {
+            text-align: center;
+            font-size: 0.65rem;
+            color: #94a3b8;
             margin-top: 1rem;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 0.75rem;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .warning-text {
-            color: #dc2626;
-            font-size: 0.7rem;
-            margin-top: 0.5rem;
         }
 
         @media (max-width: 768px) {
@@ -454,64 +478,49 @@
     <div class="deposit-container">
         <div class="page-header">
             <h1>Deposit Funds</h1>
-            <p>Enter amount, select asset, then scan QR code or copy address</p>
+            <p>Enter amount, select asset, and generate your deposit address</p>
         </div>
 
         <div class="deposit-card">
-            <div class="card-title">Deposit Instructions</div>
-
-            <!-- Step 1: Enter Amount -->
+            <!-- Amount Input -->
             <div class="amount-section">
-                <label class="amount-label">Step 1: Enter Amount (USD)</label>
-                <input type="number" class="amount-input" id="depositAmount" placeholder="Enter amount in USD" value="100">
+                <label class="amount-label">Amount (USD)</label>
+                <input type="number" class="amount-input" id="depositAmount" placeholder="Enter amount" value="100">
             </div>
 
-            <!-- Step 2: Select Asset -->
+            <!-- Asset Selection -->
             <div>
-                <label class="asset-label">Step 2: Select Asset</label>
+                <label class="asset-label">Asset</label>
                 <div class="asset-buttons" id="assetButtons">
-                    <button class="asset-btn active" data-asset="BTC">₿ Bitcoin (BTC)</button>
-                    <button class="asset-btn" data-asset="ETH">Ξ Ethereum (ETH)</button>
-                    <button class="asset-btn" data-asset="SOL">◎ Solana (SOL)</button>
-                    <button class="asset-btn" data-asset="BNB">🔶 Binance (BNB)</button>
-                    <button class="asset-btn" data-asset="USDT_TRX">💵 Tether TRX (USDT)</button>
-                    <button class="asset-btn" data-asset="USDC">💵 USD Coin (USDC)</button>
-                    <button class="asset-btn" data-asset="DOGE">🐕 Dogecoin (DOGE)</button>
+                    <button class="asset-btn active" data-asset="BTC">Bitcoin (BTC)</button>
+                    <button class="asset-btn" data-asset="ETH">Ethereum (ETH)</button>
+                    <button class="asset-btn" data-asset="SOL">Solana (SOL)</button>
+                    <button class="asset-btn" data-asset="BNB">Binance (BNB)</button>
+                    <button class="asset-btn" data-asset="USDT_TRX">Tether TRX (USDT)</button>
+                    <button class="asset-btn" data-asset="USDC">USD Coin (USDC)</button>
+                    <button class="asset-btn" data-asset="DOGE">Dogecoin (DOGE)</button>
                 </div>
             </div>
 
-            <!-- Step 3: QR Code and Address -->
-            <div id="depositInfo">
-                <div class="qr-section">
-                    <div class="qr-code" id="qrCodeContainer">
-                        <img id="qrImage" src="" alt="QR Code">
-                    </div>
+            <!-- Generate Button -->
+            <button class="generate-btn" id="generateBtn" onclick="generateDeposit()">Generate Deposit Address</button>
+
+            <!-- Timer -->
+            <div class="timer" id="timerDisplay" style="display: none;">
+                Address expires in: <span class="countdown" id="countdown">02:00</span>
+            </div>
+
+            <!-- QR Code and Address (Hidden until Generate clicked) -->
+            <div id="depositInfo" class="qr-section">
+                <div class="qr-code">
+                    <img id="qrImage" src="" alt="QR Code">
                 </div>
                 <div class="address-box">
                     <span id="depositAddress"></span>
                     <button class="copy-address-btn" onclick="copyAddress()">Copy Address</button>
                 </div>
-
-                <div class="info-box">
-                    <div class="info-row">
-                        <span>Minimum Deposit</span>
-                        <span id="minDeposit">0.001 BTC</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Network</span>
-                        <span id="network">Bitcoin Network</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Confirmations Required</span>
-                        <span id="confirmations">3</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Estimated Processing</span>
-                        <span id="processingTime">10-30 minutes</span>
-                    </div>
-                    <div class="warning-text" id="warningText">
-                        ⚠️ Send only BTC to this address. Sending other cryptocurrencies may result in permanent loss.
-                    </div>
+                <div class="info-note">
+                    Send the exact amount shown above to this address
                 </div>
             </div>
         </div>
@@ -526,95 +535,108 @@
             BTC: {
                 name: "Bitcoin",
                 symbol: "BTC",
-                address: "112NvxwyYBycQwhuKboLstQQMWjm8qk88W",
-                minDeposit: "0.001 BTC",
-                network: "Bitcoin Network",
-                confirmations: "3",
-                processingTime: "10-30 minutes",
-                warning: "Send only BTC to this address"
+                address: "112NvxwyYBycQwhuKboLstQQMWjm8qk88W"
             },
             ETH: {
                 name: "Ethereum",
                 symbol: "ETH",
-                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4",
-                minDeposit: "0.01 ETH",
-                network: "ERC-20",
-                confirmations: "12",
-                processingTime: "5-15 minutes",
-                warning: "Send only ETH to this address"
+                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4"
             },
             SOL: {
                 name: "Solana",
                 symbol: "SOL",
-                address: "6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w",
-                minDeposit: "0.1 SOL",
-                network: "Solana Network",
-                confirmations: "1",
-                processingTime: "2-5 minutes",
-                warning: "Send only SOL to this address"
+                address: "6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w"
             },
             BNB: {
                 name: "Binance Coin",
                 symbol: "BNB",
-                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4",
-                minDeposit: "0.01 BNB",
-                network: "BSC (BEP-20)",
-                confirmations: "15",
-                processingTime: "3-8 minutes",
-                warning: "Send only BNB (BEP-20) to this address"
+                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4"
             },
             USDT_TRX: {
                 name: "Tether",
                 symbol: "USDT",
-                address: "TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae",
-                minDeposit: "50 USDT",
-                network: "TRC-20",
-                confirmations: "19",
-                processingTime: "5-10 minutes",
-                warning: "Send only USDT (TRC-20) to this address"
+                address: "TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae"
             },
             USDC: {
                 name: "USD Coin",
                 symbol: "USDC",
-                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4",
-                minDeposit: "50 USDC",
-                network: "ERC-20",
-                confirmations: "12",
-                processingTime: "5-15 minutes",
-                warning: "Send only USDC (ERC-20) to this address"
+                address: "0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4"
             },
             DOGE: {
                 name: "Dogecoin",
                 symbol: "DOGE",
-                address: "DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm",
-                minDeposit: "50 DOGE",
-                network: "Dogecoin Network",
-                confirmations: "40",
-                processingTime: "10-30 minutes",
-                warning: "Send only DOGE to this address"
+                address: "DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm"
             }
         };
 
         let currentAsset = "BTC";
+        let countdownInterval = null;
+        let depositInfoVisible = false;
 
-        function updateDepositInterface() {
+        function generateDeposit() {
             const asset = assets[currentAsset];
+            const amount = document.getElementById('depositAmount').value;
+            
+            if (!amount || amount <= 0) {
+                showToast('Please enter a valid amount');
+                return;
+            }
+            
+            // Show QR code section
+            const depositInfo = document.getElementById('depositInfo');
+            depositInfo.classList.add('active');
             
             // Update address
             document.getElementById('depositAddress').innerHTML = asset.address;
             
-            // Update QR Code using API (automatically generates from address)
+            // Update QR Code
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(asset.address)}`;
             document.getElementById('qrImage').src = qrUrl;
             
-            // Update info
-            document.getElementById('minDeposit').innerHTML = asset.minDeposit;
-            document.getElementById('network').innerHTML = asset.network;
-            document.getElementById('confirmations').innerHTML = asset.confirmations;
-            document.getElementById('processingTime').innerHTML = asset.processingTime;
+            // Start timer
+            startTimer();
             
-            // Update warning
-            document.getElementById('warningText').innerHTML = `⚠️ ${asset.warning}`;
+            // Show timer display
+            document.getElementById('timerDisplay').style.display = 'block';
+            
+            // Disable generate button during timer
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.5';
+            
+            showToast(`Deposit address generated for ${asset.name}`);
+        }
+
+        function startTimer() {
+            let seconds = 120; // 2 minutes = 120 seconds
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            countdownInterval = setInterval(() => {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                
+                const countdownElement = document.getElementById('countdown');
+                countdownElement.innerHTML = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    // Hide QR code after timer expires
+                    document.getElementById('depositInfo').classList.remove('active');
+                    document.getElementById('timerDisplay').style.display = 'none';
+                    
+                    // Re-enable generate button
+                    const generateBtn = document.getElementById('generateBtn');
+                    generateBtn.disabled = false;
+                    generateBtn.style.opacity = '1';
+                    
+                    showToast('Deposit address expired. Please generate a new one.');
+                }
+                
+                seconds--;
+            }, 1000);
         }
 
         function copyAddress() {
@@ -637,15 +659,24 @@
                 document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentAsset = this.dataset.asset;
-                updateDepositInterface();
+                
+                // If QR is visible, reset it (user needs to generate again)
+                if (depositInfoVisible) {
+                    document.getElementById('depositInfo').classList.remove('active');
+                    document.getElementById('timerDisplay').style.display = 'none';
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                    }
+                    const generateBtn = document.getElementById('generateBtn');
+                    generateBtn.disabled = false;
+                    generateBtn.style.opacity = '1';
+                    depositInfoVisible = false;
+                }
             });
         });
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
-
-        // Initialize
-        updateDepositInterface();
     </script>
 </body>
 </html>
