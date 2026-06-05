@@ -9,6 +9,24 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <!-- Supabase SDK -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                window.location.href = 'login.html'
+            }
+        }
+        
+        checkAuth()
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -22,7 +40,6 @@
             color: #1a1f36;
         }
 
-        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -64,7 +81,6 @@
             color: transparent;
         }
 
-        /* Desktop Navigation */
         .nav-links {
             display: flex;
             gap: 1rem;
@@ -82,7 +98,6 @@
             color: #3b82f6;
         }
 
-        /* Right Menu */
         .right-menu {
             display: flex;
             align-items: center;
@@ -90,33 +105,10 @@
         }
 
         .flag-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             object-fit: cover;
-            cursor: pointer;
-        }
-
-        .balance-amount {
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #1a1f36;
-            background: #f1f5f9;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-        }
-
-        .user-avatar {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.7rem;
             cursor: pointer;
         }
 
@@ -130,7 +122,6 @@
             display: none;
         }
 
-        /* Sidebar Menu */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -188,7 +179,6 @@
             color: #3b82f6;
         }
 
-        /* Trust Bar */
         .trust-bar {
             background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
@@ -207,14 +197,12 @@
             background: #cbd5e1;
         }
 
-        /* Main Container */
         .withdraw-container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
 
-        /* Page Header */
         .page-header {
             margin-bottom: 1rem;
         }
@@ -230,14 +218,12 @@
             font-size: 0.75rem;
         }
 
-        /* Two Column Layout */
         .withdraw-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
         }
 
-        /* Withdraw Card */
         .withdraw-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -253,7 +239,6 @@
             border-bottom: 1px solid #e2e8f0;
         }
 
-        /* Asset Selector */
         .asset-selector {
             margin-bottom: 1rem;
         }
@@ -287,7 +272,6 @@
             color: white;
         }
 
-        /* Form */
         .form-group {
             margin-bottom: 0.8rem;
         }
@@ -313,7 +297,6 @@
             margin-top: 0.2rem;
         }
 
-        /* Fee Breakdown */
         .fee-breakdown {
             background: #f8fafc;
             border-radius: 8px;
@@ -352,7 +335,6 @@
             background: #2563eb;
         }
 
-        /* Warning Box */
         .warning-box {
             background: #fef2f2;
             border: 1px solid #fee2e2;
@@ -366,7 +348,6 @@
             color: #dc2626;
         }
 
-        /* Info Card */
         .info-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -391,7 +372,6 @@
             font-weight: 500;
         }
 
-        /* Recent Withdrawals */
         .recent-section {
             margin-top: 1.5rem;
         }
@@ -407,13 +387,12 @@
             border: 1px solid #e2e8f0;
             border-radius: 10px;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
         .recent-table table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 450px;
+            min-width: 550px;
         }
 
         .recent-table th {
@@ -433,9 +412,10 @@
         }
 
         .status-pending { color: #f59e0b; }
+        .status-approved { color: #3b82f6; }
         .status-completed { color: #10b981; }
+        .status-rejected { color: #ef4444; }
 
-        /* Mobile Responsive */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -460,6 +440,10 @@
                 padding: 0.25rem 0.6rem;
                 font-size: 0.65rem;
             }
+            .flag-icon {
+                width: 24px;
+                height: 24px;
+            }
         }
     </style>
 </head>
@@ -482,13 +466,10 @@
         </div>
         <div class="right-menu">
             <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
-            <div class="balance-amount">$12,450</div>
-            <div class="user-avatar" onclick="showToast('Account settings')">JD</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
 
-    <!-- Sidebar Menu -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
         <div class="sidebar-menu" onclick="event.stopPropagation()">
             <div class="sidebar-header">
@@ -509,7 +490,6 @@
         </div>
     </div>
 
-    <!-- Trust Bar -->
     <div class="trust-bar">
         <span>FINRA Member</span>
         <span class="trust-separator"></span>
@@ -523,11 +503,10 @@
     <div class="withdraw-container">
         <div class="page-header">
             <h1>Withdraw Funds</h1>
-            <p>Withdraw cryptocurrency from your institutional account</p>
+            <p>Submit withdrawal request for admin approval</p>
         </div>
 
         <div class="withdraw-grid">
-            <!-- Left Column - Withdraw Interface -->
             <div class="withdraw-card">
                 <div class="card-title">Withdrawal Request</div>
                 
@@ -539,6 +518,7 @@
                         <button class="asset-btn" data-asset="USDT">USDT</button>
                         <button class="asset-btn" data-asset="SOL">SOL</button>
                         <button class="asset-btn" data-asset="USDC">USDC</button>
+                        <button class="asset-btn" data-asset="DOGE">DOGE</button>
                     </div>
                 </div>
 
@@ -551,7 +531,7 @@
                 <div class="form-group">
                     <label>Amount</label>
                     <input type="number" id="withdrawAmount" placeholder="0.000" step="0.001">
-                    <div class="balance-info" id="availableBalance">Available: 0.250 BTC</div>
+                    <div class="balance-info" id="availableBalance">Available: 0.000 BTC</div>
                 </div>
 
                 <div class="fee-breakdown">
@@ -573,12 +553,11 @@
 
                 <div class="warning-box">
                     <div class="warning-text">
-                        <strong>Important:</strong> Withdrawals processed within 24 hours
+                        Withdrawals require admin approval. Processing within 24 hours.
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column - Information -->
             <div>
                 <div class="info-card">
                     <div class="card-title">Withdrawal Info</div>
@@ -589,46 +568,45 @@
                     </div>
                     
                     <div class="info-item">
-                        <div class="info-label">Processing</div>
-                        <div class="info-value" id="processingTime">24 hours</div>
+                        <div class="info-label">Processing Time</div>
+                        <div class="info-value">24 hours (after approval)</div>
                     </div>
                     
                     <div class="info-item">
-                        <div class="info-label">Daily Limit</div>
-                        <div class="info-value" id="dailyLimit">$50,000</div>
+                        <div class="info-label">Approval Required</div>
+                        <div class="info-value">Yes - Admin review</div>
                     </div>
                     
                     <div class="info-item">
-                        <div class="info-label">Whitelist</div>
-                        <div class="info-value">24h cooldown</div>
+                        <div class="info-label">Status Tracking</div>
+                        <div class="info-value">Request ID provided</div>
                     </div>
                 </div>
 
                 <div class="info-card" style="margin-top: 0.8rem;">
                     <div class="card-title">Security</div>
                     <div class="info-item">
-                        <div class="info-label">✓ 2FA Required</div>
+                        <div class="info-label">2FA Required</div>
                         <div class="info-value">Enabled</div>
                     </div>
                     <div class="info-item">
-                        <div class="info-label">✓ Email Confirm</div>
+                        <div class="info-label">Email Confirmation</div>
                         <div class="info-value">Required</div>
                     </div>
                     <div class="info-item">
-                        <div class="info-label">✓ Address Whitelist</div>
-                        <div class="info-value">Optional</div>
+                        <div class="info-label">Admin Approval</div>
+                        <div class="info-value">24h review</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Withdrawals -->
         <div class="recent-section">
-            <div class="recent-title">Recent Withdrawals</div>
+            <div class="recent-title">Withdrawal Requests</div>
             <div class="recent-table">
                 <table>
                     <thead>
-                        <tr><th>Date</th><th>Asset</th><th>Amount</th><th>Address</th><th>Status</th></tr>
+                        <tr><th>Request ID</th><th>Date</th><th>Asset</th><th>Amount</th><th>Address</th><th>Status</th></tr>
                     </thead>
                     <tbody id="recentWithdrawalsBody"></tbody>
                 </table>
@@ -637,22 +615,25 @@
     </div>
 
     <script>
+        let withdrawalRequests = [
+            { id: "WDR-001", date: "2024-01-14", asset: "ETH", amount: "1.500", address: "0x742d...bEb5", status: "approved" },
+            { id: "WDR-002", date: "2024-01-12", asset: "BTC", amount: "0.100", address: "1A1zP...vfNa", status: "completed" },
+            { id: "WDR-003", date: "2024-01-10", asset: "SOL", amount: "50.00", address: "7Ec5e...XqZ", status: "pending" },
+            { id: "WDR-004", date: "2024-01-08", asset: "USDT", amount: "500.00", address: "0x742d...bEb5", status: "rejected" }
+        ];
+
+        let requestCounter = 100;
+
         const assetBalances = {
-            BTC: { balance: 0.25, minWithdraw: 0.001, networkFee: 0.0005, symbol: "BTC" },
-            ETH: { balance: 5.00, minWithdraw: 0.01, networkFee: 0.005, symbol: "ETH" },
-            USDT: { balance: 2500.00, minWithdraw: 50, networkFee: 5, symbol: "USDT" },
-            SOL: { balance: 120.00, minWithdraw: 0.1, networkFee: 0.01, symbol: "SOL" },
-            USDC: { balance: 1500.00, minWithdraw: 50, networkFee: 5, symbol: "USDC" }
+            BTC: { balance: 0, minWithdraw: 0.001, networkFee: 0.0005, symbol: "BTC" },
+            ETH: { balance: 0, minWithdraw: 0.01, networkFee: 0.005, symbol: "ETH" },
+            USDT: { balance: 0, minWithdraw: 50, networkFee: 5, symbol: "USDT" },
+            SOL: { balance: 0, minWithdraw: 0.1, networkFee: 0.01, symbol: "SOL" },
+            USDC: { balance: 0, minWithdraw: 50, networkFee: 5, symbol: "USDC" },
+            DOGE: { balance: 0, minWithdraw: 50, networkFee: 2, symbol: "DOGE" }
         };
 
         let currentAsset = "BTC";
-
-        let recentWithdrawals = [
-            { date: "2024-01-14", asset: "ETH", amount: "1.500", address: "0x742d...bEb5", status: "Completed" },
-            { date: "2024-01-12", asset: "BTC", amount: "0.100", address: "1A1zP...vfNa", status: "Completed" },
-            { date: "2024-01-10", asset: "SOL", amount: "50.00", address: "7Ec5e...XqZ", status: "Pending" },
-            { date: "2024-01-08", asset: "USDT", amount: "500.00", address: "0x742d...bEb5", status: "Completed" }
-        ];
 
         function updateWithdrawInterface() {
             const asset = assetBalances[currentAsset];
@@ -679,33 +660,54 @@
             if (!address) { showToast('Enter withdrawal address'); return; }
             if (!amount || amount <= 0) { showToast('Enter valid amount'); return; }
             if (amount < asset.minWithdraw) { showToast(`Minimum: ${asset.minWithdraw} ${asset.symbol}`); return; }
-            if (amount > asset.balance) { showToast(`Insufficient balance. Max: ${asset.balance} ${asset.symbol}`); return; }
             
-            if (confirm(`Confirm withdrawal of ${amount} ${asset.symbol}?`)) {
-                showToast(`Request submitted for ${amount} ${asset.symbol}`);
-                recentWithdrawals.unshift({
-                    date: new Date().toLocaleDateString(),
-                    asset: asset.symbol,
-                    amount: amount,
-                    address: address.substring(0, 10) + '...',
-                    status: "Pending"
-                });
-                loadRecentWithdrawals();
-                document.getElementById('withdrawAddress').value = '';
-                document.getElementById('withdrawAmount').value = '';
-                calculateTotal();
-            }
+            requestCounter++;
+            const requestId = `WDR-${requestCounter}`;
+            
+            const newRequest = {
+                id: requestId,
+                date: new Date().toLocaleDateString(),
+                asset: asset.symbol,
+                amount: amount,
+                address: address.substring(0, 10) + '...',
+                status: 'pending'
+            };
+            
+            withdrawalRequests.unshift(newRequest);
+            loadWithdrawalRequests();
+            
+            document.getElementById('withdrawAddress').value = '';
+            document.getElementById('withdrawAmount').value = '';
+            calculateTotal();
+            
+            showToast(`Withdrawal request ${requestId} submitted. Pending admin approval.`);
         }
 
-        function loadRecentWithdrawals() {
+        function loadWithdrawalRequests() {
             const tbody = document.getElementById('recentWithdrawalsBody');
-            tbody.innerHTML = recentWithdrawals.map(w => `
+            
+            const statusText = {
+                'pending': 'Pending',
+                'approved': 'Approved',
+                'completed': 'Completed',
+                'rejected': 'Rejected'
+            };
+            
+            const statusClass = {
+                'pending': 'status-pending',
+                'approved': 'status-approved',
+                'completed': 'status-completed',
+                'rejected': 'status-rejected'
+            };
+            
+            tbody.innerHTML = withdrawalRequests.map(w => `
                 <tr>
+                    <td>${w.id}</td>
                     <td>${w.date}</td>
                     <td>${w.asset}</td>
                     <td>${w.amount} ${w.asset}</td>
                     <td>${w.address}</td>
-                    <td class="${w.status === 'Completed' ? 'status-completed' : 'status-pending'}">${w.status}</td>
+                    <td class="${statusClass[w.status]}">${statusText[w.status]}</td>
                 </tr>
             `).join('');
         }
@@ -734,8 +736,9 @@
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
 
+        // Initialize
         updateWithdrawInterface();
-        loadRecentWithdrawals();
+        loadWithdrawalRequests();
     </script>
 </body>
 </html>
