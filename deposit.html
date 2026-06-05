@@ -421,11 +421,38 @@
             white-space: nowrap;
         }
 
+        .copy-address-btn:active {
+            background: #2563eb;
+        }
+
         .info-note {
             text-align: center;
             font-size: 0.65rem;
             color: #94a3b8;
             margin-top: 1rem;
+        }
+
+        /* Toast notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast-notification.show {
+            opacity: 1;
         }
 
         @media (max-width: 768px) {
@@ -450,6 +477,11 @@
             }
             .copy-address-btn {
                 width: 100%;
+            }
+            .toast-notification {
+                white-space: nowrap;
+                font-size: 0.7rem;
+                padding: 6px 16px;
             }
         }
     </style>
@@ -507,6 +539,9 @@
         <span class="trust-separator"></span>
         <span>$500M Insurance</span>
     </div>
+
+    <!-- Toast Notification for copied address -->
+    <div id="toastMessage" class="toast-notification">✓ Copied!</div>
 
     <div class="deposit-container">
         <div class="page-header">
@@ -576,6 +611,14 @@
 
         let currentAsset = assets[0];
         let countdownInterval = null;
+
+        function showCopiedToast() {
+            const toast = document.getElementById('toastMessage');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 1500);
+        }
 
         function renderAssetList() {
             const container = document.getElementById('assetList');
@@ -677,7 +720,7 @@
         function copyAddress() {
             const address = document.getElementById('depositAddress').innerHTML;
             navigator.clipboard.writeText(address);
-            alert('Address copied to clipboard');
+            showCopiedToast();
         }
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
