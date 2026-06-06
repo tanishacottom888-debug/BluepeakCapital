@@ -31,60 +31,73 @@
         }
         
         async function loadUserBalance() {
-            const { data, error } = await supabase
-                .from('user_balances')
-                .select('balance')
-                .eq('user_id', currentUser.id)
-                .single()
-            
-            if (error && error.code !== 'PGRST116') {
-                console.error('Error loading balance:', error)
+            try {
+                const { data, error } = await supabase
+                    .from('user_balances')
+                    .select('balance')
+                    .eq('user_id', currentUser.id)
+                    .single()
+                
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Error loading balance:', error)
+                }
+                
+                const balance = data?.balance || 0
+                window.userBalance = balance
+                const balanceElement = document.getElementById('balanceDisplay')
+                if (balanceElement) balanceElement.textContent = `$${balance.toFixed(2)}`
+            } catch (e) {
+                console.error('Balance error:', e)
+                window.userBalance = 0
             }
-            
-            const balance = data?.balance || 0
-            window.userBalance = balance
-            const balanceElement = document.getElementById('balanceDisplay')
-            if (balanceElement) balanceElement.textContent = `$${balance.toFixed(2)}`
         }
         
         async function loadUserBot() {
-            const { data, error } = await supabase
-                .from('user_bots')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .maybeSingle()
-            
-            if (error) {
-                console.error('Error loading bot:', error)
+            try {
+                // First try localStorage (fallback)
+                const localBot = localStorage.getItem(`bot_${currentUser.id}`)
+                if (localBot) {
+                    window.userBot = JSON.parse(localBot)
+                    renderBots()
+                    return
+                }
+                
+                // Then try Supabase
+                const { data, error } = await supabase
+                    .from('user_bots')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle()
+                
+                if (error) {
+                    console.error('Error loading bot from Supabase:', error)
+                    window.userBot = null
+                } else if (data) {
+                    window.userBot = data
+                    // Save to localStorage as backup
+                    localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(data))
+                } else {
+                    window.userBot = null
+                }
+                
+                renderBots()
+            } catch (e) {
+                console.error('Load bot error:', e)
                 window.userBot = null
-            } else if (data) {
-                window.userBot = data
-            } else {
-                window.userBot = null
-            }
-            
-            // Force render after bot data is loaded
-            if (typeof renderBots === 'function') {
                 renderBots()
             }
         }
         
         window.saveBotToDatabase = async function(botData) {
-            // First check if bot already exists
-            const { data: existing } = await supabase
-                .from('user_bots')
-                .select('id')
-                .eq('user_id', currentUser.id)
-                .maybeSingle()
-            
-            if (existing) {
-                showToast('Bot already activated!')
-                return null
-            }
-            
-            const { data, error } = await supabase
-                .from('user_bots')
-                .insert({
+            try {
+                // Check if bot already exists
+                if (window.userBot) {
+                    showToast('Bot already activated!')
+                    return null
+                }
+                
+                const newBot = {
+                    id: Date.now().toString(),
                     user_id: currentUser.id,
                     bot_name: botData.name,
                     bot_version: botData.version,
@@ -92,35 +105,81 @@
                     status: 'stopped',
                     strategy: 'balanced',
                     created_at: new Date().toISOString()
-                })
-                .select()
-                .single()
-            
-            if (error) {
+                }
+                
+                // Try Supabase first
+                try {
+                    const { data, error } = await supabase
+                        .from('user_bots')
+                        .insert({
+                            user_id: currentUser.id,
+                            bot_name: botData.name,
+                            bot_version: botData.version,
+                            description: botData.description,
+                            status: 'stopped',
+                            strategy: 'balanced',
+                            created_at: new Date().toISOString()
+                        })
+                        .select()
+                        .single()
+                    
+                    if (!error && data) {
+                        window.userBot = data
+                        localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(data))
+                        renderBots()
+                        return data
+                    }
+                } catch (supabaseError) {
+                    console.error('Supabase save error:', supabaseError)
+                }
+                
+                // Fallback to localStorage
+                window.userBot = newBot
+                localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(newBot))
+                renderBots()
+                return newBot
+                
+            } catch (error) {
                 console.error('Error saving bot:', error)
-                showToast('Error activating bot')
-                return null
+                showToast('Error activating bot. Using local storage.')
+                
+                // Fallback to localStorage
+                const fallbackBot = {
+                    id: Date.now().toString(),
+                    user_id: currentUser.id,
+                    bot_name: botData.name,
+                    bot_version: botData.version,
+                    description: botData.description,
+                    status: 'stopped',
+                    strategy: 'balanced',
+                    created_at: new Date().toISOString()
+                }
+                window.userBot = fallbackBot
+                localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(fallbackBot))
+                renderBots()
+                return fallbackBot
             }
-            
-            window.userBot = data
-            renderBots()
-            return data
         }
         
         window.updateBotStatus = async function(status) {
             if (!window.userBot) return false
             
-            const { error } = await supabase
-                .from('user_bots')
-                .update({ status: status })
-                .eq('id', window.userBot.id)
+            // Update local storage
+            window.userBot.status = status
+            localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(window.userBot))
             
-            if (error) {
-                console.error('Error updating bot status:', error)
-                return false
+            // Try Supabase update
+            if (window.userBot.id && !window.userBot.id.toString().startsWith('fallback')) {
+                try {
+                    await supabase
+                        .from('user_bots')
+                        .update({ status: status })
+                        .eq('id', window.userBot.id)
+                } catch (e) {
+                    console.error('Supabase update error:', e)
+                }
             }
             
-            window.userBot.status = status
             renderBots()
             return true
         }
@@ -128,14 +187,19 @@
         window.deleteBotFromDatabase = async function() {
             if (!window.userBot) return false
             
-            const { error } = await supabase
-                .from('user_bots')
-                .delete()
-                .eq('id', window.userBot.id)
+            // Remove from localStorage
+            localStorage.removeItem(`bot_${currentUser.id}`)
             
-            if (error) {
-                console.error('Error deleting bot:', error)
-                return false
+            // Try Supabase delete
+            if (window.userBot.id && !window.userBot.id.toString().startsWith('fallback')) {
+                try {
+                    await supabase
+                        .from('user_bots')
+                        .delete()
+                        .eq('id', window.userBot.id)
+                } catch (e) {
+                    console.error('Supabase delete error:', e)
+                }
             }
             
             window.userBot = null
@@ -882,8 +946,6 @@
         function renderBots() {
             const container = document.getElementById('botsList')
             const countSpan = document.getElementById('botsCount')
-            
-            console.log('renderBots called, userBot:', window.userBot)
             
             if (!window.userBot) {
                 container.innerHTML = `
