@@ -519,7 +519,15 @@
             margin-bottom: 0.3rem;
         }
 
-        .setting-field input, .setting-field select {
+        .setting-field input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        .setting-field select {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid #e2e8f0;
@@ -529,18 +537,13 @@
             cursor: pointer;
         }
 
-        /* Asset option with icon */
-        .asset-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .asset-icon-img {
+        /* Asset option with real image icon */
+        .asset-option-icon {
             width: 18px;
             height: 18px;
+            vertical-align: middle;
+            margin-right: 6px;
             border-radius: 50%;
-            object-fit: contain;
         }
 
         .bots-list-card {
@@ -874,26 +877,18 @@
                 <div class="setting-field">
                     <label>Trading Asset</label>
                     <select id="tradingAsset">
-                        <option value="BTC">₿ Bitcoin</option>
-                        <option value="ETH">Ξ Ethereum</option>
-                        <option value="SOL">◎ Solana</option>
-                        <option value="XRP">✕ Ripple</option>
-                        <option value="ADA">₳ Cardano</option>
-                        <option value="DOGE">Ð Dogecoin</option>
-                        <option value="LINK">🔗 Chainlink</option>
-                        <option value="DOT">● Polkadot</option>
-                        <option value="LTC">Ł Litecoin</option>
-                        <option value="BNB">ⓑ Binance Coin</option>
-                        <option value="AVAX">❄️ Avalanche</option>
-                        <option value="MATIC">🔷 Polygon</option>
-                        <option value="ATOM">⚛️ Cosmos</option>
-                        <option value="ALGO">🔵 Algorand</option>
-                        <option value="VET">🌿 VeChain</option>
-                        <option value="FIL">📁 Filecoin</option>
-                        <option value="EOS">🌐 EOS</option>
-                        <option value="TRX">💧 TRON</option>
-                        <option value="XTZ">🥖 Tezos</option>
-                        <option value="NEO">💚 NEO</option>
+                        <option value="BTC"><img src="https://assets.coincap.io/assets/icons/btc@2x.png" class="asset-option-icon"> Bitcoin</option>
+                        <option value="ETH"><img src="https://assets.coincap.io/assets/icons/eth@2x.png" class="asset-option-icon"> Ethereum</option>
+                        <option value="SOL"><img src="https://assets.coincap.io/assets/icons/sol@2x.png" class="asset-option-icon"> Solana</option>
+                        <option value="XRP"><img src="https://assets.coincap.io/assets/icons/xrp@2x.png" class="asset-option-icon"> Ripple</option>
+                        <option value="ADA"><img src="https://assets.coincap.io/assets/icons/ada@2x.png" class="asset-option-icon"> Cardano</option>
+                        <option value="DOGE"><img src="https://assets.coincap.io/assets/icons/doge@2x.png" class="asset-option-icon"> Dogecoin</option>
+                        <option value="LINK"><img src="https://assets.coincap.io/assets/icons/link@2x.png" class="asset-option-icon"> Chainlink</option>
+                        <option value="DOT"><img src="https://assets.coincap.io/assets/icons/dot@2x.png" class="asset-option-icon"> Polkadot</option>
+                        <option value="LTC"><img src="https://assets.coincap.io/assets/icons/ltc@2x.png" class="asset-option-icon"> Litecoin</option>
+                        <option value="BNB"><img src="https://assets.coincap.io/assets/icons/bnb@2x.png" class="asset-option-icon"> Binance Coin</option>
+                        <option value="AVAX"><img src="https://assets.coincap.io/assets/icons/avax@2x.png" class="asset-option-icon"> Avalanche</option>
+                        <option value="MATIC"><img src="https://assets.coincap.io/assets/icons/matic@2x.png" class="asset-option-icon"> Polygon</option>
                     </select>
                 </div>
             </div>
