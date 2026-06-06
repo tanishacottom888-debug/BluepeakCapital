@@ -46,7 +46,6 @@
                 updateUserDisplay(profile)
             }
             
-            // Load user's portfolio balances from Supabase
             await loadUserBalances(session.user.id)
         }
         
@@ -59,7 +58,6 @@
                 welcomeH1.textContent = `Welcome back, ${firstName}`
             }
             
-            // Update sidebar with user info
             const sidebarName = document.getElementById('sidebarName')
             const sidebarEmail = document.getElementById('sidebarEmail')
             const sidebarAvatar = document.getElementById('sidebarAvatar')
@@ -71,7 +69,6 @@
             }
         }
         
-        // Load user balances from database
         async function loadUserBalances(userId) {
             try {
                 const { data: balances, error } = await supabase
@@ -81,16 +78,13 @@
                 
                 if (error) {
                     console.error('Error loading balances:', error)
-                    // If no balances table exists yet, use empty portfolio
                     useEmptyPortfolio()
                     return
                 }
                 
                 if (balances && balances.length > 0) {
-                    // User has existing balances, update portfolio
                     updatePortfolioWithBalances(balances)
                 } else {
-                    // New user - create default zero balances
                     await createDefaultBalances(userId)
                     useEmptyPortfolio()
                 }
@@ -100,7 +94,6 @@
             }
         }
         
-        // Create default zero balances for new user
         async function createDefaultBalances(userId) {
             const defaultBalances = [
                 { user_id: userId, asset: "BTC", balance: 0, symbol: "BTC" },
@@ -122,9 +115,7 @@
             }
         }
         
-        // Update portfolio display with empty balances
         function useEmptyPortfolio() {
-            // Update portfolio table with empty data
             const portfolioData = [
                 { asset: "Bitcoin", symbol: "BTC", holdings: 0, avgPrice: 0, currentPrice: 43250, value: 0, pnl: 0, pnlPercent: 0 },
                 { asset: "Ethereum", symbol: "ETH", holdings: 0, avgPrice: 0, currentPrice: 2250, value: 0, pnl: 0, pnlPercent: 0 },
@@ -137,7 +128,6 @@
         }
         
         function updatePortfolioWithBalances(balances) {
-            // Map balances to portfolio data
             const portfolioData = [
                 { asset: "Bitcoin", symbol: "BTC", holdings: 0, avgPrice: 38500, currentPrice: 43250, value: 0, pnl: 0, pnlPercent: 0 },
                 { asset: "Ethereum", symbol: "ETH", holdings: 0, avgPrice: 1850, currentPrice: 2250, value: 0, pnl: 0, pnlPercent: 0 },
@@ -170,75 +160,14 @@
                     <td>${asset.holdings} ${asset.symbol}</td>
                     <td>$${asset.avgPrice.toLocaleString()}</td>
                     <td>$${asset.currentPrice.toLocaleString()}</td>
-                    <td>$${asset.value.toLocaleString()}</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
+                    <td>$${asset.value.toLocaleString()}</td>
                     <td class="${asset.pnl >= 0 ? 'positive' : 'negative'}">
                         ${asset.pnl >= 0 ? '▲' : '▼'} $${Math.abs(asset.pnl).toLocaleString()} (${Math.abs(asset.pnlPercent)}%)
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </td>
                     <td><button class="btn-small" onclick="showMessage('Trade page')">Trade</button></td>
                 </tr>
             `).join('')
             
-            // Update total balance stat
             const totalBalance = portfolioData.reduce((sum, a) => sum + a.value, 0)
             document.getElementById('totalBalance').innerHTML = `$${totalBalance.toLocaleString()}`
             document.getElementById('totalPnl').innerHTML = `$${portfolioData.reduce((sum, a) => sum + a.pnl, 0).toLocaleString()}`
@@ -251,7 +180,6 @@
             }
         }
         
-        // Logout function for sidebar menu
         window.logout = async function() {
             const { error } = await supabase.auth.signOut()
             if (!error) {
@@ -270,10 +198,8 @@
         checkAuthAndLoadUser()
     </script>
     
-    <!-- TradingView Widget Script -->
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     
-    <!-- LiveChat Script -->
     <script>
         window.__lc = window.__lc || {};
         window.__lc.license = 19515979;
@@ -289,12 +215,38 @@
             box-sizing: border-box;
         }
 
+        /* CSS Variables for Dark/Light Mode */
+        :root {
+            --bg-primary: #f5f7fb;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1f36;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --nav-bg: #ffffff;
+            --stat-bg: #ffffff;
+            --hover-bg: #f1f5f9;
+        }
+
+        body.dark-mode {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --nav-bg: #111827;
+            --stat-bg: #1f2937;
+            --hover-bg: #374151;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f7fb;
-            color: #1a1f36;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             overflow-x: hidden;
             width: 100%;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         /* Navigation */
@@ -302,9 +254,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 0.8rem 1.5rem;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
             position: fixed;
             width: 100%;
             top: 0;
@@ -312,7 +264,8 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
-        .logo {
+        /* Left side - Logo and Site Name */
+        .logo-area {
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -331,37 +284,37 @@
             color: white;
         }
 
-        .logo-text {
-            font-size: 1.2rem;
+        .site-name {
+            font-size: 1.1rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: #4a5568;
-            text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            color: #3b82f6;
-        }
-
-        /* Right side menu */
+        /* Right side menu - Dark Mode, Flag, Balance, Menu */
         .right-menu {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+        }
+
+        .dark-mode-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.3rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .dark-mode-btn:hover {
+            background: var(--hover-bg);
         }
 
         .flag-icon {
@@ -375,21 +328,28 @@
 
         .balance-display {
             font-weight: 600;
-            font-size: 0.9rem;
-            color: #1a1f36;
-            background: #f1f5f9;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            background: var(--hover-bg);
             padding: 0.4rem 1rem;
             border-radius: 30px;
         }
 
         .mobile-menu-btn {
-            display: none;
             background: none;
             border: none;
-            color: #1a1f36;
-            font-size: 1.5rem;
+            color: var(--text-primary);
+            font-size: 1.3rem;
             cursor: pointer;
             padding: 0.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hide desktop nav links - we use sidebar for mobile */
+        .nav-links {
+            display: none;
         }
 
         /* Sidebar */
@@ -417,7 +377,7 @@
             right: -300px;
             width: 280px;
             height: 100%;
-            background: white;
+            background: var(--bg-secondary);
             box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
             z-index: 2001;
             transition: right 0.3s ease;
@@ -431,7 +391,7 @@
 
         .sidebar-header {
             padding: 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 0.8rem;
@@ -458,11 +418,12 @@
         .sidebar-header .user-name {
             font-weight: 600;
             font-size: 1rem;
+            color: var(--text-primary);
         }
 
         .sidebar-header .user-email {
             font-size: 0.7rem;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         .close-sidebar {
@@ -471,7 +432,7 @@
             border: none;
             font-size: 1.2rem;
             cursor: pointer;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         .sidebar-nav {
@@ -484,20 +445,20 @@
         .sidebar-nav a {
             display: block;
             padding: 0.8rem 1.5rem;
-            color: #4a5568;
+            color: var(--text-primary);
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 500;
         }
 
         .sidebar-nav a:hover {
-            background: #f1f5f9;
+            background: var(--hover-bg);
             color: #3b82f6;
         }
 
         .sidebar-nav .logout-item {
             margin-top: auto;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--border-color);
             margin-top: 1rem;
             color: #ef4444;
         }
@@ -507,8 +468,19 @@
             color: #dc2626;
         }
 
-        .main-container {
+        .trust-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.4rem 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
             margin-top: 65px;
+        }
+
+        .main-container {
             padding: 1.5rem;
             max-width: 1600px;
             margin-left: auto;
@@ -537,15 +509,15 @@
         }
 
         .stat-card {
-            background: white;
+            background: var(--stat-bg);
             border-radius: 16px;
             padding: 1.25rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
         }
 
         .stat-label {
             font-size: 0.75rem;
-            color: #718096;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 0.5rem;
@@ -554,12 +526,7 @@
         .stat-value {
             font-size: 1.75rem;
             font-weight: 700;
-            color: #1a1f36;
-        }
-
-        .stat-change {
-            font-size: 0.7rem;
-            margin-top: 0.5rem;
+            color: var(--text-primary);
         }
 
         .positive { color: #10b981; }
@@ -572,52 +539,38 @@
             margin-bottom: 1.5rem;
         }
 
-        .chart-container {
-            background: white;
+        .chart-container, .orderbook-container, .alerts-section, .portfolio-container, .mobile-app-section, .news-section {
+            background: var(--bg-card);
             border-radius: 16px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             overflow: hidden;
         }
 
-        .chart-header {
+        .chart-header, .orderbook-header, .alerts-header, .news-header {
             padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .chart-header h3 {
+        .chart-header h3, .orderbook-header h3, .alerts-header h3, .news-header h3 {
             font-size: 1rem;
             font-weight: 600;
+            color: var(--text-primary);
         }
 
         .pair-selector {
             padding: 0.25rem 0.5rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            background: white;
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
 
         #tradingview_chart {
             height: 400px;
             width: 100%;
-        }
-
-        .orderbook-container {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .orderbook-header {
-            padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .orderbook-header h3 {
-            font-size: 1rem;
-            font-weight: 600;
         }
 
         .orderbook-table {
@@ -628,36 +581,17 @@
         .orderbook-table th, .orderbook-table td {
             padding: 0.5rem 1rem;
             text-align: left;
+            color: var(--text-primary);
         }
 
         .orderbook-table th {
-            color: #718096;
+            color: var(--text-secondary);
             font-weight: 500;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .bid { color: #10b981; }
         .ask { color: #ef4444; }
-
-        .alerts-section {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 1.5rem;
-        }
-
-        .alerts-header {
-            padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .alerts-header h3 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
 
         .alert-form {
             padding: 1rem;
@@ -668,9 +602,11 @@
 
         .alert-form input, .alert-form select {
             padding: 0.5rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.8rem;
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
 
         .alert-form button {
@@ -691,8 +627,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             font-size: 0.8rem;
+            color: var(--text-primary);
         }
 
         .delete-alert {
@@ -705,14 +642,6 @@
             font-size: 0.7rem;
         }
 
-        .portfolio-container {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 1.5rem;
-            overflow-x: auto;
-        }
-
         .portfolio-table {
             width: 100%;
             border-collapse: collapse;
@@ -722,30 +651,29 @@
         .portfolio-table th {
             text-align: left;
             padding: 1rem;
-            background: #f8fafc;
-            color: #64748b;
+            background: var(--hover-bg);
+            color: var(--text-secondary);
             font-size: 0.75rem;
             font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .portfolio-table td {
             padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             font-size: 0.85rem;
+            color: var(--text-primary);
         }
 
         .mobile-app-section {
             background: linear-gradient(135deg, #1a1f36, #0f172a);
-            border-radius: 16px;
-            padding: 1.5rem;
             color: white;
-            margin-bottom: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
+            padding: 1.5rem;
         }
 
         .qr-code {
@@ -772,44 +700,30 @@
             padding: 0.5rem 1rem;
             border-radius: 8px;
             cursor: pointer;
-        }
-
-        .news-section {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .news-header {
-            padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .news-header h3 {
-            font-size: 1rem;
-            font-weight: 600;
+            color: white;
         }
 
         .news-item {
             padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: background 0.2s;
         }
 
         .news-item:hover {
-            background: #f8fafc;
+            background: var(--hover-bg);
         }
 
         .news-title {
             font-weight: 600;
             font-size: 0.85rem;
             margin-bottom: 0.25rem;
+            color: var(--text-primary);
         }
 
         .news-time {
             font-size: 0.7rem;
-            color: #94a3b8;
+            color: var(--text-secondary);
         }
 
         .btn-small {
@@ -822,12 +736,6 @@
             font-size: 0.7rem;
         }
 
-        @media (min-width: 769px) {
-            .mobile-menu-btn {
-                display: none;
-            }
-        }
-
         @media (max-width: 1024px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -835,43 +743,25 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                overflow-x: hidden;
-            }
-            
-            .nav-links {
+            .trust-bar {
                 display: none;
             }
-            .mobile-menu-btn {
-                display: block;
-            }
-            nav {
-                padding: 0.8rem 1rem;
-            }
-            
             .main-container {
                 padding: 1rem;
                 margin-top: 60px;
-                overflow-x: hidden;
             }
-            
             .welcome-section {
                 padding: 1rem;
-                margin-bottom: 1rem;
-                border-radius: 12px;
             }
             .welcome-section h1 {
                 font-size: 1.2rem;
             }
-            
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
-                margin-bottom: 1rem;
             }
             .stat-card {
                 padding: 0.75rem;
-                border-radius: 12px;
             }
             .stat-value {
                 font-size: 1.1rem;
@@ -879,55 +769,21 @@
             .stat-label {
                 font-size: 0.55rem;
             }
-            
-            .chart-container {
-                border-radius: 12px;
-            }
-            .chart-header {
-                padding: 0.75rem;
-            }
             #tradingview_chart {
                 height: 280px;
             }
-            
-            .orderbook-container {
-                border-radius: 12px;
-            }
-            .orderbook-header {
-                padding: 0.75rem;
-            }
-            .orderbook-table {
-                font-size: 0.7rem;
-            }
-            
-            .alerts-section {
-                border-radius: 12px;
-            }
             .alert-form {
                 flex-direction: column;
-                padding: 0.75rem;
             }
             .alert-form select, .alert-form input, .alert-form button {
                 width: 100%;
             }
-            
-            .portfolio-container {
-                border-radius: 12px;
-                margin-bottom: 1rem;
-                overflow-x: auto;
-            }
             .portfolio-table {
                 min-width: 550px;
             }
-            .portfolio-table th, .portfolio-table td {
-                padding: 0.6rem;
-                font-size: 0.7rem;
-            }
-            
             .mobile-app-section {
                 flex-direction: column;
                 text-align: center;
-                padding: 1rem;
             }
             .app-buttons {
                 justify-content: center;
@@ -936,49 +792,31 @@
                 width: 70px;
                 height: 70px;
             }
-            
-            .news-section {
-                border-radius: 12px;
-            }
-            .news-header {
-                padding: 0.75rem;
-            }
-            .news-item {
-                padding: 0.75rem;
-            }
-            .news-title {
-                font-size: 0.75rem;
-            }
-            
             .balance-display {
-                font-size: 0.75rem;
+                font-size: 0.7rem;
                 padding: 0.3rem 0.7rem;
             }
             .flag-icon {
                 width: 24px;
                 height: 24px;
             }
+            .dark-mode-btn {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
 <body>
     <nav>
-        <div class="logo" onclick="location.href='index.html'">
+        <!-- Left side: Logo + Site Name -->
+        <div class="logo-area" onclick="location.href='index.html'">
             <div class="logo-icon">⛰️</div>
-            <div class="logo-text">BluepeakCapital</div>
+            <div class="site-name">BluepeakCapital</div>
         </div>
-        <div class="nav-links">
-            <a href="#" class="active">Dashboard</a>
-            <a href="trade.html">Trade</a>
-            <a href="markets.html">Markets</a>
-            <a href="orders.html">Orders</a>
-            <a href="bots.html">Bots</a>
-            <a href="deposit.html">Deposit</a>
-            <a href="withdraw.html">Withdraw</a>
-            <a href="settings.html">Settings</a>
-            <a href="support.html">Support</a>
-        </div>
+
+        <!-- Right side: Dark Mode Toggle, Flag, Balance, Menu Button -->
         <div class="right-menu">
+            <button class="dark-mode-btn" id="darkModeToggle" title="Dark/Light mode">🌙</button>
             <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showMessage('Currency: USD')">
             <div class="balance-display" id="balanceDisplay">$0.00</div>
             <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
@@ -1011,6 +849,19 @@
         </div>
     </div>
 
+    <!-- Trust Bar -->
+    <div class="trust-bar">
+        <span>FINRA Member</span>
+        <span>|</span>
+        <span>SIPC Insured</span>
+        <span>|</span>
+        <span>SOC 2 Type II</span>
+        <span>|</span>
+        <span>$500M Insurance</span>
+        <span>|</span>
+        <span>24/7 Support</span>
+    </div>
+
     <div class="main-container">
         <div class="welcome-section">
             <h1>Welcome back, User</h1>
@@ -1030,7 +881,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total P&L</div>
-                <div class="stat-value">$0.00</div>
+                <div class="stat-value" id="totalPnl">$0.00</div>
                 <div class="stat-change">Start trading</div>
             </div>
             <div class="stat-card">
@@ -1122,6 +973,22 @@
     </div>
 
     <script>
+        // Dark Mode Toggle
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeToggle').textContent = '☀️';
+            }
+            
+            document.getElementById('darkModeToggle').addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                localStorage.setItem('darkMode', isDark);
+                document.getElementById('darkModeToggle').textContent = isDark ? '☀️' : '🌙';
+            });
+        }
+
         let tvWidget = null;
 
         function initTradingView() {
@@ -1155,8 +1022,8 @@
                 asks.push({ price: basePrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice + (i * 5)) * Math.random() * 2).toFixed(0) });
                 bids.push({ price: basePrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice - (i * 5)) * Math.random() * 2).toFixed(0) });
             }
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></div> </div>`).join('');
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></div> </div>`).join('');
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></tr>`).join('');
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('');
         }
 
         function addPriceAlert() {
@@ -1183,7 +1050,7 @@
             let priceAlerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
             const alertList = document.getElementById('alertList');
             if (priceAlerts.length === 0) {
-                alertList.innerHTML = '<p style="padding: 1rem; color: #718096; font-size: 0.8rem;">No alerts set. Create one above.</p>';
+                alertList.innerHTML = '<p style="padding: 1rem; color: var(--text-secondary); font-size: 0.8rem;">No alerts set. Create one above.</p>';
                 return;
             }
             alertList.innerHTML = priceAlerts.map((alert, i) => `
@@ -1218,6 +1085,7 @@
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
 
         function init() {
+            initDarkMode();
             updateOrderBook();
             renderAlerts();
             loadNews();
