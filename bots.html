@@ -56,19 +56,32 @@
             
             if (error) {
                 console.error('Error loading bot:', error)
-                return
-            }
-            
-            if (data) {
+                window.userBot = null
+            } else if (data) {
                 window.userBot = data
             } else {
                 window.userBot = null
             }
             
-            if (typeof renderBots === 'function') renderBots()
+            // Force render after bot data is loaded
+            if (typeof renderBots === 'function') {
+                renderBots()
+            }
         }
         
         window.saveBotToDatabase = async function(botData) {
+            // First check if bot already exists
+            const { data: existing } = await supabase
+                .from('user_bots')
+                .select('id')
+                .eq('user_id', currentUser.id)
+                .maybeSingle()
+            
+            if (existing) {
+                showToast('Bot already activated!')
+                return null
+            }
+            
             const { data, error } = await supabase
                 .from('user_bots')
                 .insert({
@@ -85,11 +98,12 @@
             
             if (error) {
                 console.error('Error saving bot:', error)
+                showToast('Error activating bot')
                 return null
             }
             
             window.userBot = data
-            await loadUserBot()
+            renderBots()
             return data
         }
         
@@ -107,7 +121,7 @@
             }
             
             window.userBot.status = status
-            if (typeof renderBots === 'function') renderBots()
+            renderBots()
             return true
         }
         
@@ -125,7 +139,7 @@
             }
             
             window.userBot = null
-            await loadUserBot()
+            renderBots()
             return true
         }
         
@@ -500,7 +514,6 @@
             color: #cbd5e1;
         }
 
-        /* Bot Item - Exactly as requested */
         .bot-item {
             background: white;
             border: 1px solid #e2e8f0;
@@ -870,6 +883,8 @@
             const container = document.getElementById('botsList')
             const countSpan = document.getElementById('botsCount')
             
+            console.log('renderBots called, userBot:', window.userBot)
+            
             if (!window.userBot) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -971,14 +986,17 @@
                 return
             }
             
-            await window.saveBotToDatabase({
+            const result = await window.saveBotToDatabase({
                 name: BOT_INFO.name,
                 version: BOT_INFO.version,
                 description: BOT_INFO.description
             })
             
             document.getElementById('passkeyInput').value = ''
-            showToast(`✅ Bot activated successfully! Welcome ${BOT_INFO.name}`)
+            
+            if (result) {
+                showToast(`✅ Bot activated successfully! Welcome ${BOT_INFO.name}`)
+            }
         }
 
         function uploadBot() {
@@ -1027,6 +1045,9 @@
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
+        
+        // Make renderBots available globally
+        window.renderBots = renderBots
     </script>
 </body>
 </html>
