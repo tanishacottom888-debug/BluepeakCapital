@@ -132,7 +132,7 @@
                 window.userBot = newBot
                 localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(newBot))
                 renderBots()
-                showToast(`✅ ${botData.name} activated! (Saved locally)`, 'success')
+                showToast(`✅ ${botData.name} activated!`, 'success')
                 return newBot
                 
             } catch (error) {
@@ -529,12 +529,18 @@
             cursor: pointer;
         }
 
-        /* Real icons for asset selector */
-        .asset-option-icon {
-            display: inline-block;
+        /* Asset option with icon */
+        .asset-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .asset-icon-img {
             width: 18px;
-            text-align: center;
-            margin-right: 6px;
+            height: 18px;
+            border-radius: 50%;
+            object-fit: contain;
         }
 
         .bots-list-card {
@@ -868,16 +874,26 @@
                 <div class="setting-field">
                     <label>Trading Asset</label>
                     <select id="tradingAsset">
-                        <option value="BTC/USD">₿ Bitcoin (BTC/USD)</option>
-                        <option value="ETH/USD">Ξ Ethereum (ETH/USD)</option>
-                        <option value="SOL/USD">◎ Solana (SOL/USD)</option>
-                        <option value="XRP/USD">✕ Ripple (XRP/USD)</option>
-                        <option value="ADA/USD">₳ Cardano (ADA/USD)</option>
-                        <option value="DOGE/USD">Ð Dogecoin (DOGE/USD)</option>
-                        <option value="LINK/USD">L Chainlink (LINK/USD)</option>
-                        <option value="DOT/USD">● Polkadot (DOT/USD)</option>
-                        <option value="LTC/USD">Ł Litecoin (LTC/USD)</option>
-                        <option value="BNB/USD">ⓑ Binance (BNB/USD)</option>
+                        <option value="BTC">₿ Bitcoin</option>
+                        <option value="ETH">Ξ Ethereum</option>
+                        <option value="SOL">◎ Solana</option>
+                        <option value="XRP">✕ Ripple</option>
+                        <option value="ADA">₳ Cardano</option>
+                        <option value="DOGE">Ð Dogecoin</option>
+                        <option value="LINK">🔗 Chainlink</option>
+                        <option value="DOT">● Polkadot</option>
+                        <option value="LTC">Ł Litecoin</option>
+                        <option value="BNB">ⓑ Binance Coin</option>
+                        <option value="AVAX">❄️ Avalanche</option>
+                        <option value="MATIC">🔷 Polygon</option>
+                        <option value="ATOM">⚛️ Cosmos</option>
+                        <option value="ALGO">🔵 Algorand</option>
+                        <option value="VET">🌿 VeChain</option>
+                        <option value="FIL">📁 Filecoin</option>
+                        <option value="EOS">🌐 EOS</option>
+                        <option value="TRX">💧 TRON</option>
+                        <option value="XTZ">🥖 Tezos</option>
+                        <option value="NEO">💚 NEO</option>
                     </select>
                 </div>
             </div>
