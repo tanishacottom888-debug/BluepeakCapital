@@ -78,9 +78,6 @@
                     description: botData.description,
                     status: 'stopped',
                     strategy: 'balanced',
-                    trade_amount: botData.tradeAmount,
-                    trade_interval: botData.tradeInterval,
-                    trading_asset: botData.tradingAsset,
                     created_at: new Date().toISOString()
                 })
                 .select()
@@ -475,12 +472,6 @@
             cursor: pointer;
         }
 
-        .asset-option {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
         .bots-list-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -509,19 +500,19 @@
             color: #cbd5e1;
         }
 
+        /* Bot Item - Exactly as requested */
         .bot-item {
-            background: #f8fafc;
+            background: white;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             padding: 1rem;
         }
 
-        .bot-header {
+        .bot-name-line {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .bot-name {
@@ -532,7 +523,22 @@
         .bot-version {
             font-size: 0.7rem;
             color: #64748b;
-            margin-left: 0.3rem;
+        }
+
+        .bot-description {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .bot-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .bot-strategy {
@@ -558,49 +564,30 @@
             color: #059669;
         }
 
-        .bot-description {
-            font-size: 0.7rem;
-            color: #64748b;
-            margin-bottom: 0.8rem;
-            line-height: 1.4;
-        }
-
-        .bot-settings-info {
-            font-size: 0.65rem;
-            color: #94a3b8;
-            margin-bottom: 1rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .bot-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.8rem;
-        }
-
-        .start-btn, .stop-btn, .delete-btn {
-            padding: 0.4rem 1rem;
+        .start-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.3rem 1rem;
             border-radius: 6px;
             font-size: 0.7rem;
             font-weight: 500;
             cursor: pointer;
-            border: none;
-        }
-
-        .start-btn {
-            background: #10b981;
-            color: white;
         }
 
         .start-btn:hover {
-            background: #059669;
+            background: #2563eb;
         }
 
         .stop-btn {
             background: #ef4444;
             color: white;
+            border: none;
+            padding: 0.3rem 1rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
         }
 
         .stop-btn:hover {
@@ -608,14 +595,16 @@
         }
 
         .delete-btn {
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.7rem;
+            text-decoration: underline;
         }
 
         .delete-btn:hover {
-            background: #fee2e2;
-            color: #dc2626;
+            color: #ef4444;
         }
 
         .modal-overlay {
@@ -715,7 +704,7 @@
                 width: 24px;
                 height: 24px;
             }
-            .bot-header {
+            .bot-footer {
                 flex-direction: column;
                 align-items: flex-start;
             }
@@ -895,54 +884,32 @@
             
             const bot = window.userBot
             const isRunning = bot.status === 'running'
-            const assetIcon = getAssetIcon(bot.trading_asset)
             
             countSpan.textContent = '1'
             container.innerHTML = `
                 <div class="bot-item">
-                    <div class="bot-header">
-                        <div>
-                            <span class="bot-name">${bot.bot_name}</span>
-                            <span class="bot-version">${bot.bot_version}</span>
-                        </div>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <span class="bot-strategy">${bot.strategy}</span>
-                            <span class="bot-status ${bot.status}">${bot.status.toUpperCase()}</span>
-                        </div>
+                    <div class="bot-name-line">
+                        <span class="bot-name">${bot.bot_name}</span>
+                        <span class="bot-version">${bot.bot_version}</span>
                     </div>
                     <div class="bot-description">
                         ${bot.description}
                     </div>
-                    <div class="bot-settings-info">
-                        <span>💰 $${bot.trade_amount}</span>
-                        <span>⏱️ ${bot.trade_interval}</span>
-                        <span>${assetIcon} ${bot.trading_asset}</span>
-                    </div>
-                    <div class="bot-actions">
-                        ${!isRunning ? 
-                            `<button class="start-btn" onclick="startBot()">START</button>` : 
-                            `<button class="stop-btn" onclick="stopBot()">STOP</button>`
-                        }
-                        <button class="delete-btn" onclick="deleteBot()">Delete</button>
+                    <div class="bot-footer">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span class="bot-strategy">${bot.strategy}</span>
+                            <span class="bot-status ${bot.status}">${bot.status.toUpperCase()}</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            ${!isRunning ? 
+                                `<button class="start-btn" onclick="startBot()">START</button>` : 
+                                `<button class="stop-btn" onclick="stopBot()">STOP</button>`
+                            }
+                            <button class="delete-btn" onclick="deleteBot()">Delete</button>
+                        </div>
                     </div>
                 </div>
             `
-        }
-
-        function getAssetIcon(asset) {
-            const icons = {
-                'BTC/USD': '₿',
-                'ETH/USD': 'Ξ',
-                'SOL/USD': '◎',
-                'XRP/USD': '✕',
-                'ADA/USD': '₳',
-                'DOGE/USD': 'Ð',
-                'LINK/USD': 'L',
-                'DOT/USD': '●',
-                'LTC/USD': 'Ł',
-                'BNB/USD': 'ⓑ'
-            }
-            return icons[asset] || '📈'
         }
 
         function showModal(title, message, balance) {
@@ -1004,17 +971,10 @@
                 return
             }
             
-            const tradeAmount = document.getElementById('tradeAmount').value
-            const tradeInterval = document.getElementById('tradeInterval').value
-            const tradingAsset = document.getElementById('tradingAsset').value
-            
             await window.saveBotToDatabase({
                 name: BOT_INFO.name,
                 version: BOT_INFO.version,
-                description: BOT_INFO.description,
-                tradeAmount: tradeAmount,
-                tradeInterval: tradeInterval,
-                tradingAsset: tradingAsset
+                description: BOT_INFO.description
             })
             
             document.getElementById('passkeyInput').value = ''
