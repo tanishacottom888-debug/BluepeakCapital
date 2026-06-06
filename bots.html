@@ -54,7 +54,6 @@
         
         async function loadUserBot() {
             try {
-                // First try localStorage (fallback)
                 const localBot = localStorage.getItem(`bot_${currentUser.id}`)
                 if (localBot) {
                     window.userBot = JSON.parse(localBot)
@@ -62,7 +61,6 @@
                     return
                 }
                 
-                // Then try Supabase
                 const { data, error } = await supabase
                     .from('user_bots')
                     .select('*')
@@ -74,7 +72,6 @@
                     window.userBot = null
                 } else if (data) {
                     window.userBot = data
-                    // Save to localStorage as backup
                     localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(data))
                 } else {
                     window.userBot = null
@@ -90,9 +87,8 @@
         
         window.saveBotToDatabase = async function(botData) {
             try {
-                // Check if bot already exists
                 if (window.userBot) {
-                    showToast('Bot already activated!')
+                    showToast('Bot already activated!', 'error')
                     return null
                 }
                 
@@ -107,7 +103,6 @@
                     created_at: new Date().toISOString()
                 }
                 
-                // Try Supabase first
                 try {
                     const { data, error } = await supabase
                         .from('user_bots')
@@ -127,48 +122,32 @@
                         window.userBot = data
                         localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(data))
                         renderBots()
+                        showToast(`✅ ${botData.name} activated!`, 'success')
                         return data
                     }
                 } catch (supabaseError) {
                     console.error('Supabase save error:', supabaseError)
                 }
                 
-                // Fallback to localStorage
                 window.userBot = newBot
                 localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(newBot))
                 renderBots()
+                showToast(`✅ ${botData.name} activated! (Saved locally)`, 'success')
                 return newBot
                 
             } catch (error) {
                 console.error('Error saving bot:', error)
-                showToast('Error activating bot. Using local storage.')
-                
-                // Fallback to localStorage
-                const fallbackBot = {
-                    id: Date.now().toString(),
-                    user_id: currentUser.id,
-                    bot_name: botData.name,
-                    bot_version: botData.version,
-                    description: botData.description,
-                    status: 'stopped',
-                    strategy: 'balanced',
-                    created_at: new Date().toISOString()
-                }
-                window.userBot = fallbackBot
-                localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(fallbackBot))
-                renderBots()
-                return fallbackBot
+                showToast('Error activating bot', 'error')
+                return null
             }
         }
         
         window.updateBotStatus = async function(status) {
             if (!window.userBot) return false
             
-            // Update local storage
             window.userBot.status = status
             localStorage.setItem(`bot_${currentUser.id}`, JSON.stringify(window.userBot))
             
-            // Try Supabase update
             if (window.userBot.id && !window.userBot.id.toString().startsWith('fallback')) {
                 try {
                     await supabase
@@ -181,16 +160,15 @@
             }
             
             renderBots()
+            showToast(status === 'running' ? '✅ Bot started!' : '⏹️ Bot stopped.', 'info')
             return true
         }
         
         window.deleteBotFromDatabase = async function() {
             if (!window.userBot) return false
             
-            // Remove from localStorage
             localStorage.removeItem(`bot_${currentUser.id}`)
             
-            // Try Supabase delete
             if (window.userBot.id && !window.userBot.id.toString().startsWith('fallback')) {
                 try {
                     await supabase
@@ -204,6 +182,7 @@
             
             window.userBot = null
             renderBots()
+            showToast('Bot deleted', 'info')
             return true
         }
         
@@ -550,6 +529,14 @@
             cursor: pointer;
         }
 
+        /* Real icons for asset selector */
+        .asset-option-icon {
+            display: inline-block;
+            width: 18px;
+            text-align: center;
+            margin-right: 6px;
+        }
+
         .bots-list-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -590,6 +577,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 0.25rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .bot-name {
@@ -684,67 +673,44 @@
             color: #ef4444;
         }
 
-        .modal-overlay {
+        /* Toast Notification - Bottom Center */
+        .toast-notification {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
             z-index: 3000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            visibility: hidden;
             opacity: 0;
             transition: all 0.3s ease;
+            pointer-events: none;
+            text-align: center;
+            min-width: 200px;
+            max-width: 90vw;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .modal-overlay.active {
-            visibility: visible;
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
 
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            max-width: 320px;
-            width: 90%;
-            text-align: center;
+        .toast-notification.success {
+            background: #059669;
         }
 
-        .modal-icon {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
+        .toast-notification.error {
+            background: #dc2626;
         }
 
-        .modal-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .modal-message {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-bottom: 1rem;
-        }
-
-        .modal-balance {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-        }
-
-        .modal-btn {
+        .toast-notification.info {
             background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            cursor: pointer;
         }
 
         @media (max-width: 768px) {
@@ -784,6 +750,11 @@
             .bot-footer {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+            .toast-notification {
+                bottom: 20px;
+                padding: 10px 20px;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -924,16 +895,6 @@
         </div>
     </div>
 
-    <div id="modalOverlay" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-icon" id="modalIcon">⚠️</div>
-            <div class="modal-title" id="modalTitle">Insufficient Balance</div>
-            <div class="modal-message" id="modalMessage">You need at least $15.00 to start trading.</div>
-            <div class="modal-balance" id="modalBalance">Current balance: $0.00</div>
-            <button class="modal-btn" onclick="closeModal()">OK</button>
-        </div>
-    </div>
-
     <script>
         const VALID_PASSKEY = "PRO-BOT-2024"
 
@@ -989,15 +950,22 @@
             `
         }
 
-        function showModal(title, message, balance) {
-            document.getElementById('modalTitle').textContent = title
-            document.getElementById('modalMessage').textContent = message
-            document.getElementById('modalBalance').textContent = `Current balance: $${balance.toFixed(2)}`
-            document.getElementById('modalOverlay').classList.add('active')
-        }
-
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active')
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div')
+            toast.className = `toast-notification ${type}`
+            toast.textContent = message
+            document.body.appendChild(toast)
+            
+            setTimeout(() => {
+                toast.classList.add('show')
+            }, 10)
+            
+            setTimeout(() => {
+                toast.classList.remove('show')
+                setTimeout(() => {
+                    toast.remove()
+                }, 300)
+            }, 3000)
         }
 
         async function startBot() {
@@ -1005,27 +973,20 @@
             const requiredBalance = 15
             
             if (userBalance < requiredBalance) {
-                showModal(
-                    'Insufficient Balance',
-                    `You need at least $${requiredBalance}.00 to start trading.`,
-                    userBalance
-                )
+                showToast(`Insufficient balance! Need $${requiredBalance}. Current: $${userBalance}`, 'error')
                 return
             }
             
             await window.updateBotStatus('running')
-            showToast('✅ Bot started successfully!')
         }
 
         async function stopBot() {
             await window.updateBotStatus('stopped')
-            showToast('⏹️ Bot stopped.')
         }
 
         async function deleteBot() {
             if (confirm('Are you sure you want to delete this bot?')) {
                 await window.deleteBotFromDatabase()
-                showToast('Bot deleted successfully')
             }
         }
 
@@ -1033,17 +994,17 @@
             const passkey = document.getElementById('passkeyInput').value.trim()
             
             if (!passkey) {
-                showToast('Please enter a passkey')
+                showToast('Please enter a passkey', 'error')
                 return
             }
             
             if (passkey !== VALID_PASSKEY) {
-                showToast('❌ Invalid passkey. Please check and try again.')
+                showToast('❌ Invalid passkey. Please check and try again.', 'error')
                 return
             }
             
             if (window.userBot) {
-                showToast('Bot already activated!')
+                showToast('Bot already activated!', 'error')
                 document.getElementById('passkeyInput').value = ''
                 return
             }
@@ -1055,31 +1016,19 @@
             })
             
             document.getElementById('passkeyInput').value = ''
-            
-            if (result) {
-                showToast(`✅ Bot activated successfully! Welcome ${BOT_INFO.name}`)
-            }
         }
 
         function uploadBot() {
             const fileInput = document.getElementById('fileInput')
             
             if (fileInput.files.length === 0) {
-                showToast('Please select a file to upload')
+                showToast('Please select a file to upload', 'error')
                 return
             }
             
             const file = fileInput.files[0]
-            showToast(`File "${file.name}" selected. Upload feature coming soon.`)
+            showToast(`File "${file.name}" selected`, 'info')
             fileInput.value = ''
-        }
-
-        function showToast(msg) {
-            const toast = document.createElement('div')
-            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;'
-            toast.textContent = msg
-            document.body.appendChild(toast)
-            setTimeout(() => toast.remove(), 3000)
         }
 
         const dropZone = document.getElementById('dropZone')
@@ -1101,14 +1050,13 @@
             if (files.length > 0) {
                 const fileInput = document.getElementById('fileInput')
                 fileInput.files = files
-                showToast(`File "${files[0].name}" selected`)
+                showToast(`File "${files[0].name}" selected`, 'info')
             }
         })
 
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
         
-        // Make renderBots available globally
         window.renderBots = renderBots
     </script>
 </body>
