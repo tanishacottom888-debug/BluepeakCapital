@@ -9,7 +9,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
-    <!-- Supabase SDK -->
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
@@ -31,7 +30,6 @@
             await loadUserBot()
         }
         
-        // Load user balance from Supabase
         async function loadUserBalance() {
             const { data, error } = await supabase
                 .from('user_balances')
@@ -49,7 +47,6 @@
             if (balanceElement) balanceElement.textContent = `$${balance.toFixed(2)}`
         }
         
-        // Load user's bot from Supabase
         async function loadUserBot() {
             const { data, error } = await supabase
                 .from('user_bots')
@@ -71,7 +68,6 @@
             if (typeof renderBots === 'function') renderBots()
         }
         
-        // Save bot to Supabase
         window.saveBotToDatabase = async function(botData) {
             const { data, error } = await supabase
                 .from('user_bots')
@@ -82,6 +78,9 @@
                     description: botData.description,
                     status: 'stopped',
                     strategy: 'balanced',
+                    trade_amount: botData.tradeAmount,
+                    trade_interval: botData.tradeInterval,
+                    trading_asset: botData.tradingAsset,
                     created_at: new Date().toISOString()
                 })
                 .select()
@@ -97,7 +96,6 @@
             return data
         }
         
-        // Update bot status
         window.updateBotStatus = async function(status) {
             if (!window.userBot) return false
             
@@ -116,7 +114,6 @@
             return true
         }
         
-        // Delete bot from Supabase
         window.deleteBotFromDatabase = async function() {
             if (!window.userBot) return false
             
@@ -478,6 +475,12 @@
             cursor: pointer;
         }
 
+        .asset-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
         .bots-list-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -501,6 +504,11 @@
             margin-bottom: 0.3rem;
         }
 
+        .empty-subtext {
+            font-size: 0.65rem;
+            color: #cbd5e1;
+        }
+
         .bot-item {
             background: #f8fafc;
             border-radius: 12px;
@@ -512,6 +520,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .bot-name {
@@ -522,6 +532,7 @@
         .bot-version {
             font-size: 0.7rem;
             color: #64748b;
+            margin-left: 0.3rem;
         }
 
         .bot-strategy {
@@ -550,8 +561,17 @@
         .bot-description {
             font-size: 0.7rem;
             color: #64748b;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
             line-height: 1.4;
+        }
+
+        .bot-settings-info {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .bot-actions {
@@ -598,7 +618,6 @@
             color: #dc2626;
         }
 
-        /* Modal Popup */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -697,11 +716,8 @@
                 height: 24px;
             }
             .bot-header {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-            .bot-actions {
-                margin-top: 0.5rem;
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -818,13 +834,13 @@
                         <option value="BTC/USD">₿ Bitcoin (BTC/USD)</option>
                         <option value="ETH/USD">Ξ Ethereum (ETH/USD)</option>
                         <option value="SOL/USD">◎ Solana (SOL/USD)</option>
-                        <option value="XRP/USD">X Ripple (XRP/USD)</option>
+                        <option value="XRP/USD">✕ Ripple (XRP/USD)</option>
                         <option value="ADA/USD">₳ Cardano (ADA/USD)</option>
                         <option value="DOGE/USD">Ð Dogecoin (DOGE/USD)</option>
                         <option value="LINK/USD">L Chainlink (LINK/USD)</option>
                         <option value="DOT/USD">● Polkadot (DOT/USD)</option>
                         <option value="LTC/USD">Ł Litecoin (LTC/USD)</option>
-                        <option value="BNB/USD">B Binance Coin (BNB/USD)</option>
+                        <option value="BNB/USD">ⓑ Binance (BNB/USD)</option>
                     </select>
                 </div>
             </div>
@@ -842,7 +858,6 @@
         </div>
     </div>
 
-    <!-- Modal Popup -->
     <div id="modalOverlay" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-icon" id="modalIcon">⚠️</div>
@@ -854,9 +869,6 @@
     </div>
 
     <script>
-        // ============================================
-        // ONE VALID PASSKEY
-        // ============================================
         const VALID_PASSKEY = "PRO-BOT-2024"
 
         const BOT_INFO = {
@@ -883,6 +895,7 @@
             
             const bot = window.userBot
             const isRunning = bot.status === 'running'
+            const assetIcon = getAssetIcon(bot.trading_asset)
             
             countSpan.textContent = '1'
             container.innerHTML = `
@@ -900,6 +913,11 @@
                     <div class="bot-description">
                         ${bot.description}
                     </div>
+                    <div class="bot-settings-info">
+                        <span>💰 $${bot.trade_amount}</span>
+                        <span>⏱️ ${bot.trade_interval}</span>
+                        <span>${assetIcon} ${bot.trading_asset}</span>
+                    </div>
                     <div class="bot-actions">
                         ${!isRunning ? 
                             `<button class="start-btn" onclick="startBot()">START</button>` : 
@@ -909,6 +927,22 @@
                     </div>
                 </div>
             `
+        }
+
+        function getAssetIcon(asset) {
+            const icons = {
+                'BTC/USD': '₿',
+                'ETH/USD': 'Ξ',
+                'SOL/USD': '◎',
+                'XRP/USD': '✕',
+                'ADA/USD': '₳',
+                'DOGE/USD': 'Ð',
+                'LINK/USD': 'L',
+                'DOT/USD': '●',
+                'LTC/USD': 'Ł',
+                'BNB/USD': 'ⓑ'
+            }
+            return icons[asset] || '📈'
         }
 
         function showModal(title, message, balance) {
@@ -1008,7 +1042,6 @@
             setTimeout(() => toast.remove(), 3000)
         }
 
-        // Drag and drop
         const dropZone = document.getElementById('dropZone')
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault()
