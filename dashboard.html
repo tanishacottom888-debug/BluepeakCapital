@@ -9,7 +9,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
-    <!-- Supabase SDK -->
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
@@ -169,14 +168,14 @@
             `).join('')
             
             const totalBalance = portfolioData.reduce((sum, a) => sum + a.value, 0)
-            document.getElementById('totalBalance').innerHTML = `$${totalBalance.toLocaleString()}`
-            document.getElementById('totalPnl').innerHTML = `$${portfolioData.reduce((sum, a) => sum + a.pnl, 0).toLocaleString()}`
+            document.getElementById('totalBalance').innerHTML = `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            document.getElementById('totalPnl').innerHTML = `$${portfolioData.reduce((sum, a) => sum + a.pnl, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         }
         
         function updateBalanceDisplay(amount) {
             const balanceDisplay = document.getElementById('balanceDisplay')
             if (balanceDisplay) {
-                balanceDisplay.innerHTML = `$${amount.toLocaleString()}`
+                balanceDisplay.innerHTML = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             }
         }
         
@@ -215,7 +214,6 @@
             box-sizing: border-box;
         }
 
-        /* CSS Variables for Dark/Light Mode */
         :root {
             --bg-primary: #f5f7fb;
             --bg-secondary: #ffffff;
@@ -249,7 +247,6 @@
             transition: background 0.3s ease, color 0.3s ease;
         }
 
-        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -264,7 +261,6 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
-        /* Left side - Logo and Site Name */
         .logo-area {
             display: flex;
             align-items: center;
@@ -293,7 +289,6 @@
             color: transparent;
         }
 
-        /* Right side menu - Dark Mode, Flag, Balance, Menu */
         .right-menu {
             display: flex;
             align-items: center;
@@ -347,12 +342,10 @@
             justify-content: center;
         }
 
-        /* Hide desktop nav links - we use sidebar for mobile */
         .nav-links {
             display: none;
         }
 
-        /* Sidebar */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -808,13 +801,11 @@
 </head>
 <body>
     <nav>
-        <!-- Left side: Logo + Site Name -->
         <div class="logo-area" onclick="location.href='index.html'">
             <div class="logo-icon">⛰️</div>
             <div class="site-name">BluepeakCapital</div>
         </div>
 
-        <!-- Right side: Dark Mode Toggle, Flag, Balance, Menu Button -->
         <div class="right-menu">
             <button class="dark-mode-btn" id="darkModeToggle" title="Dark/Light mode">🌙</button>
             <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showMessage('Currency: USD')">
@@ -823,7 +814,6 @@
         </div>
     </nav>
 
-    <!-- Sidebar Menu -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
         <div class="sidebar-menu" onclick="event.stopPropagation()">
             <div class="sidebar-header">
@@ -849,7 +839,6 @@
         </div>
     </div>
 
-    <!-- Trust Bar -->
     <div class="trust-bar">
         <span>FINRA Member</span>
         <span>|</span>
@@ -973,7 +962,6 @@
     </div>
 
     <script>
-        // Dark Mode Toggle
         function initDarkMode() {
             const darkMode = localStorage.getItem('darkMode') === 'true';
             if (darkMode) {
@@ -1022,8 +1010,8 @@
                 asks.push({ price: basePrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice + (i * 5)) * Math.random() * 2).toFixed(0) });
                 bids.push({ price: basePrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice - (i * 5)) * Math.random() * 2).toFixed(0) });
             }
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></tr>`).join('');
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('');
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></tr>`).join('');
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></tr>`).join('');
         }
 
         function addPriceAlert() {
