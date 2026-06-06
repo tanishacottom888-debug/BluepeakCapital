@@ -17,6 +17,7 @@
         const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+        window.supabase = supabase
         let currentUser = null
 
         async function checkAuth() {
@@ -26,23 +27,47 @@
                 return
             }
             currentUser = session.user
-            await loadUserBots()
+            await loadUserBalance()
+            await loadUserBot()
         }
         
-        // Load user's bots from Supabase
-        async function loadUserBots() {
+        // Load user balance from Supabase
+        async function loadUserBalance() {
+            const { data, error } = await supabase
+                .from('user_balances')
+                .select('balance')
+                .eq('user_id', currentUser.id)
+                .single()
+            
+            if (error && error.code !== 'PGRST116') {
+                console.error('Error loading balance:', error)
+            }
+            
+            const balance = data?.balance || 0
+            window.userBalance = balance
+            const balanceElement = document.getElementById('balanceDisplay')
+            if (balanceElement) balanceElement.textContent = `$${balance.toFixed(2)}`
+        }
+        
+        // Load user's bot from Supabase
+        async function loadUserBot() {
             const { data, error } = await supabase
                 .from('user_bots')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false })
+                .maybeSingle()
             
             if (error) {
-                console.error('Error loading bots:', error)
+                console.error('Error loading bot:', error)
                 return
             }
             
-            window.userBots = data || []
+            if (data) {
+                window.userBot = data
+            } else {
+                window.userBot = null
+            }
+            
             if (typeof renderBots === 'function') renderBots()
         }
         
@@ -53,39 +78,60 @@
                 .insert({
                     user_id: currentUser.id,
                     bot_name: botData.name,
-                    bot_type: botData.type,
-                    asset: botData.asset,
-                    amount: botData.amount,
-                    interval: botData.interval,
-                    passkey_used: botData.passkey,
-                    status: 'active',
+                    bot_version: botData.version,
+                    description: botData.description,
+                    status: 'stopped',
+                    strategy: 'balanced',
                     created_at: new Date().toISOString()
                 })
                 .select()
+                .single()
             
             if (error) {
                 console.error('Error saving bot:', error)
                 return null
             }
             
-            await loadUserBots()
-            return data?.[0]
+            window.userBot = data
+            await loadUserBot()
+            return data
+        }
+        
+        // Update bot status
+        window.updateBotStatus = async function(status) {
+            if (!window.userBot) return false
+            
+            const { error } = await supabase
+                .from('user_bots')
+                .update({ status: status })
+                .eq('id', window.userBot.id)
+            
+            if (error) {
+                console.error('Error updating bot status:', error)
+                return false
+            }
+            
+            window.userBot.status = status
+            if (typeof renderBots === 'function') renderBots()
+            return true
         }
         
         // Delete bot from Supabase
-        window.deleteBotFromDatabase = async function(botId) {
+        window.deleteBotFromDatabase = async function() {
+            if (!window.userBot) return false
+            
             const { error } = await supabase
                 .from('user_bots')
                 .delete()
-                .eq('id', botId)
-                .eq('user_id', currentUser.id)
+                .eq('id', window.userBot.id)
             
             if (error) {
                 console.error('Error deleting bot:', error)
                 return false
             }
             
-            await loadUserBots()
+            window.userBot = null
+            await loadUserBot()
             return true
         }
         
@@ -105,7 +151,6 @@
             color: #1a1f36;
         }
 
-        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -178,6 +223,15 @@
             cursor: pointer;
         }
 
+        .balance-amount {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1a1f36;
+            background: #f1f5f9;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+        }
+
         .hamburger-btn {
             background: none;
             border: none;
@@ -188,7 +242,6 @@
             display: none;
         }
 
-        /* Sidebar Menu */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -246,7 +299,6 @@
             color: #3b82f6;
         }
 
-        /* Trust Bar */
         .trust-bar {
             background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
@@ -265,14 +317,12 @@
             background: #cbd5e1;
         }
 
-        /* Main Container */
         .bots-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
 
-        /* Page Header */
         .page-header {
             margin-bottom: 1.5rem;
         }
@@ -282,7 +332,6 @@
             font-weight: 600;
         }
 
-        /* Two Column Layout */
         .bots-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -291,7 +340,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* OR Divider */
         .or-divider {
             position: absolute;
             top: 50%;
@@ -306,7 +354,6 @@
             z-index: 1;
         }
 
-        /* Upload Card */
         .upload-card, .passkey-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -322,7 +369,6 @@
             border-bottom: 1px solid #e2e8f0;
         }
 
-        /* Drop Zone */
         .drop-zone {
             border: 2px dashed #cbd5e1;
             border-radius: 12px;
@@ -369,7 +415,6 @@
             background: #2563eb;
         }
 
-        /* Passkey Form */
         .passkey-input {
             width: 100%;
             padding: 0.6rem;
@@ -402,7 +447,6 @@
             text-align: center;
         }
 
-        /* Settings Section */
         .settings-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -424,16 +468,7 @@
             margin-bottom: 0.3rem;
         }
 
-        .setting-field input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.75rem;
-        }
-
-        /* Asset Select */
-        .asset-select {
+        .setting-field input, .setting-field select {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid #e2e8f0;
@@ -443,21 +478,6 @@
             cursor: pointer;
         }
 
-        .asset-option {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .asset-icon {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            vertical-align: middle;
-            margin-right: 0.3rem;
-        }
-
-        /* My Bots Section */
         .bots-list-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -481,53 +501,167 @@
             margin-bottom: 0.3rem;
         }
 
-        .empty-subtext {
-            font-size: 0.65rem;
-            color: #cbd5e1;
+        .bot-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1rem;
         }
 
-        /* Bot Item */
-        .bot-item {
+        .bot-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.8rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .bot-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
+            margin-bottom: 0.5rem;
         }
 
         .bot-name {
-            font-weight: 600;
-            font-size: 0.8rem;
+            font-weight: 700;
+            font-size: 1rem;
         }
 
-        .bot-details {
-            font-size: 0.65rem;
+        .bot-version {
+            font-size: 0.7rem;
             color: #64748b;
         }
 
-        .bot-status {
-            font-size: 0.6rem;
-            padding: 0.2rem 0.5rem;
+        .bot-strategy {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            background: #e2e8f0;
             border-radius: 20px;
+        }
+
+        .bot-status {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+        }
+
+        .bot-status.stopped {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .bot-status.running {
             background: #d1fae5;
             color: #059669;
         }
 
-        .delete-bot {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 1rem;
+        .bot-description {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            line-height: 1.4;
         }
 
-        /* Mobile */
+        .bot-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+        }
+
+        .start-btn, .stop-btn, .delete-btn {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+
+        .start-btn {
+            background: #10b981;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: #059669;
+        }
+
+        .stop-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .stop-btn:hover {
+            background: #dc2626;
+        }
+
+        .delete-btn {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .delete-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Modal Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-message {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .modal-balance {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+        }
+
+        .modal-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -562,6 +696,13 @@
                 width: 24px;
                 height: 24px;
             }
+            .bot-header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .bot-actions {
+                margin-top: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -583,12 +724,12 @@
             <a href="support.html">Support</a>
         </div>
         <div class="right-menu">
-            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-amount" id="balanceDisplay">$0.00</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
 
-    <!-- Sidebar Menu -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
         <div class="sidebar-menu" onclick="event.stopPropagation()">
             <div class="sidebar-header">
@@ -609,7 +750,6 @@
         </div>
     </div>
 
-    <!-- Trust Bar -->
     <div class="trust-bar">
         <span>FINRA Member</span>
         <span class="trust-separator"></span>
@@ -625,9 +765,7 @@
             <h1>Trading Bots</h1>
         </div>
 
-        <!-- Upload + Passkey Grid with OR divider -->
         <div class="bots-grid">
-            <!-- Upload Bot Card -->
             <div class="upload-card">
                 <div class="card-title">Upload Trading Bot</div>
                 <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
@@ -640,24 +778,21 @@
                 <button class="upload-btn" onclick="uploadBot()">Upload Trading Bot</button>
             </div>
 
-            <!-- OR Divider -->
             <div class="or-divider">OR</div>
 
-            <!-- Activate with Passkey Card -->
             <div class="passkey-card">
                 <div class="card-title">Activate with Passkey</div>
                 <div class="help-text" style="text-align: left; margin-bottom: 0.5rem;">
-                    Enter your passkey to activate your trading bot instantly.
+                    Already have a trading bot passkey? Enter it below to activate your bot instantly.
                 </div>
-                <input type="text" class="passkey-input" id="passkeyInput" placeholder="Enter your passkey">
-                <button class="submit-btn" onclick="activateWithPasskey()">Activate Bot</button>
+                <input type="text" class="passkey-input" id="passkeyInput" placeholder="Enter your trading bot passkey">
+                <button class="submit-btn" onclick="activateWithPasskey()">Submit Passkey</button>
                 <div class="help-text">
-                    Passkeys are provided after purchase. Contact support if you need assistance.
+                    Passkeys are provided by authorized bot developers. Contact support if you need assistance.
                 </div>
             </div>
         </div>
 
-        <!-- Bot Settings -->
         <div class="settings-card">
             <div class="card-title">Bot Settings</div>
             <div class="settings-grid">
@@ -679,17 +814,15 @@
                 </div>
                 <div class="setting-field">
                     <label>Trading Asset</label>
-                    <select id="tradingAsset" class="asset-select">
+                    <select id="tradingAsset">
                         <option value="BTC/USD">₿ Bitcoin (BTC/USD)</option>
                         <option value="ETH/USD">Ξ Ethereum (ETH/USD)</option>
                         <option value="SOL/USD">◎ Solana (SOL/USD)</option>
                         <option value="XRP/USD">X Ripple (XRP/USD)</option>
                         <option value="ADA/USD">₳ Cardano (ADA/USD)</option>
-                        <option value="AVAX/USD">A Avalanche (AVAX/USD)</option>
                         <option value="DOGE/USD">Ð Dogecoin (DOGE/USD)</option>
-                        <option value="DOT/USD">● Polkadot (DOT/USD)</option>
                         <option value="LINK/USD">L Chainlink (LINK/USD)</option>
-                        <option value="MATIC/USD">P Polygon (MATIC/USD)</option>
+                        <option value="DOT/USD">● Polkadot (DOT/USD)</option>
                         <option value="LTC/USD">Ł Litecoin (LTC/USD)</option>
                         <option value="BNB/USD">B Binance Coin (BNB/USD)</option>
                     </select>
@@ -697,88 +830,46 @@
             </div>
         </div>
 
-        <!-- My Bots List -->
         <div class="bots-list-card">
             <div class="card-title">My Bots (<span id="botsCount">0</span>)</div>
             <div id="botsList">
                 <div class="empty-state">
                     <div class="empty-icon">🤖</div>
                     <div class="empty-text">No bots added yet</div>
-                    <div class="empty-subtext">Enter a passkey above to activate a trading bot</div>
+                    <div class="empty-subtext">Enter a valid passkey above to activate a trading bot</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Modal Popup -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon" id="modalIcon">⚠️</div>
+            <div class="modal-title" id="modalTitle">Insufficient Balance</div>
+            <div class="modal-message" id="modalMessage">You need at least $15.00 to start trading.</div>
+            <div class="modal-balance" id="modalBalance">Current balance: $0.00</div>
+            <button class="modal-btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
     <script>
         // ============================================
-        // PRE-DEFINED PASSKEYS FOR YOUR BOTS
-        // You can add/edit these passkeys as needed
+        // ONE VALID PASSKEY
         // ============================================
-        
-        const VALID_PASSKEYS = {
-            // Bot Passkeys - Give these to your users
-            "BOT-GRID-2024": {
-                name: "Grid Trading Bot Pro",
-                type: "Grid Trading",
-                description: "Automated grid trading strategy"
-            },
-            "BOT-DCA-2024": {
-                name: "DCA Accumulator Bot",
-                type: "DCA Trading",
-                description: "Dollar cost averaging strategy"
-            },
-            "BOT-ARB-2024": {
-                name: "Arbitrage Scanner Bot",
-                type: "Arbitrage",
-                description: "Cross-exchange arbitrage detection"
-            },
-            "BOT-SCALP-2024": {
-                name: "Scalping Pro Bot",
-                type: "Scalping",
-                description: "High-frequency scalping strategy"
-            },
-            "BOT-MOM-2024": {
-                name: "Momentum Trader Bot",
-                type: "Momentum",
-                description: "Trend following strategy"
-            },
-            "BOT-MEAN-2024": {
-                name: "Mean Reversion Bot",
-                type: "Mean Reversion",
-                description: "Buy low, sell high strategy"
-            },
-            // Premium Bots
-            "PREMIUM-AI-001": {
-                name: "AI Smart Trader",
-                type: "AI Trading",
-                description: "Machine learning based predictions"
-            },
-            "PREMIUM-PORT-002": {
-                name: "Portfolio Rebalancer",
-                type: "Rebalancing",
-                description: "Auto portfolio management"
-            },
-            // Test passkeys (for demo)
-            "DEMO123": {
-                name: "Demo Trading Bot",
-                type: "Demo",
-                description: "Practice trading bot"
-            },
-            "TEST456": {
-                name: "Test Bot",
-                type: "Test",
-                description: "Testing purposes only"
-            }
-        }
+        const VALID_PASSKEY = "PRO-BOT-2024"
 
-        let userBots = []
+        const BOT_INFO = {
+            name: "Pro Trading Bot",
+            version: "v2.1",
+            description: "Professional algorithmic trading bot with advanced market analysis"
+        }
 
         function renderBots() {
             const container = document.getElementById('botsList')
             const countSpan = document.getElementById('botsCount')
             
-            if (userBots.length === 0) {
+            if (!window.userBot) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">🤖</div>
@@ -790,27 +881,114 @@
                 return
             }
             
-            countSpan.textContent = userBots.length
-            container.innerHTML = userBots.map((bot, index) => `
+            const bot = window.userBot
+            const isRunning = bot.status === 'running'
+            
+            countSpan.textContent = '1'
+            container.innerHTML = `
                 <div class="bot-item">
-                    <div class="bot-info">
-                        <span class="bot-name">${bot.name}</span>
-                        <span class="bot-details">${bot.asset} • $${bot.amount} • ${bot.interval}</span>
-                        <span class="bot-details">Passkey: ${bot.passkey}</span>
+                    <div class="bot-header">
+                        <div>
+                            <span class="bot-name">${bot.bot_name}</span>
+                            <span class="bot-version">${bot.bot_version}</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span class="bot-strategy">${bot.strategy}</span>
+                            <span class="bot-status ${bot.status}">${bot.status.toUpperCase()}</span>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="bot-status">Active</span>
-                        <button class="delete-bot" onclick="deleteBot(${index})">🗑️</button>
+                    <div class="bot-description">
+                        ${bot.description}
+                    </div>
+                    <div class="bot-actions">
+                        ${!isRunning ? 
+                            `<button class="start-btn" onclick="startBot()">START</button>` : 
+                            `<button class="stop-btn" onclick="stopBot()">STOP</button>`
+                        }
+                        <button class="delete-btn" onclick="deleteBot()">Delete</button>
                     </div>
                 </div>
-            `).join('')
+            `
+        }
+
+        function showModal(title, message, balance) {
+            document.getElementById('modalTitle').textContent = title
+            document.getElementById('modalMessage').textContent = message
+            document.getElementById('modalBalance').textContent = `Current balance: $${balance.toFixed(2)}`
+            document.getElementById('modalOverlay').classList.add('active')
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active')
+        }
+
+        async function startBot() {
+            const userBalance = window.userBalance || 0
+            const requiredBalance = 15
+            
+            if (userBalance < requiredBalance) {
+                showModal(
+                    'Insufficient Balance',
+                    `You need at least $${requiredBalance}.00 to start trading.`,
+                    userBalance
+                )
+                return
+            }
+            
+            await window.updateBotStatus('running')
+            showToast('✅ Bot started successfully!')
+        }
+
+        async function stopBot() {
+            await window.updateBotStatus('stopped')
+            showToast('⏹️ Bot stopped.')
+        }
+
+        async function deleteBot() {
+            if (confirm('Are you sure you want to delete this bot?')) {
+                await window.deleteBotFromDatabase()
+                showToast('Bot deleted successfully')
+            }
+        }
+
+        async function activateWithPasskey() {
+            const passkey = document.getElementById('passkeyInput').value.trim()
+            
+            if (!passkey) {
+                showToast('Please enter a passkey')
+                return
+            }
+            
+            if (passkey !== VALID_PASSKEY) {
+                showToast('❌ Invalid passkey. Please check and try again.')
+                return
+            }
+            
+            if (window.userBot) {
+                showToast('Bot already activated!')
+                document.getElementById('passkeyInput').value = ''
+                return
+            }
+            
+            const tradeAmount = document.getElementById('tradeAmount').value
+            const tradeInterval = document.getElementById('tradeInterval').value
+            const tradingAsset = document.getElementById('tradingAsset').value
+            
+            await window.saveBotToDatabase({
+                name: BOT_INFO.name,
+                version: BOT_INFO.version,
+                description: BOT_INFO.description,
+                tradeAmount: tradeAmount,
+                tradeInterval: tradeInterval,
+                tradingAsset: tradingAsset
+            })
+            
+            document.getElementById('passkeyInput').value = ''
+            showToast(`✅ Bot activated successfully! Welcome ${BOT_INFO.name}`)
         }
 
         function uploadBot() {
             const fileInput = document.getElementById('fileInput')
-            const tradeAmount = document.getElementById('tradeAmount').value
-            const tradeInterval = document.getElementById('tradeInterval').value
-            const tradingAsset = document.getElementById('tradingAsset').value
             
             if (fileInput.files.length === 0) {
                 showToast('Please select a file to upload')
@@ -818,119 +996,9 @@
             }
             
             const file = fileInput.files[0]
-            const botName = file.name.replace(/\.[^/.]+$/, '')
-            
-            const newBot = {
-                name: botName,
-                type: 'Custom Upload',
-                asset: tradingAsset,
-                amount: tradeAmount,
-                interval: tradeInterval,
-                passkey: 'N/A (Uploaded)',
-                created: new Date().toISOString()
-            }
-            
-            userBots.push(newBot)
-            saveBotsToLocalStorage()
-            renderBots()
+            showToast(`File "${file.name}" selected. Upload feature coming soon.`)
             fileInput.value = ''
-            showToast(`Bot "${botName}" uploaded successfully!`)
         }
-
-        function activateWithPasskey() {
-            const passkey = document.getElementById('passkeyInput').value.trim()
-            const tradeAmount = document.getElementById('tradeAmount').value
-            const tradeInterval = document.getElementById('tradeInterval').value
-            const tradingAsset = document.getElementById('tradingAsset').value
-            
-            if (!passkey) {
-                showToast('Please enter a passkey')
-                return
-            }
-            
-            // Check if passkey is valid
-            const botInfo = VALID_PASSKEYS[passkey]
-            
-            if (botInfo) {
-                // Check if bot already exists for this user
-                const existingBot = userBots.find(bot => bot.passkey === passkey)
-                if (existingBot) {
-                    showToast('This bot has already been activated!')
-                    document.getElementById('passkeyInput').value = ''
-                    return
-                }
-                
-                const newBot = {
-                    name: botInfo.name,
-                    type: botInfo.type,
-                    asset: tradingAsset,
-                    amount: tradeAmount,
-                    interval: tradeInterval,
-                    passkey: passkey,
-                    description: botInfo.description,
-                    created: new Date().toISOString()
-                }
-                
-                userBots.push(newBot)
-                saveBotsToLocalStorage()
-                renderBots()
-                document.getElementById('passkeyInput').value = ''
-                showToast(`✅ Bot activated successfully! Welcome ${botInfo.name}`)
-            } else {
-                showToast('❌ Invalid passkey. Please check and try again.')
-            }
-        }
-
-        function deleteBot(index) {
-            if (confirm('Are you sure you want to remove this bot?')) {
-                userBots.splice(index, 1)
-                saveBotsToLocalStorage()
-                renderBots()
-                showToast('Bot removed successfully')
-            }
-        }
-
-        function saveBotsToLocalStorage() {
-            localStorage.setItem('tradingBots', JSON.stringify(userBots))
-        }
-
-        function loadBotsFromLocalStorage() {
-            const saved = localStorage.getItem('tradingBots')
-            if (saved) {
-                userBots = JSON.parse(saved)
-            } else {
-                userBots = []
-            }
-            renderBots()
-        }
-
-        // Drag and drop functionality
-        const dropZone = document.getElementById('dropZone')
-        
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault()
-            dropZone.style.borderColor = '#3b82f6'
-            dropZone.style.background = '#f8fafc'
-        })
-        
-        dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault()
-            dropZone.style.borderColor = '#cbd5e1'
-            dropZone.style.background = 'transparent'
-        })
-        
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault()
-            dropZone.style.borderColor = '#cbd5e1'
-            dropZone.style.background = 'transparent'
-            
-            const files = e.dataTransfer.files
-            if (files.length > 0) {
-                const fileInput = document.getElementById('fileInput')
-                fileInput.files = files
-                showToast(`File "${files[0].name}" selected`)
-            }
-        })
 
         function showToast(msg) {
             const toast = document.createElement('div')
@@ -940,11 +1008,32 @@
             setTimeout(() => toast.remove(), 3000)
         }
 
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone')
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault()
+            dropZone.style.borderColor = '#3b82f6'
+            dropZone.style.background = '#f8fafc'
+        })
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault()
+            dropZone.style.borderColor = '#cbd5e1'
+            dropZone.style.background = 'transparent'
+        })
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault()
+            dropZone.style.borderColor = '#cbd5e1'
+            dropZone.style.background = 'transparent'
+            const files = e.dataTransfer.files
+            if (files.length > 0) {
+                const fileInput = document.getElementById('fileInput')
+                fileInput.files = files
+                showToast(`File "${files[0].name}" selected`)
+            }
+        })
+
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
-
-        // Initialize
-        loadBotsFromLocalStorage()
     </script>
 </body>
 </html>
