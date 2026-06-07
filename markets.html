@@ -41,10 +41,27 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        /* Dark Mode as Default */
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --bg-input: #374151;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --nav-bg: #111827;
+            --hover-bg: #374151;
+            --positive: #10b981;
+            --negative: #ef4444;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+        }
+        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f7fb;
-            color: #1a1f36;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
         
         /* Navigation */
@@ -53,8 +70,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.8rem 1.5rem;
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -83,7 +100,7 @@
         .logo-text {
             font-size: 1.2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -96,7 +113,7 @@
         }
         
         .nav-links a {
-            color: #4a5568;
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.8rem;
             font-weight: 500;
@@ -123,8 +140,8 @@
         .balance-amount {
             font-weight: 600;
             font-size: 0.85rem;
-            color: #1a1f36;
-            background: #f1f5f9;
+            color: var(--text-primary);
+            background: var(--hover-bg);
             padding: 0.4rem 1rem;
             border-radius: 30px;
         }
@@ -132,7 +149,7 @@
         .hamburger-btn {
             background: none;
             border: none;
-            color: #1a1f36;
+            color: var(--text-primary);
             font-size: 1.4rem;
             cursor: pointer;
             display: none;
@@ -145,7 +162,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             z-index: 2000;
             visibility: hidden;
             opacity: 0;
@@ -163,8 +180,8 @@
             right: -280px;
             width: 280px;
             height: 100%;
-            background: white;
-            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+            background: var(--bg-secondary);
+            box-shadow: -2px 0 8px rgba(0,0,0,0.3);
             z-index: 2001;
             transition: right 0.3s;
             display: flex;
@@ -177,7 +194,7 @@
         
         .sidebar-header {
             padding: 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .sidebar-header .logo {
@@ -193,14 +210,14 @@
         
         .sidebar-nav a {
             padding: 0.8rem 1.5rem;
-            color: #4a5568;
+            color: var(--text-primary);
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 500;
         }
         
         .sidebar-nav a:hover {
-            background: #f1f5f9;
+            background: var(--hover-bg);
             color: #3b82f6;
         }
         
@@ -210,7 +227,7 @@
             border: none;
             font-size: 1.2rem;
             cursor: pointer;
-            color: #64748b;
+            color: var(--text-secondary);
         }
         
         /* Main Container */
@@ -232,6 +249,7 @@
         .page-header h1 {
             font-size: 1.5rem;
             font-weight: 600;
+            color: var(--text-primary);
         }
         
         .header-actions {
@@ -241,18 +259,23 @@
         
         .btn-secondary {
             background: transparent;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--border-color);
             padding: 0.4rem 1rem;
             border-radius: 8px;
             font-size: 0.75rem;
             font-weight: 500;
             cursor: pointer;
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--hover-bg);
         }
         
         /* Filters */
         .filters-bar {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1rem;
             margin-bottom: 1.5rem;
@@ -276,7 +299,7 @@
             border-radius: 6px;
             font-size: 0.75rem;
             cursor: pointer;
-            color: #475569;
+            color: var(--text-secondary);
             font-weight: 500;
         }
         
@@ -287,16 +310,22 @@
         
         .search-input {
             padding: 0.4rem 1rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.75rem;
             width: 200px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+        
+        .search-input::placeholder {
+            color: var(--text-secondary);
         }
         
         /* Table */
         .table-container {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             overflow-x: auto;
             margin-bottom: 1.5rem;
@@ -311,12 +340,12 @@
         .market-table th {
             text-align: left;
             padding: 1rem;
-            background: #f8fafc;
-            color: #64748b;
+            background: var(--hover-bg);
+            color: var(--text-secondary);
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             cursor: pointer;
         }
         
@@ -326,8 +355,9 @@
         
         .market-table td {
             padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             font-size: 0.85rem;
+            color: var(--text-primary);
         }
         
         .market-table td:last-child {
@@ -341,7 +371,7 @@
         }
         
         .coin-rank {
-            color: #94a3b8;
+            color: var(--text-secondary);
             font-weight: 500;
             width: 30px;
         }
@@ -361,11 +391,12 @@
         .coin-name {
             font-weight: 600;
             font-size: 0.85rem;
+            color: var(--text-primary);
         }
         
         .coin-symbol {
             font-size: 0.7rem;
-            color: #94a3b8;
+            color: var(--text-secondary);
         }
         
         .price-value {
@@ -392,7 +423,7 @@
         
         .favorite-star {
             cursor: pointer;
-            color: #cbd5e1;
+            color: var(--text-secondary);
             font-size: 1rem;
         }
         
@@ -416,36 +447,43 @@
         }
         
         .page-btn {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             padding: 0.4rem 0.8rem;
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.75rem;
+            color: var(--text-primary);
+        }
+        
+        .page-btn:hover {
+            background: var(--hover-bg);
         }
         
         .items-per-page {
             padding: 0.4rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             font-size: 0.75rem;
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
         
         .update-time {
             font-size: 0.7rem;
-            color: #94a3b8;
+            color: var(--text-secondary);
         }
         
         /* Trust Bar */
         .trust-bar {
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
             padding: 0.5rem 1.5rem;
             display: flex;
             gap: 1.5rem;
             flex-wrap: wrap;
             font-size: 0.65rem;
-            color: #475569;
+            color: var(--text-secondary);
         }
         
         /* Mobile */
@@ -586,7 +624,6 @@
     </div>
 
     <script>
-        // Market Data with real icons
         const marketData = [
             { rank: 1, name: "Bitcoin", symbol: "BTC", price: 43250, change24h: 2.4, change7d: 5.2, volume: "28500000000", marketCap: "845000000000", iconUrl: "https://assets.coincap.io/assets/icons/btc@2x.png" },
             { rank: 2, name: "Ethereum", symbol: "ETH", price: 2250, change24h: 1.8, change7d: 3.1, volume: "15200000000", marketCap: "270000000000", iconUrl: "https://assets.coincap.io/assets/icons/eth@2x.png" },
@@ -627,76 +664,14 @@
                                 <span class="coin-symbol">${coin.symbol}</span>
                             </div>
                         </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
                     </td>
-                    <td class="price-value" data-price="${coin.price}">$${coin.price.toLocaleString()}</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td class="${coin.change24h >= 0 ? 'positive' : 'negative'}">${coin.change24h >= 0 ? '▲' : '▼'} ${Math.abs(coin.change24h)}%</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td class="${coin.change7d >= 0 ? 'positive' : 'negative'}">${coin.change7d >= 0 ? '▲' : '▼'} ${Math.abs(coin.change7d)}%</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td>$${(parseFloat(coin.volume) / 1000000000).toFixed(1)}B</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td>$${(parseFloat(coin.marketCap) / 1000000000).toFixed(0)}B</div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td><span class="favorite-star ${favorites.includes(coin.symbol) ? 'active' : ''}" onclick="toggleFavorite('${coin.symbol}')">★</span></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
-                    <td><button class="trade-btn" onclick="window.location.href='trade.html?pair=${coin.symbol}USD'">Trade</button></div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    </td>
+                    <td class="price-value" data-price="${coin.price}">$${coin.price.toLocaleString()}</td>
+                    <td class="${coin.change24h >= 0 ? 'positive' : 'negative'}">${coin.change24h >= 0 ? '▲' : '▼'} ${Math.abs(coin.change24h)}%</td>
+                    <td class="${coin.change7d >= 0 ? 'positive' : 'negative'}">${coin.change7d >= 0 ? '▲' : '▼'} ${Math.abs(coin.change7d)}%</td>
+                    <td>$${(parseFloat(coin.volume) / 1000000000).toFixed(1)}B</td>
+                    <td>$${(parseFloat(coin.marketCap) / 1000000000).toFixed(0)}B</td>
+                    <td><span class="favorite-star ${favorites.includes(coin.symbol) ? 'active' : ''}" onclick="toggleFavorite('${coin.symbol}')">★</span></td>
+                    <td><button class="trade-btn" onclick="window.location.href='trade.html?pair=${coin.symbol}USD'">Trade</button></td>
                 </tr>
             `).join('');
             
@@ -808,7 +783,6 @@
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
 
-        // Live price updates
         setInterval(() => {
             marketData.forEach(coin => {
                 const oldPrice = coin.price;
