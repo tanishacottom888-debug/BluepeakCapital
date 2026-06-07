@@ -3,10 +3,23 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
-    <meta name="description" content="BluepeakCapital - Withdraw funds securely from your institutional trading account." />
     <title>BluepeakCapital | Withdraw</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    
+    <!-- THEME CONTROLLER - MUST BE FIRST -->
+    <script>
+        function initTheme() {
+            const savedTheme = localStorage.getItem('bluepeak_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('bluepeak_theme', 'dark');
+            }
+        }
+        initTheme();
+    </script>
     
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
@@ -49,10 +62,24 @@
             --negative: #ef4444;
         }
 
+        /* Light Mode */
+        [data-theme="light"] {
+            --bg-primary: #f5f7fb;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --text-primary: #1a1f36;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --nav-bg: #ffffff;
+            --hover-bg: #f1f5f9;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         nav {
