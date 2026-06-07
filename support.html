@@ -34,10 +34,27 @@
             box-sizing: border-box;
         }
 
+        /* Dark Mode as Default */
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --bg-input: #374151;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --nav-bg: #111827;
+            --hover-bg: #374151;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+            --positive: #10b981;
+            --negative: #ef4444;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f7fb;
-            color: #1a1f36;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         /* Navigation */
@@ -46,8 +63,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.8rem 1rem;
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -76,7 +93,7 @@
         .logo-text {
             font-size: 1rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -90,7 +107,7 @@
         }
 
         .nav-links a {
-            color: #4a5568;
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.75rem;
             font-weight: 500;
@@ -100,7 +117,7 @@
             color: #3b82f6;
         }
 
-        /* Right Menu - Only flag and hamburger */
+        /* Right Menu */
         .right-menu {
             display: flex;
             align-items: center;
@@ -118,7 +135,7 @@
         .hamburger-btn {
             background: none;
             border: none;
-            color: #1a1f36;
+            color: var(--text-primary);
             font-size: 1.3rem;
             cursor: pointer;
             padding: 0.3rem;
@@ -132,7 +149,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 2000;
             visibility: hidden;
             opacity: 0;
@@ -150,8 +167,8 @@
             right: -280px;
             width: 260px;
             height: 100%;
-            background: white;
-            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+            background: var(--bg-secondary);
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
             z-index: 2001;
             transition: right 0.3s ease;
             display: flex;
@@ -165,41 +182,41 @@
 
         .sidebar-header {
             padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             margin-bottom: 0.5rem;
         }
 
         .sidebar-menu a {
             display: block;
             padding: 0.8rem 1.2rem;
-            color: #4a5568;
+            color: var(--text-primary);
             text-decoration: none;
             font-size: 0.85rem;
             font-weight: 500;
         }
 
         .sidebar-menu a:hover {
-            background: #f1f5f9;
+            background: var(--hover-bg);
             color: #3b82f6;
         }
 
         /* Trust Bar */
         .trust-bar {
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
             padding: 0.4rem 1rem;
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
             font-size: 0.6rem;
-            color: #475569;
+            color: var(--text-secondary);
             overflow-x: auto;
         }
 
         .trust-separator {
             width: 1px;
             height: 10px;
-            background: #cbd5e1;
+            background: var(--border-color);
         }
 
         /* Main Container */
@@ -219,10 +236,11 @@
             font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 0.3rem;
+            color: var(--text-primary);
         }
 
         .support-hero p {
-            color: #64748b;
+            color: var(--text-secondary);
             font-size: 0.8rem;
             margin-bottom: 1rem;
         }
@@ -235,10 +253,15 @@
         .search-box input {
             width: 100%;
             padding: 0.5rem 1rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 30px;
             font-size: 0.8rem;
-            background: white;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
         }
 
         /* Quick Actions */
@@ -250,8 +273,8 @@
         }
 
         .quick-card {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 0.8rem;
             text-align: center;
@@ -273,11 +296,12 @@
             font-weight: 600;
             font-size: 0.7rem;
             margin-bottom: 0.2rem;
+            color: var(--text-primary);
         }
 
         .quick-desc {
             font-size: 0.55rem;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         /* Two Column Layout */
@@ -290,8 +314,8 @@
 
         /* FAQ Section */
         .faq-section, .contact-section {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1rem;
         }
@@ -301,12 +325,13 @@
             font-weight: 600;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
 
         /* FAQ Accordion */
         .faq-item {
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .faq-question {
@@ -317,17 +342,19 @@
             cursor: pointer;
             font-weight: 500;
             font-size: 0.8rem;
+            color: var(--text-primary);
         }
 
         .faq-question span {
             font-size: 0.7rem;
+            color: var(--text-secondary);
         }
 
         .faq-answer {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
-            color: #64748b;
+            color: var(--text-secondary);
             font-size: 0.7rem;
             line-height: 1.4;
         }
@@ -345,16 +372,22 @@
         .contact-form label {
             display: block;
             font-size: 0.65rem;
-            color: #64748b;
+            color: var(--text-secondary);
             margin-bottom: 0.2rem;
         }
 
         .contact-form input, .contact-form select, .contact-form textarea {
             width: 100%;
             padding: 0.5rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.75rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        .contact-form input::placeholder, .contact-form textarea::placeholder {
+            color: var(--text-secondary);
         }
 
         .contact-form textarea {
@@ -363,7 +396,7 @@
         }
 
         .btn-primary {
-            background: #3b82f6;
+            background: var(--btn-primary);
             color: white;
             border: none;
             padding: 0.5rem;
@@ -374,7 +407,7 @@
         }
 
         .btn-primary:hover {
-            background: #2563eb;
+            background: var(--btn-primary-hover);
         }
 
         /* Knowledge Base */
@@ -389,8 +422,8 @@
         }
 
         .kb-card {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 0.8rem;
             cursor: pointer;
@@ -411,17 +444,18 @@
             font-weight: 600;
             margin-bottom: 0.3rem;
             font-size: 0.75rem;
+            color: var(--text-primary);
         }
 
         .kb-desc {
             font-size: 0.65rem;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         /* System Status */
         .status-section {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1rem;
             margin-bottom: 1.5rem;
@@ -432,11 +466,12 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .status-name {
             font-size: 0.75rem;
+            color: var(--text-primary);
         }
 
         .status-badge {
@@ -446,8 +481,8 @@
         }
 
         .status-operational {
-            background: #d1fae5;
-            color: #059669;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
         }
 
         /* Mobile Responsive */
@@ -755,7 +790,7 @@
 
         function showToast(msg) {
             const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1a1f36; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;';
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; z-index: 1000;';
             toast.textContent = msg;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 2000);
