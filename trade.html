@@ -22,7 +22,6 @@
         let userOrders = []
         let userTrades = []
 
-        // Check authentication and load user data
         async function checkAuthAndLoadData() {
             const { data: { session } } = await supabase.auth.getSession()
             
@@ -36,11 +35,9 @@
             await loadUserOrders()
             await loadUserTrades()
             
-            // Update UI with real balances
             updateBalanceDisplay()
         }
         
-        // Load user balances from Supabase
         async function loadUserBalances() {
             const { data, error } = await supabase
                 .from('balances')
@@ -58,11 +55,9 @@
                 })
             }
             
-            // Ensure USD balance exists (for display)
             if (!userBalances.USD) userBalances.USD = 0
         }
         
-        // Load user's open orders
         async function loadUserOrders() {
             const { data, error } = await supabase
                 .from('orders')
@@ -80,7 +75,6 @@
             renderOpenOrders()
         }
         
-        // Load user's trade history
         async function loadUserTrades() {
             const { data, error } = await supabase
                 .from('trades')
@@ -98,7 +92,6 @@
             renderRecentTrades()
         }
         
-        // Update balance display in UI
         function updateBalanceDisplay() {
             const availableSpan = document.getElementById('availableBalance')
             if (availableSpan) {
@@ -107,11 +100,11 @@
                 availableSpan.innerHTML = `${balance.toFixed(4)} ${pairAsset}`
             }
             
-            // Also update USD balance in order total calculation
+            const usdBalance = userBalances.USD || 0
+            document.getElementById('topBalanceDisplay').innerHTML = `$${usdBalance.toFixed(2)}`
             updateCalculations()
         }
         
-        // Save order to Supabase
         async function saveOrderToDatabase(pair, type, orderType, price, amount, status = 'pending') {
             const { data, error } = await supabase
                 .from('orders')
@@ -137,7 +130,6 @@
             return data?.[0]
         }
         
-        // Update user balances after trade
         async function updateUserBalances(asset, amount, isBuy) {
             const currentBalance = userBalances[asset] || 0
             const newBalance = isBuy ? currentBalance + amount : currentBalance - amount
@@ -160,7 +152,6 @@
             return true
         }
         
-        // Save trade to history
         async function saveTradeToHistory(pair, type, price, amount, total, fee) {
             const { error } = await supabase
                 .from('trades')
@@ -180,42 +171,37 @@
             }
         }
         
-        // Execute market order
-        async function executeMarketOrder(amount, price, total) {
+        window.executeMarketOrder = async function(amount, price, total) {
             const pairAsset = currentPair.split('/')[0]
             
             if (currentOrderType === 'buy') {
-                // Check if user has enough USD
                 if (total > userBalances.USD) {
                     showToast(`Insufficient USD balance. Available: $${userBalances.USD.toFixed(2)}`)
                     return false
                 }
                 
-                // Update balances
-                await updateUserBalances('USD', total, false) // Remove USD
-                await updateUserBalances(pairAsset, amount, true) // Add crypto
+                await updateUserBalances('USD', total, false)
+                await updateUserBalances(pairAsset, amount, true)
                 
             } else {
-                // Sell
                 if (amount > (userBalances[pairAsset] || 0)) {
                     showToast(`Insufficient ${pairAsset} balance. Available: ${(userBalances[pairAsset] || 0).toFixed(4)}`)
                     return false
                 }
                 
-                // Update balances
-                await updateUserBalances(pairAsset, amount, false) // Remove crypto
-                await updateUserBalances('USD', total, true) // Add USD
+                await updateUserBalances(pairAsset, amount, false)
+                await updateUserBalances('USD', total, true)
             }
             
             const fee = total * 0.001
             await saveTradeToHistory(currentPair, currentOrderType, price, amount, total, fee)
-            await loadUserTrades() // Refresh trade history
+            await loadUserTrades()
+            updateBalanceDisplay()
             
             return true
         }
         
-        // Save limit order
-        async function saveLimitOrder(amount, price) {
+        window.saveLimitOrder = async function(amount, price) {
             const order = await saveOrderToDatabase(
                 currentPair,
                 currentOrderType,
@@ -234,7 +220,6 @@
             return false
         }
         
-        // Cancel order
         window.cancelOrder = async function(orderId) {
             const { error } = await supabase
                 .from('orders')
@@ -253,35 +238,80 @@
             showToast('Order cancelled')
         }
         
-        // Update UI after order
-        function updateUIAfterOrder() {
-            updateBalanceDisplay()
-            updateCalculations()
+        function renderOpenOrders() {
+            const container = document.getElementById('openOrdersList')
+            if (!container) return
+            
+            if (userOrders.length === 0) {
+                container.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1rem;">No open orders</td></tr>'
+                return
+            }
+            
+            container.innerHTML = userOrders.map(order => `
+                <tr>
+                    <td>${order.pair}</td>
+                    <td class="${order.type === 'buy' ? 'positive' : 'negative'}">${order.type.toUpperCase()}</td>
+                    <td>$${order.price}</td>
+                    <td>${order.amount}</td>
+                    <td>${order.filled || 0}/${order.amount}</td>
+                    <td><button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button></td>
+                </tr>
+            `).join('')
         }
         
-        // Expose global functions for onclick handlers
-        window.setOrderType = setOrderType
-        window.setPercentage = setPercentage
-        window.submitOrder = submitOrder
-        window.switchBottomTab = switchBottomTab
-        window.addIndicator = addIndicator
-        window.mobilePairChange = mobilePairChange
+        function renderRecentTrades() {
+            const container = document.getElementById('tradesList')
+            if (!container) return
+            
+            if (userTrades.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No recent trades</td></tr>'
+                return
+            }
+            
+            container.innerHTML = userTrades.slice(0, 10).map(trade => `
+                <tr>
+                    <td>${new Date(trade.created_at).toLocaleTimeString()}</td>
+                    <td class="${trade.type === 'buy' ? 'positive' : 'negative'}">$${trade.price}</td>
+                    <td>${trade.amount}</td>
+                </tr>
+            `).join('')
+        }
+        
+        checkAuthAndLoadData()
     </script>
     
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     
     <style>
-        /* Your existing styles remain the same */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        /* Dark Mode as Default */
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --bg-input: #374151;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --nav-bg: #111827;
+            --hover-bg: #374151;
+            --positive: #10b981;
+            --negative: #ef4444;
+            --buy-color: #10b981;
+            --sell-color: #ef4444;
+            --bid-color: #10b981;
+            --ask-color: #ef4444;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f7fb;
-            color: #1a1f36;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             overflow-x: hidden;
         }
 
@@ -291,8 +321,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.8rem 1rem;
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -321,13 +351,12 @@
         .logo-text {
             font-size: 1rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
 
-        /* Desktop Navigation */
         .nav-links {
             display: flex;
             gap: 1rem;
@@ -335,7 +364,7 @@
         }
 
         .nav-links a {
-            color: #4a5568;
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.75rem;
             font-weight: 500;
@@ -345,7 +374,6 @@
             color: #3b82f6;
         }
 
-        /* Right Menu */
         .right-menu {
             display: flex;
             align-items: center;
@@ -363,8 +391,8 @@
         .balance-display {
             font-weight: 600;
             font-size: 0.8rem;
-            color: #1a1f36;
-            background: #f1f5f9;
+            color: var(--text-primary);
+            background: var(--hover-bg);
             padding: 0.3rem 0.8rem;
             border-radius: 30px;
         }
@@ -372,7 +400,7 @@
         .hamburger-btn {
             background: none;
             border: none;
-            color: #1a1f36;
+            color: var(--text-primary);
             font-size: 1.3rem;
             cursor: pointer;
             padding: 0.3rem;
@@ -386,7 +414,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 2000;
             visibility: hidden;
             opacity: 0;
@@ -404,8 +432,8 @@
             right: -280px;
             width: 260px;
             height: 100%;
-            background: white;
-            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+            background: var(--bg-secondary);
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
             z-index: 2001;
             transition: right 0.3s ease;
             display: flex;
@@ -419,35 +447,35 @@
 
         .sidebar-header {
             padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             margin-bottom: 0.5rem;
         }
 
         .sidebar-menu a {
             display: block;
             padding: 0.8rem 1.2rem;
-            color: #4a5568;
+            color: var(--text-primary);
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 500;
         }
 
         .sidebar-menu a:hover {
-            background: #f1f5f9;
+            background: var(--hover-bg);
             color: #3b82f6;
         }
 
         /* Trading Container */
         .trading-container {
             padding: 1rem;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
         /* Mobile Pair Selector */
         .pair-selector-mobile {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 0.5rem;
             margin-bottom: 1rem;
@@ -459,28 +487,30 @@
         .current-pair {
             font-weight: 700;
             font-size: 0.9rem;
+            color: var(--text-primary);
         }
 
         .pair-select {
             padding: 0.3rem 0.5rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            background: white;
+            background: var(--bg-input);
+            color: var(--text-primary);
             font-size: 0.75rem;
         }
 
         /* Chart Container */
         .chart-container {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             overflow: hidden;
             margin-bottom: 1rem;
         }
 
         .chart-header {
             padding: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -498,7 +528,8 @@
             padding: 0.2rem 0.4rem;
             font-size: 0.6rem;
             border: none;
-            background: #f1f5f9;
+            background: var(--hover-bg);
+            color: var(--text-primary);
             border-radius: 4px;
             cursor: pointer;
         }
@@ -515,8 +546,8 @@
 
         /* Order Form */
         .order-container {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             margin-bottom: 1rem;
             overflow: hidden;
@@ -524,7 +555,7 @@
 
         .order-tabs {
             display: flex;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .order-tab {
@@ -534,16 +565,17 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 0.8rem;
+            color: var(--text-secondary);
         }
 
         .order-tab.buy.active {
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(16, 185, 129, 0.15);
             color: #10b981;
             border-bottom: 2px solid #10b981;
         }
 
         .order-tab.sell.active {
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(239, 68, 68, 0.15);
             color: #ef4444;
             border-bottom: 2px solid #ef4444;
         }
@@ -559,16 +591,18 @@
         .form-group label {
             display: block;
             font-size: 0.7rem;
-            color: #64748b;
+            color: var(--text-secondary);
             margin-bottom: 0.2rem;
         }
 
         .order-type-select, .form-group input {
             width: 100%;
             padding: 0.5rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.8rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
         }
 
         .percentage-buttons {
@@ -580,19 +614,24 @@
         .perc-btn {
             flex: 1;
             padding: 0.25rem;
-            background: #f1f5f9;
+            background: var(--hover-bg);
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.65rem;
+            color: var(--text-primary);
         }
 
         .order-total {
-            background: #f8fafc;
+            background: var(--bg-input);
             padding: 0.6rem;
             border-radius: 8px;
             margin: 0.8rem 0;
             font-size: 0.75rem;
+        }
+
+        .order-total div {
+            color: var(--text-primary);
         }
 
         .submit-btn {
@@ -626,12 +665,13 @@
             flex: 1;
             padding: 0.5rem;
             text-align: center;
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             cursor: pointer;
             font-size: 0.7rem;
             font-weight: 500;
+            color: var(--text-secondary);
         }
 
         .bottom-tab.active {
@@ -641,8 +681,8 @@
         }
 
         .bottom-panel {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             overflow-x: auto;
             margin-bottom: 1rem;
@@ -655,9 +695,10 @@
 
         .panel-header {
             padding: 0.6rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             font-weight: 600;
             font-size: 0.8rem;
+            color: var(--text-primary);
         }
 
         .orderbook-table, .trades-table, .orders-table {
@@ -669,13 +710,14 @@
         .orderbook-table th, .trades-table th, .orders-table th {
             padding: 0.4rem;
             text-align: left;
-            color: #64748b;
-            border-bottom: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .orderbook-table td, .trades-table td, .orders-table td {
             padding: 0.3rem 0.4rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
 
         .bid { color: #10b981; }
@@ -698,7 +740,7 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #1a1f36;
+            background: #1e293b;
             color: white;
             padding: 0.6rem 1.2rem;
             border-radius: 8px;
@@ -817,7 +859,7 @@
                     <button class="timeframe-btn" data-tf="D">1D</button>
                     <button class="timeframe-btn" data-tf="W">1W</button>
                 </div>
-                <select id="indicatorSelect" onchange="addIndicator()">
+                <select id="indicatorSelect" onchange="addIndicator()" style="background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.2rem 0.4rem;">
                     <option value="">+ Indicator</option>
                     <option value="RSI">RSI</option>
                     <option value="MACD">MACD</option>
@@ -912,13 +954,11 @@
     </div>
 
     <script>
-        // Global variables
         let currentPair = "BTC/USD"
         let currentPrice = 43250
         let currentOrderType = "buy"
         let tvWidget = null
         
-        // Market data
         const markets = [
             { symbol: "BTC/USD", name: "Bitcoin", price: 43250, change: 2.4 },
             { symbol: "ETH/USD", name: "Ethereum", price: 2250, change: 1.8 },
@@ -926,7 +966,6 @@
             { symbol: "AVAX/USD", name: "Avalanche", price: 38.20, change: 4.2 }
         ]
         
-        // TradingView Chart
         function initTradingView() {
             if (tvWidget) tvWidget.remove()
             tvWidget = new TradingView.widget({
@@ -937,15 +976,14 @@
                 width: "100%",
                 height: "100%",
                 autosize: true,
-                toolbar_bg: "#f1f3f6",
+                toolbar_bg: "#1f2937",
                 enable_publishing: false,
                 allow_symbol_change: true,
-                theme: "light",
+                theme: "dark",
                 style: "1"
             })
         }
         
-        // Mobile pair change
         window.mobilePairChange = function() {
             const select = document.getElementById('mobilePairSelect')
             currentPair = select.value
@@ -962,7 +1000,6 @@
             showToast(`Switched to ${currentPair}`)
         }
         
-        // Order Book Simulation
         function updateOrderBook() {
             const asks = [], bids = []
             for (let i = 1; i <= 6; i++) {
@@ -971,11 +1008,10 @@
             }
             const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2)
             document.getElementById('spreadDisplay').innerHTML = `Spread: ${spread}%`
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}<td>${a.size}<td>$${parseInt(a.total).toLocaleString()}</tr>`).join('')
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}<td>${b.size}<td>$${parseInt(b.total).toLocaleString()}<tr>`).join('')
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></tr>`).join('')
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('')
         }
         
-        // Order Form Logic
         window.setOrderType = function(type) {
             currentOrderType = type
             document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'))
@@ -986,7 +1022,6 @@
         }
         
         window.setPercentage = function(perc) {
-            // For new users with 0 balance, percentage buttons will show 0
             const pairAsset = currentPair.split('/')[0]
             const maxAmount = window.userBalances ? (window.userBalances[pairAsset] || 0) : 0
             const amount = (maxAmount * perc / 100).toFixed(4)
@@ -1008,7 +1043,6 @@
             const balance = window.userBalances ? (window.userBalances[pairAsset] || 0) : 0
             document.getElementById('availableBalance').innerHTML = `${balance.toFixed(4)} ${pairAsset}`
             
-            // Update top balance display
             const usdBalance = window.userBalances ? (window.userBalances.USD || 0) : 0
             document.getElementById('topBalanceDisplay').innerHTML = `$${usdBalance.toFixed(2)}`
         }
@@ -1023,7 +1057,6 @@
             const total = amount * price
             const pairAsset = currentPair.split('/')[0]
             
-            // Check balance for market orders
             if (orderType === 'market') {
                 if (currentOrderType === 'buy') {
                     if (total > (window.userBalances?.USD || 0)) {
@@ -1038,11 +1071,7 @@
                 }
             }
             
-            // Execute or save order
             if (orderType === 'market') {
-                const fee = total * 0.001
-                
-                // Update balances (will be handled by the parent module)
                 if (window.executeMarketOrder) {
                     const success = await window.executeMarketOrder(amount, price, total)
                     if (success) {
@@ -1052,7 +1081,6 @@
                         document.getElementById('amount').value = '0.01'
                     }
                 } else {
-                    // Fallback for demo
                     showToast(`${currentOrderType.toUpperCase()} order executed (Demo)! ${amount} ${pairAsset} at $${price}`)
                 }
             } else {
@@ -1066,7 +1094,6 @@
             }
         }
         
-        // Timeframe change
         document.querySelectorAll('.timeframe-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'))
@@ -1107,37 +1134,44 @@
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
         
-        // Event listeners
         document.getElementById('amount').addEventListener('input', updateCalculations)
         document.getElementById('price').addEventListener('input', updateCalculations)
         document.getElementById('orderType').addEventListener('change', function() {
             document.getElementById('priceGroup').style.display = this.value === 'market' ? 'none' : 'block'
         })
         
-        // Initialize
         function init() {
             initTradingView()
             updateOrderBook()
             updateCalculations()
             
-            // Add some demo trades for visual
             const tradesList = document.getElementById('tradesList')
             if (tradesList && tradesList.children.length === 0) {
                 tradesList.innerHTML = `
-                    <tr><td>14:30:25</td><td class="positive">$43,250</td><td>0.050</td></tr>
-                    <tr><td>14:28:12</td><td class="negative">$43,248</td><td>0.030</td></tr>
-                    <tr><td>14:25:45</td><td class="positive">$43,252</td><td>0.080</td></tr>
+                    <tr>
+                        <td>14:30:25</div>
+                        <td class="positive">$43,250</div>
+                        <td>0.050</div>
+                    </tr>
+                    <tr>
+                        <td>14:28:12</div>
+                        <td class="negative">$43,248</div>
+                        <td>0.030</div>
+                    </tr>
+                    <tr>
+                        <td>14:25:45</div>
+                        <td class="positive">$43,252</div>
+                        <td>0.080</div>
+                    </tr>
                 `
             }
         }
         
         init()
         
-        // Expose functions and data to the module scope
         window.updateBalanceDisplay = updateBalanceDisplay
         window.showToast = showToast
         
-        // Listen for balance updates from main module
         setInterval(() => {
             if (window.userBalances) {
                 updateBalanceDisplay()
