@@ -65,9 +65,6 @@
             --btn-primary-hover: #2563eb;
             --btn-secondary: #374151;
             --btn-secondary-hover: #4b5563;
-            --status-expired: #ef4444;
-            --status-completed: #10b981;
-            --status-pending: #f59e0b;
         }
 
         /* Light Mode */
@@ -273,6 +270,7 @@
             font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 0.3rem;
+            color: var(--text-primary);
         }
 
         .page-header p {
@@ -298,6 +296,7 @@
         .new-deposit-title {
             font-size: 1rem;
             font-weight: 600;
+            color: var(--text-primary);
         }
 
         .current-balance {
@@ -368,6 +367,7 @@
             font-size: 1rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
+            color: var(--text-primary);
         }
 
         .section-subtitle {
@@ -392,6 +392,7 @@
         .depositing-value {
             font-size: 1.3rem;
             font-weight: 700;
+            color: var(--text-primary);
         }
 
         .form-group {
@@ -460,6 +461,7 @@
         .quick-amount-btn:hover {
             background: var(--step-active);
             border-color: var(--step-active);
+            color: white;
         }
 
         .select-dropdown {
@@ -567,7 +569,6 @@
             margin-top: 0.8rem;
         }
 
-        /* Deposit History - Empty State */
         .history-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -580,6 +581,7 @@
             font-weight: 600;
             padding: 1rem;
             border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
 
         .history-list {
@@ -823,9 +825,6 @@
                         <option value="BNB">ⓑ Binance (BNB)</option>
                         <option value="DOGE">Ð Dogecoin (DOGE)</option>
                         <option value="XRP">✕ Ripple (XRP)</option>
-                        <option value="ADA">₳ Cardano (ADA)</option>
-                        <option value="DOT">● Polkadot (DOT)</option>
-                        <option value="LTC">Ł Litecoin (LTC)</option>
                         <option value="TRX">💧 TRON (TRX)</option>
                         <option value="TON">💎 Toncoin (TON)</option>
                         <option value="MATIC">🔷 Polygon (MATIC)</option>
@@ -909,9 +908,9 @@
         let selectedCrypto = 'BTC';
         let selectedNetwork = 'Bitcoin Network';
         
-        // Empty deposit history array - starts blank
         let depositHistory = [];
         
+        // Network options for each cryptocurrency
         const networkOptions = {
             BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
             ETH: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
@@ -927,20 +926,15 @@
                 { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }
             ],
             SOL: [{ value: 'SOL', label: 'Solana Network' }],
-            BNB: [
-                { value: 'BEP2', label: 'BNB Beacon Chain (BEP2)' },
-                { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }
-            ],
+            BNB: [{ value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }],
             DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }],
             XRP: [{ value: 'XRP', label: 'Ripple Network' }],
-            ADA: [{ value: 'ADA', label: 'Cardano Network' }],
-            DOT: [{ value: 'DOT', label: 'Polkadot Network' }],
-            LTC: [{ value: 'LTC', label: 'Litecoin Network' }],
             TRX: [{ value: 'TRC20', label: 'Tron (TRC20)' }],
             TON: [{ value: 'TON', label: 'Toncoin Network' }],
             MATIC: [{ value: 'POLYGON', label: 'Polygon Network' }]
         };
         
+        // Deposit addresses for each cryptocurrency and network
         const depositAddresses = {
             BTC: { BTC: '112NvxwyYBycQwhuKboLstQQMWjm8qk88W' },
             ETH: { ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
@@ -956,17 +950,11 @@
                 BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4'
             },
             SOL: { SOL: '6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w' },
-            BNB: {
-                BEP2: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4',
-                BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4'
-            },
+            BNB: { BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
             DOGE: { DOGE: 'DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm' },
-            XRP: { XRP: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh' },
-            ADA: { ADA: 'addr1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
-            DOT: { DOT: '1x2k3gdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
-            LTC: { LTC: 'ltc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
+            XRP: { XRP: 'rhspJoR6Lt3X856Lh3k6pW9ihJQvHT55vD' },
             TRX: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae' },
-            TON: { TON: 'EQD4fpL8A6e5qMxG1j2k3L4m5N6o7P8q9R0sT1uV2wX3yZ' },
+            TON: { TON: 'EQA2JuIow55lkSVjw92hUq_BeKlm99F4MtX6XlOEw871jpuo' },
             MATIC: { POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' }
         };
         
@@ -1024,6 +1012,7 @@
             document.getElementById('depositAddress').innerHTML = address;
             document.getElementById('finalDepositAmount').innerHTML = `$${depositAmount.toFixed(2)} ${selectedCrypto}`;
             
+            // Generate QR Code
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`;
             document.getElementById('qrImage').src = qrUrl;
             
