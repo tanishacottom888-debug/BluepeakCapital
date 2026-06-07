@@ -33,7 +33,6 @@
             box-sizing: border-box;
         }
 
-        /* Dark Mode as Default */
         :root {
             --bg-primary: #0a0e17;
             --bg-secondary: #111827;
@@ -51,6 +50,9 @@
             --btn-primary-hover: #2563eb;
             --btn-secondary: #374151;
             --btn-secondary-hover: #4b5563;
+            --status-expired: #ef4444;
+            --status-completed: #10b981;
+            --status-pending: #f59e0b;
         }
 
         body {
@@ -61,7 +63,6 @@
             width: 100%;
         }
 
-        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -139,7 +140,6 @@
             display: none;
         }
 
-        /* Sidebar */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -230,14 +230,12 @@
             margin-top: 65px;
         }
 
-        /* Main Container */
         .deposit-container {
-            max-width: 800px;
+            max-width: 700px;
             margin: 0 auto;
             padding: 1.5rem;
         }
 
-        /* Page Header */
         .page-header {
             margin-bottom: 1.5rem;
         }
@@ -253,7 +251,6 @@
             font-size: 0.8rem;
         }
 
-        /* Deposit Card */
         .deposit-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -262,7 +259,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Header Row with New Deposit and Current Balance */
         .deposit-header {
             display: flex;
             justify-content: space-between;
@@ -290,7 +286,6 @@
             color: #10b981;
         }
 
-        /* Step Indicator */
         .step-indicator {
             display: flex;
             justify-content: center;
@@ -340,7 +335,6 @@
             color: var(--step-active);
         }
 
-        /* Section Title */
         .section-title {
             font-size: 1rem;
             font-weight: 600;
@@ -353,7 +347,6 @@
             margin-bottom: 1rem;
         }
 
-        /* Amount Display */
         .depositing-amount {
             background: var(--bg-input);
             border-radius: 12px;
@@ -372,7 +365,6 @@
             font-weight: 700;
         }
 
-        /* Form Elements */
         .form-group {
             margin-bottom: 1.2rem;
         }
@@ -418,7 +410,6 @@
             margin-top: 0.3rem;
         }
 
-        /* Quick Amount Buttons */
         .quick-amounts {
             display: flex;
             gap: 0.8rem;
@@ -442,7 +433,6 @@
             border-color: var(--step-active);
         }
 
-        /* Select Dropdown */
         .select-dropdown {
             width: 100%;
             padding: 0.8rem;
@@ -458,44 +448,6 @@
             background: var(--bg-card);
         }
 
-        /* Selected Crypto Display */
-        .selected-crypto {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem;
-            background: var(--bg-input);
-            border-radius: 12px;
-            cursor: pointer;
-        }
-
-        .crypto-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: contain;
-        }
-
-        .crypto-info {
-            flex: 1;
-        }
-
-        .crypto-symbol {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .crypto-name {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-        }
-
-        .dropdown-arrow {
-            font-size: 1rem;
-            color: var(--text-secondary);
-        }
-
-        /* Button Styles */
         .button-group {
             display: flex;
             gap: 1rem;
@@ -536,7 +488,6 @@
             background: var(--btn-primary-hover);
         }
 
-        /* QR Section */
         .qr-section {
             text-align: center;
             margin-top: 1rem;
@@ -587,92 +538,129 @@
             margin-top: 0.8rem;
         }
 
-        /* Deposit History */
+        /* Clean Deposit History */
         .history-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 1rem;
+            overflow: hidden;
         }
 
         .history-title {
             font-size: 0.9rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.8rem 0;
+            padding: 1rem;
             border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
         }
 
         .history-item:last-child {
             border-bottom: none;
         }
 
-        .history-left {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
+        .history-item:hover {
+            background: var(--hover-bg);
         }
 
-        .history-icon {
-            width: 36px;
-            height: 36px;
+        .history-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-asset {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .history-asset-icon {
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             object-fit: contain;
         }
 
-        .history-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .history-asset {
+        .history-asset-name {
             font-weight: 600;
             font-size: 0.85rem;
         }
 
-        .history-amount {
-            font-size: 0.7rem;
+        .history-asset-symbol {
+            font-size: 0.65rem;
             color: var(--text-secondary);
         }
 
-        .history-right {
-            text-align: right;
+        .history-amount-usd {
+            font-weight: 600;
+            font-size: 0.85rem;
         }
 
         .history-status {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             padding: 0.2rem 0.5rem;
             border-radius: 20px;
+            text-transform: uppercase;
         }
 
         .history-status.expired {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.15);
             color: #ef4444;
         }
 
         .history-status.completed {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.15);
             color: #10b981;
         }
 
         .history-status.pending {
-            background: rgba(245, 158, 11, 0.2);
+            background: rgba(245, 158, 11, 0.15);
             color: #f59e0b;
         }
 
-        .history-date {
+        .history-address {
+            font-family: monospace;
             font-size: 0.6rem;
             color: var(--text-secondary);
-            margin-top: 0.2rem;
+            word-break: break-all;
+            margin-bottom: 0.3rem;
         }
 
-        /* Toast Notification */
+        .history-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+        }
+
+        .history-date {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .history-crypto-amount {
+            font-family: monospace;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -736,6 +724,13 @@
             }
             .copy-btn {
                 width: 100%;
+            }
+            .history-row {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .history-amount-usd {
+                align-self: flex-start;
             }
         }
     </style>
@@ -950,10 +945,10 @@
             </div>
         </div>
 
-        <!-- Deposit History -->
+        <!-- Clean Deposit History -->
         <div class="history-card">
             <div class="history-title">Deposit History</div>
-            <div id="depositHistory"></div>
+            <div class="history-list" id="depositHistoryList"></div>
         </div>
     </div>
 
@@ -964,7 +959,6 @@
         let selectedCrypto = 'BTC';
         let selectedNetwork = 'Bitcoin Network';
         
-        // Network options for different cryptocurrencies
         const networkOptions = {
             BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
             ETH: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
@@ -994,7 +988,6 @@
             MATIC: [{ value: 'POLYGON', label: 'Polygon Network' }]
         };
         
-        // Deposit addresses for each crypto and network
         const depositAddresses = {
             BTC: { BTC: '112NvxwyYBycQwhuKboLstQQMWjm8qk88W' },
             ETH: { ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
@@ -1024,9 +1017,38 @@
             MATIC: { POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' }
         };
         
-        // Deposit history data
+        // Clean Deposit History Data
         let depositHistory = [
-            { asset: 'BTC', amount: 100, status: 'expired', address: 'bc1qpkhu0ytppxjr96c3eut4gc3jvmt255z6454n57', date: '6/6/2026', cryptoAmount: '0.00167977 BTC' }
+            { 
+                asset: 'BTC', 
+                assetName: 'Bitcoin',
+                amountUSD: 100, 
+                status: 'expired', 
+                address: 'bc1qpkhu0ytppxjr96c3eut4gc3jvmt255z6454n57', 
+                date: '2026-06-06', 
+                cryptoAmount: '0.00167977 BTC',
+                txId: '0x1a2b3c4d5e6f'
+            },
+            { 
+                asset: 'ETH', 
+                assetName: 'Ethereum',
+                amountUSD: 250, 
+                status: 'completed', 
+                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5', 
+                date: '2026-06-05', 
+                cryptoAmount: '0.089 ETH',
+                txId: '0x2b3c4d5e6f7g'
+            },
+            { 
+                asset: 'USDT', 
+                assetName: 'Tether',
+                amountUSD: 500, 
+                status: 'pending', 
+                address: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', 
+                date: '2026-06-04', 
+                cryptoAmount: '500 USDT (TRC20)',
+                txId: '0x3c4d5e6f7g8h'
+            }
         ];
         
         function setAmount(amount) {
@@ -1083,11 +1105,9 @@
             document.getElementById('depositAddress').innerHTML = address;
             document.getElementById('finalDepositAmount').innerHTML = `$${depositAmount.toFixed(2)} ${selectedCrypto}`;
             
-            // Generate QR Code
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`;
             document.getElementById('qrImage').src = qrUrl;
             
-            // Update warning message
             let warningMsg = `⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`;
             if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') {
                 warningMsg += ` Make sure to use the ${selectedNetwork} network.`;
@@ -1114,25 +1134,34 @@
             }, 2000);
         }
         
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
         function loadDepositHistory() {
-            const container = document.getElementById('depositHistory');
+            const container = document.getElementById('depositHistoryList');
+            
             if (depositHistory.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">No deposit history</div>';
+                container.innerHTML = '<div class="empty-history">No deposit history yet</div>';
                 return;
             }
             
             container.innerHTML = depositHistory.map(item => `
                 <div class="history-item">
-                    <div class="history-left">
-                        <div class="history-details">
-                            <span class="history-asset">${item.asset}</span>
-                            <span class="history-amount">$${item.amount}</span>
+                    <div class="history-row">
+                        <div class="history-asset">
+                            <span class="history-asset-name">${item.assetName} (${item.asset})</span>
                         </div>
+                        <div class="history-amount-usd">$${item.amountUSD}</div>
+                        <div class="history-status ${item.status}">${item.status}</div>
                     </div>
-                    <div class="history-right">
-                        <span class="history-status ${item.status}">${item.status}</span>
-                        <div class="history-date">${item.date}</div>
-                        <div class="history-amount" style="font-size: 0.6rem;">${item.cryptoAmount}</div>
+                    <div class="history-address">${item.address}</div>
+                    <div class="history-footer">
+                        <div class="history-date">
+                            <span>📅 ${formatDate(item.date)}</span>
+                        </div>
+                        <div class="history-crypto-amount">💰 ${item.cryptoAmount}</div>
                     </div>
                 </div>
             `).join('');
@@ -1146,11 +1175,8 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         }
         
-        // Initialize
         loadDepositHistory();
         updateNetworkOptions();
-        
-        // Set balance (will be updated from Supabase later)
         document.getElementById('currentBalance').innerHTML = '$0.00';
     </script>
 </body>
