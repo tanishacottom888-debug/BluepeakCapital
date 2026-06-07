@@ -464,6 +464,105 @@
             color: white;
         }
 
+        /* Custom Crypto Selector */
+        .crypto-selector {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .crypto-selected {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem;
+        }
+
+        .crypto-selected-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .crypto-selected-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: contain;
+        }
+
+        .crypto-selected-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .crypto-selected-symbol {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-arrow {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .crypto-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 0.3rem;
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .crypto-dropdown.show {
+            display: block;
+        }
+
+        .crypto-option {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.7rem 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .crypto-option:hover {
+            background: var(--hover-bg);
+        }
+
+        .crypto-option-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: contain;
+        }
+
+        .crypto-option-info {
+            flex: 1;
+        }
+
+        .crypto-option-name {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .crypto-option-symbol {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
         .select-dropdown {
             width: 100%;
             padding: 0.8rem;
@@ -678,6 +777,9 @@
             .copy-btn {
                 width: 100%;
             }
+            .crypto-selected-info {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
@@ -816,19 +918,20 @@
 
                 <div class="form-group">
                     <label class="form-label">Select Cryptocurrency</label>
-                    <select class="select-dropdown" id="cryptoSelect" onchange="updateNetworkOptions()">
-                        <option value="BTC">₿ Bitcoin (BTC)</option>
-                        <option value="ETH">Ξ Ethereum (ETH)</option>
-                        <option value="USDT">₮ Tether (USDT)</option>
-                        <option value="USDC">💵 USD Coin (USDC)</option>
-                        <option value="SOL">◎ Solana (SOL)</option>
-                        <option value="BNB">ⓑ Binance (BNB)</option>
-                        <option value="DOGE">Ð Dogecoin (DOGE)</option>
-                        <option value="XRP">✕ Ripple (XRP)</option>
-                        <option value="TRX">💧 TRON (TRX)</option>
-                        <option value="TON">💎 Toncoin (TON)</option>
-                        <option value="MATIC">🔷 Polygon (MATIC)</option>
-                    </select>
+                    <!-- Custom Crypto Selector with Real Icons -->
+                    <div class="crypto-selector" id="cryptoSelector">
+                        <div class="crypto-selected" onclick="toggleCryptoDropdown()">
+                            <div class="crypto-selected-info">
+                                <img id="selectedCryptoIcon" class="crypto-selected-icon" src="https://assets.coincap.io/assets/icons/btc@2x.png" alt="BTC">
+                                <div>
+                                    <div class="crypto-selected-name" id="selectedCryptoName">Bitcoin</div>
+                                    <div class="crypto-selected-symbol" id="selectedCryptoSymbol">BTC</div>
+                                </div>
+                            </div>
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="crypto-dropdown" id="cryptoDropdown"></div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -907,8 +1010,22 @@
         let depositAmount = 0;
         let selectedCrypto = 'BTC';
         let selectedNetwork = 'Bitcoin Network';
-        
         let depositHistory = [];
+        
+        // Cryptocurrency list with real icons from CoinCap
+        const cryptoList = [
+            { symbol: 'BTC', name: 'Bitcoin', iconUrl: 'https://assets.coincap.io/assets/icons/btc@2x.png' },
+            { symbol: 'ETH', name: 'Ethereum', iconUrl: 'https://assets.coincap.io/assets/icons/eth@2x.png' },
+            { symbol: 'USDT', name: 'Tether', iconUrl: 'https://assets.coincap.io/assets/icons/usdt@2x.png' },
+            { symbol: 'USDC', name: 'USD Coin', iconUrl: 'https://assets.coincap.io/assets/icons/usdc@2x.png' },
+            { symbol: 'SOL', name: 'Solana', iconUrl: 'https://assets.coincap.io/assets/icons/sol@2x.png' },
+            { symbol: 'BNB', name: 'Binance', iconUrl: 'https://assets.coincap.io/assets/icons/bnb@2x.png' },
+            { symbol: 'DOGE', name: 'Dogecoin', iconUrl: 'https://assets.coincap.io/assets/icons/doge@2x.png' },
+            { symbol: 'XRP', name: 'Ripple', iconUrl: 'https://assets.coincap.io/assets/icons/xrp@2x.png' },
+            { symbol: 'TRX', name: 'TRON', iconUrl: 'https://assets.coincap.io/assets/icons/trx@2x.png' },
+            { symbol: 'TON', name: 'Toncoin', iconUrl: 'https://assets.coincap.io/assets/icons/ton@2x.png' },
+            { symbol: 'MATIC', name: 'Polygon', iconUrl: 'https://assets.coincap.io/assets/icons/matic@2x.png' }
+        ];
         
         // Network options for each cryptocurrency
         const networkOptions = {
@@ -965,11 +1082,11 @@
         function goToStep2() {
             const amount = parseFloat(document.getElementById('depositAmount').value);
             if (!amount || amount <= 0) {
-                showToast('Please enter a valid amount', 'error');
+                showToast('Please enter a valid amount');
                 return;
             }
             if (amount < 50) {
-                showToast('Minimum deposit is $50 USD', 'error');
+                showToast('Minimum deposit is $50 USD');
                 return;
             }
             
@@ -989,10 +1106,38 @@
             document.getElementById('step3').style.display = 'none';
         }
         
-        function updateNetworkOptions() {
-            const cryptoSelect = document.getElementById('cryptoSelect');
-            selectedCrypto = cryptoSelect.value;
+        function toggleCryptoDropdown() {
+            const dropdown = document.getElementById('cryptoDropdown');
+            dropdown.classList.toggle('show');
+        }
+        
+        function selectCrypto(symbol, name, iconUrl) {
+            selectedCrypto = symbol;
+            document.getElementById('selectedCryptoIcon').src = iconUrl;
+            document.getElementById('selectedCryptoName').innerHTML = name;
+            document.getElementById('selectedCryptoSymbol').innerHTML = symbol;
             
+            // Close dropdown
+            document.getElementById('cryptoDropdown').classList.remove('show');
+            
+            // Update network options
+            updateNetworkOptions();
+        }
+        
+        function renderCryptoDropdown() {
+            const dropdown = document.getElementById('cryptoDropdown');
+            dropdown.innerHTML = cryptoList.map(crypto => `
+                <div class="crypto-option" onclick="selectCrypto('${crypto.symbol}', '${crypto.name}', '${crypto.iconUrl}')">
+                    <img src="${crypto.iconUrl}" class="crypto-option-icon" alt="${crypto.symbol}">
+                    <div class="crypto-option-info">
+                        <div class="crypto-option-name">${crypto.name}</div>
+                        <div class="crypto-option-symbol">${crypto.symbol}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateNetworkOptions() {
             const networkSelect = document.getElementById('networkSelect');
             const options = networkOptions[selectedCrypto] || [{ value: selectedCrypto, label: `${selectedCrypto} Network` }];
             
@@ -1001,12 +1146,6 @@
         }
         
         function generateDepositAddress() {
-            const cryptoSelect = document.getElementById('cryptoSelect');
-            selectedCrypto = cryptoSelect.value;
-            
-            const networkSelect = document.getElementById('networkSelect');
-            selectedNetwork = networkSelect.value;
-            
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available';
             
             document.getElementById('depositAddress').innerHTML = address;
@@ -1030,10 +1169,10 @@
         function copyAddress() {
             const address = document.getElementById('depositAddress').innerHTML;
             navigator.clipboard.writeText(address);
-            showToast('✓ Address copied!', 'success');
+            showToast('✓ Address copied!');
         }
         
-        function showToast(message, type = 'success') {
+        function showToast(message) {
             const toast = document.getElementById('toastMessage');
             toast.textContent = message;
             toast.classList.add('show');
@@ -1050,6 +1189,17 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         }
         
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const selector = document.getElementById('cryptoSelector');
+            const dropdown = document.getElementById('cryptoDropdown');
+            if (selector && !selector.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+        
+        // Initialize
+        renderCryptoDropdown();
         updateNetworkOptions();
         document.getElementById('currentBalance').innerHTML = '$0.00';
     </script>
