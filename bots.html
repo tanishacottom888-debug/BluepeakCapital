@@ -196,10 +196,27 @@
             box-sizing: border-box;
         }
 
+        /* Dark Mode as Default */
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --bg-input: #374151;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --nav-bg: #111827;
+            --hover-bg: #374151;
+            --positive: #10b981;
+            --negative: #ef4444;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f7fb;
-            color: #1a1f36;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         nav {
@@ -207,8 +224,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.8rem 1rem;
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -237,7 +254,7 @@
         .logo-text {
             font-size: 1rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -250,7 +267,7 @@
         }
 
         .nav-links a {
-            color: #4a5568;
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.75rem;
             font-weight: 500;
@@ -277,8 +294,8 @@
         .balance-amount {
             font-weight: 600;
             font-size: 0.8rem;
-            color: #1a1f36;
-            background: #f1f5f9;
+            color: var(--text-primary);
+            background: var(--hover-bg);
             padding: 0.3rem 0.8rem;
             border-radius: 30px;
         }
@@ -286,7 +303,7 @@
         .hamburger-btn {
             background: none;
             border: none;
-            color: #1a1f36;
+            color: var(--text-primary);
             font-size: 1.3rem;
             cursor: pointer;
             padding: 0.3rem;
@@ -299,7 +316,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 2000;
             visibility: hidden;
             opacity: 0;
@@ -317,8 +334,8 @@
             right: -280px;
             width: 260px;
             height: 100%;
-            background: white;
-            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+            background: var(--bg-secondary);
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
             z-index: 2001;
             transition: right 0.3s ease;
             display: flex;
@@ -332,40 +349,40 @@
 
         .sidebar-header {
             padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             margin-bottom: 0.5rem;
         }
 
         .sidebar-menu a {
             display: block;
             padding: 0.8rem 1.2rem;
-            color: #4a5568;
+            color: var(--text-primary);
             text-decoration: none;
             font-size: 0.85rem;
             font-weight: 500;
         }
 
         .sidebar-menu a:hover {
-            background: #f1f5f9;
+            background: var(--hover-bg);
             color: #3b82f6;
         }
 
         .trust-bar {
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
             padding: 0.4rem 1rem;
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
             font-size: 0.6rem;
-            color: #475569;
+            color: var(--text-secondary);
             overflow-x: auto;
         }
 
         .trust-separator {
             width: 1px;
             height: 10px;
-            background: #cbd5e1;
+            background: var(--border-color);
         }
 
         .bots-container {
@@ -381,6 +398,7 @@
         .page-header h1 {
             font-size: 1.3rem;
             font-weight: 600;
+            color: var(--text-primary);
         }
 
         .bots-grid {
@@ -396,18 +414,18 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #f5f7fb;
+            background: var(--bg-primary);
             padding: 0.5rem 1rem;
             border-radius: 30px;
             font-weight: 600;
             font-size: 0.8rem;
-            color: #64748b;
+            color: var(--text-secondary);
             z-index: 1;
         }
 
         .upload-card, .passkey-card {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1.2rem;
         }
@@ -417,11 +435,12 @@
             font-weight: 600;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
 
         .drop-zone {
-            border: 2px dashed #cbd5e1;
+            border: 2px dashed var(--border-color);
             border-radius: 12px;
             padding: 1.5rem;
             text-align: center;
@@ -432,7 +451,7 @@
 
         .drop-zone:hover {
             border-color: #3b82f6;
-            background: #f8fafc;
+            background: var(--hover-bg);
         }
 
         .drop-icon {
@@ -442,18 +461,18 @@
 
         .drop-text {
             font-size: 0.8rem;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         .file-types {
             font-size: 0.6rem;
-            color: #94a3b8;
+            color: var(--text-secondary);
             margin-top: 0.5rem;
         }
 
         .upload-btn {
             width: 100%;
-            background: #3b82f6;
+            background: var(--btn-primary);
             color: white;
             border: none;
             padding: 0.5rem;
@@ -463,16 +482,18 @@
         }
 
         .upload-btn:hover {
-            background: #2563eb;
+            background: var(--btn-primary-hover);
         }
 
         .passkey-input {
             width: 100%;
             padding: 0.6rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.8rem;
             margin-bottom: 0.8rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
         }
 
         .passkey-input:focus {
@@ -482,7 +503,7 @@
 
         .submit-btn {
             width: 100%;
-            background: #3b82f6;
+            background: var(--btn-primary);
             color: white;
             border: none;
             padding: 0.5rem;
@@ -491,16 +512,20 @@
             cursor: pointer;
         }
 
+        .submit-btn:hover {
+            background: var(--btn-primary-hover);
+        }
+
         .help-text {
             font-size: 0.6rem;
-            color: #94a3b8;
+            color: var(--text-secondary);
             margin-top: 0.8rem;
             text-align: center;
         }
 
         .settings-card {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1.2rem;
             margin-bottom: 1.5rem;
@@ -515,29 +540,31 @@
         .setting-field label {
             display: block;
             font-size: 0.65rem;
-            color: #64748b;
+            color: var(--text-secondary);
             margin-bottom: 0.3rem;
         }
 
         .setting-field input {
             width: 100%;
             padding: 0.5rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.75rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
         }
 
         .setting-field select {
             width: 100%;
             padding: 0.5rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.75rem;
-            background: white;
+            background: var(--bg-input);
+            color: var(--text-primary);
             cursor: pointer;
         }
 
-        /* Asset option with real image icon */
         .asset-option-icon {
             width: 18px;
             height: 18px;
@@ -547,8 +574,8 @@
         }
 
         .bots-list-card {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1.2rem;
         }
@@ -556,7 +583,7 @@
         .empty-state {
             text-align: center;
             padding: 2rem;
-            color: #94a3b8;
+            color: var(--text-secondary);
         }
 
         .empty-icon {
@@ -571,12 +598,12 @@
 
         .empty-subtext {
             font-size: 0.65rem;
-            color: #cbd5e1;
+            color: var(--text-secondary);
         }
 
         .bot-item {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1rem;
         }
@@ -593,16 +620,17 @@
         .bot-name {
             font-weight: 700;
             font-size: 1rem;
+            color: var(--text-primary);
         }
 
         .bot-version {
             font-size: 0.7rem;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         .bot-description {
             font-size: 0.7rem;
-            color: #64748b;
+            color: var(--text-secondary);
             margin-bottom: 0.8rem;
             line-height: 1.4;
         }
@@ -619,8 +647,9 @@
         .bot-strategy {
             font-size: 0.7rem;
             padding: 0.2rem 0.6rem;
-            background: #e2e8f0;
+            background: var(--hover-bg);
             border-radius: 20px;
+            color: var(--text-primary);
         }
 
         .bot-status {
@@ -630,17 +659,17 @@
         }
 
         .bot-status.stopped {
-            background: #fee2e2;
-            color: #dc2626;
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
         }
 
         .bot-status.running {
-            background: #d1fae5;
-            color: #059669;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
         }
 
         .start-btn {
-            background: #3b82f6;
+            background: #10b981;
             color: white;
             border: none;
             padding: 0.3rem 1rem;
@@ -651,7 +680,7 @@
         }
 
         .start-btn:hover {
-            background: #2563eb;
+            background: #059669;
         }
 
         .stop-btn {
@@ -672,7 +701,7 @@
         .delete-btn {
             background: none;
             border: none;
-            color: #94a3b8;
+            color: var(--text-secondary);
             cursor: pointer;
             font-size: 0.7rem;
             text-decoration: underline;
@@ -682,7 +711,6 @@
             color: #ef4444;
         }
 
-        /* Toast Notification - Bottom Center */
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -1046,16 +1074,16 @@
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault()
             dropZone.style.borderColor = '#3b82f6'
-            dropZone.style.background = '#f8fafc'
+            dropZone.style.background = 'var(--hover-bg)'
         })
         dropZone.addEventListener('dragleave', (e) => {
             e.preventDefault()
-            dropZone.style.borderColor = '#cbd5e1'
+            dropZone.style.borderColor = 'var(--border-color)'
             dropZone.style.background = 'transparent'
         })
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault()
-            dropZone.style.borderColor = '#cbd5e1'
+            dropZone.style.borderColor = 'var(--border-color)'
             dropZone.style.background = 'transparent'
             const files = e.dataTransfer.files
             if (files.length > 0) {
