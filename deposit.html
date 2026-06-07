@@ -538,7 +538,7 @@
             margin-top: 0.8rem;
         }
 
-        /* Clean Deposit History */
+        /* Deposit History - Empty State */
         .history-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -554,110 +554,32 @@
         }
 
         .history-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            transition: background 0.2s;
-        }
-
-        .history-item:last-child {
-            border-bottom: none;
-        }
-
-        .history-item:hover {
-            background: var(--hover-bg);
-        }
-
-        .history-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.5rem;
-        }
-
-        .history-asset {
+            min-height: 200px;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-
-        .history-asset-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            object-fit: contain;
-        }
-
-        .history-asset-name {
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .history-asset-symbol {
-            font-size: 0.65rem;
-            color: var(--text-secondary);
-        }
-
-        .history-amount-usd {
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .history-status {
-            font-size: 0.65rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-
-        .history-status.expired {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
-
-        .history-status.completed {
-            background: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-        }
-
-        .history-status.pending {
-            background: rgba(245, 158, 11, 0.15);
-            color: #f59e0b;
-        }
-
-        .history-address {
-            font-family: monospace;
-            font-size: 0.6rem;
-            color: var(--text-secondary);
-            word-break: break-all;
-            margin-bottom: 0.3rem;
-        }
-
-        .history-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.6rem;
-            color: var(--text-secondary);
-        }
-
-        .history-date {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .history-crypto-amount {
-            font-family: monospace;
+            justify-content: center;
         }
 
         .empty-history {
             text-align: center;
             padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+
+        .empty-subtitle {
+            font-size: 0.7rem;
             color: var(--text-secondary);
         }
 
@@ -724,13 +646,6 @@
             }
             .copy-btn {
                 width: 100%;
-            }
-            .history-row {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            .history-amount-usd {
-                align-self: flex-start;
             }
         }
     </style>
@@ -945,10 +860,16 @@
             </div>
         </div>
 
-        <!-- Clean Deposit History -->
+        <!-- Deposit History - Blank/Empty until first deposit -->
         <div class="history-card">
             <div class="history-title">Deposit History</div>
-            <div class="history-list" id="depositHistoryList"></div>
+            <div class="history-list" id="depositHistoryList">
+                <div class="empty-history">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">No deposits yet</div>
+                    <div class="empty-subtitle">Your deposit history will appear here</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -958,6 +879,9 @@
         let depositAmount = 0;
         let selectedCrypto = 'BTC';
         let selectedNetwork = 'Bitcoin Network';
+        
+        // Empty deposit history array - starts blank
+        let depositHistory = [];
         
         const networkOptions = {
             BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
@@ -1016,40 +940,6 @@
             TON: { TON: 'EQD4fpL8A6e5qMxG1j2k3L4m5N6o7P8q9R0sT1uV2wX3yZ' },
             MATIC: { POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' }
         };
-        
-        // Clean Deposit History Data
-        let depositHistory = [
-            { 
-                asset: 'BTC', 
-                assetName: 'Bitcoin',
-                amountUSD: 100, 
-                status: 'expired', 
-                address: 'bc1qpkhu0ytppxjr96c3eut4gc3jvmt255z6454n57', 
-                date: '2026-06-06', 
-                cryptoAmount: '0.00167977 BTC',
-                txId: '0x1a2b3c4d5e6f'
-            },
-            { 
-                asset: 'ETH', 
-                assetName: 'Ethereum',
-                amountUSD: 250, 
-                status: 'completed', 
-                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5', 
-                date: '2026-06-05', 
-                cryptoAmount: '0.089 ETH',
-                txId: '0x2b3c4d5e6f7g'
-            },
-            { 
-                asset: 'USDT', 
-                assetName: 'Tether',
-                amountUSD: 500, 
-                status: 'pending', 
-                address: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', 
-                date: '2026-06-04', 
-                cryptoAmount: '500 USDT (TRC20)',
-                txId: '0x3c4d5e6f7g8h'
-            }
-        ];
         
         function setAmount(amount) {
             document.getElementById('depositAmount').value = amount;
@@ -1134,39 +1024,6 @@
             }, 2000);
         }
         
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        }
-        
-        function loadDepositHistory() {
-            const container = document.getElementById('depositHistoryList');
-            
-            if (depositHistory.length === 0) {
-                container.innerHTML = '<div class="empty-history">No deposit history yet</div>';
-                return;
-            }
-            
-            container.innerHTML = depositHistory.map(item => `
-                <div class="history-item">
-                    <div class="history-row">
-                        <div class="history-asset">
-                            <span class="history-asset-name">${item.assetName} (${item.asset})</span>
-                        </div>
-                        <div class="history-amount-usd">$${item.amountUSD}</div>
-                        <div class="history-status ${item.status}">${item.status}</div>
-                    </div>
-                    <div class="history-address">${item.address}</div>
-                    <div class="history-footer">
-                        <div class="history-date">
-                            <span>📅 ${formatDate(item.date)}</span>
-                        </div>
-                        <div class="history-crypto-amount">💰 ${item.cryptoAmount}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
         function openSidebar() {
             document.getElementById('sidebarOverlay').classList.add('active');
         }
@@ -1175,7 +1032,6 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         }
         
-        loadDepositHistory();
         updateNetworkOptions();
         document.getElementById('currentBalance').innerHTML = '$0.00';
     </script>
