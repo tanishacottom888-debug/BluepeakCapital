@@ -66,6 +66,7 @@
             --btn-secondary: #374151;
             --btn-secondary-hover: #4b5563;
             --status-pending: #f59e0b;
+            --status-awaiting: #3b82f6;
             --status-completed: #10b981;
             --status-expired: #ef4444;
         }
@@ -704,7 +705,7 @@
 
         .btn-confirm {
             width: 100%;
-            background: #10b981;
+            background: #3b82f6;
             color: white;
             border: none;
             padding: 0.8rem;
@@ -716,12 +717,16 @@
         }
 
         .btn-confirm:hover {
-            background: #059669;
+            background: #2563eb;
         }
 
         .btn-confirm:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .btn-confirm.confirmed {
+            background: #10b981;
         }
 
         .history-card {
@@ -740,7 +745,7 @@
         }
 
         .history-list {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
@@ -782,6 +787,11 @@
         .history-status.pending {
             background: rgba(245, 158, 11, 0.15);
             color: #f59e0b;
+        }
+
+        .history-status.awaiting {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
         }
 
         .history-status.completed {
@@ -1253,10 +1263,20 @@
                         <div class="history-date">${deposit.date}</div>
                     </div>
                     <div>
-                        <span class="history-status ${deposit.status}">${deposit.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
+                        <span class="history-status ${deposit.status}">${getStatusText(deposit.status)}</span>
                     </div>
                 </div>
             `).join('');
+        }
+        
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return '⏳ Pending';
+                case 'awaiting': return '🔵 Awaiting Verification';
+                case 'completed': return '✅ Completed';
+                case 'expired': return '❌ Expired';
+                default: return status;
+            }
         }
         
         function addDepositToHistory(amount, crypto, network, address, status) {
@@ -1281,23 +1301,22 @@
                 return;
             }
             
-            // Update the pending deposit to completed
+            // Update the pending deposit to "awaiting" status (admin needs to verify)
             if (depositHistory.length > 0 && depositHistory[0].status === 'pending') {
-                depositHistory[0].status = 'completed';
+                depositHistory[0].status = 'awaiting';
                 localStorage.setItem('depositHistory', JSON.stringify(depositHistory));
                 renderDepositHistory();
-                showToast('✅ Payment confirmed! Your deposit will be credited shortly.');
-            } else {
-                // If no pending deposit exists, add completed directly
-                addDepositToHistory(depositAmount, selectedCrypto, selectedNetwork, depositAddresses[selectedCrypto]?.[selectedNetwork], 'completed');
-                showToast('✅ Payment confirmed! Your deposit will be credited shortly.');
+                showToast('✅ Payment confirmation sent! Admin will verify your deposit shortly.');
             }
+            
+            // Change button to show confirmed state and disable it
+            const confirmBtn = document.getElementById('confirmPaymentBtn');
+            confirmBtn.textContent = '✓ Payment Reported';
+            confirmBtn.classList.add('confirmed');
+            confirmBtn.disabled = true;
             
             // Stop timer
             if (timerInterval) clearInterval(timerInterval);
-            
-            // Disable confirm button
-            document.getElementById('confirmPaymentBtn').disabled = true;
         }
         
         function setAmount(amount) {
@@ -1391,8 +1410,11 @@
             timerSeconds = 600;
             startTimer();
             
-            // Enable confirm button
-            document.getElementById('confirmPaymentBtn').disabled = false;
+            // Reset confirm button
+            const confirmBtn = document.getElementById('confirmPaymentBtn');
+            confirmBtn.textContent = '✅ I have sent payment';
+            confirmBtn.classList.remove('confirmed');
+            confirmBtn.disabled = false;
             
             document.getElementById('step1').style.display = 'none';
             document.getElementById('step2').style.display = 'none';
