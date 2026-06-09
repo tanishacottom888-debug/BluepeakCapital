@@ -467,7 +467,6 @@
             color: white;
         }
 
-        /* Custom Crypto Selector */
         .crypto-selector {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -671,7 +670,6 @@
             margin-top: 0.8rem;
         }
 
-        /* Timer Styles */
         .timer-section {
             text-align: center;
             margin: 1rem 0;
@@ -704,7 +702,7 @@
 
         .btn-confirm {
             width: 100%;
-            background: #3b82f6;
+            background: #10b981;
             color: white;
             border: none;
             padding: 0.8rem;
@@ -716,7 +714,7 @@
         }
 
         .btn-confirm:hover {
-            background: #2563eb;
+            background: #059669;
         }
 
         .btn-confirm:disabled {
@@ -724,8 +722,9 @@
             cursor: not-allowed;
         }
 
-        .btn-confirm.confirmed {
-            background: #10b981;
+        .btn-confirm.reported {
+            background: #6b7280;
+            cursor: not-allowed;
         }
 
         .history-card {
@@ -908,7 +907,7 @@
             <div class="site-name">BluepeakCapital</div>
         </div>
         <div class="right-menu">
-            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="showToast('Currency: USD')">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
             <div class="balance-display" id="balanceDisplay">$0.00</div>
             <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
         </div>
@@ -1138,14 +1137,11 @@
         let depositAmount = 0;
         let selectedCrypto = 'BTC';
         let selectedNetwork = 'Bitcoin Network';
-        let currentDepositId = null;
         let timerInterval = null;
-        let timerSeconds = 600; // 10 minutes = 600 seconds
+        let timerSeconds = 600;
         
-        // Load deposit history from localStorage
         let depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || [];
         
-        // Cryptocurrency list with real icons from CoinCap
         const cryptoList = [
             { symbol: 'BTC', name: 'Bitcoin', iconUrl: 'https://assets.coincap.io/assets/icons/btc@2x.png' },
             { symbol: 'ETH', name: 'Ethereum', iconUrl: 'https://assets.coincap.io/assets/icons/eth@2x.png' },
@@ -1160,7 +1156,6 @@
             { symbol: 'MATIC', name: 'Polygon', iconUrl: 'https://assets.coincap.io/assets/icons/matic@2x.png' }
         ];
         
-        // Network options for each cryptocurrency
         const networkOptions = {
             BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
             ETH: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
@@ -1184,7 +1179,6 @@
             MATIC: [{ value: 'POLYGON', label: 'Polygon Network' }]
         };
         
-        // Deposit addresses for each cryptocurrency and network
         const depositAddresses = {
             BTC: { BTC: '112NvxwyYBycQwhuKboLstQQMWjm8qk88W' },
             ETH: { ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
@@ -1217,7 +1211,7 @@
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
             
-            timerSeconds = 600; // 10 minutes
+            timerSeconds = 600;
             const timerElement = document.getElementById('timerValue');
             timerElement.classList.remove('expired');
             
@@ -1227,7 +1221,6 @@
                     timerElement.textContent = '00:00';
                     timerElement.classList.add('expired');
                     document.getElementById('confirmPaymentBtn').disabled = true;
-                    showToast('⚠️ Address expired! Please generate a new address.');
                 } else {
                     timerSeconds--;
                     timerElement.textContent = formatTime(timerSeconds);
@@ -1280,25 +1273,12 @@
         }
         
         function confirmPayment() {
-            if (timerSeconds <= 0) {
-                showToast('❌ Address expired! Please generate a new address.');
-                return;
-            }
+            if (timerSeconds <= 0) return;
             
-            // Update the pending deposit status (remains "pending" for user view)
-            // Admin will see the internal status and approve
-            if (depositHistory.length > 0 && depositHistory[0].status === 'pending') {
-                // Keep status as pending - admin will approve later
-                // We just mark it as reported internally
-                localStorage.setItem('depositHistory', JSON.stringify(depositHistory));
-                renderDepositHistory();
-                showToast('✅ Payment reported! Admin will verify and credit your account shortly.');
-            }
-            
-            // Change button to show reported state and disable it
+            // Just mark as reported - no popup
             const confirmBtn = document.getElementById('confirmPaymentBtn');
             confirmBtn.textContent = '✓ Payment Reported';
-            confirmBtn.classList.add('confirmed');
+            confirmBtn.classList.add('reported');
             confirmBtn.disabled = true;
             
             // Stop timer
@@ -1312,11 +1292,11 @@
         function goToStep2() {
             const amount = parseFloat(document.getElementById('depositAmount').value);
             if (!amount || amount <= 0) {
-                showToast('Please enter a valid amount');
+                alert('Please enter a valid amount');
                 return;
             }
             if (amount < 50) {
-                showToast('Minimum deposit is $50 USD');
+                alert('Minimum deposit is $50 USD');
                 return;
             }
             
@@ -1388,18 +1368,15 @@
             }
             document.getElementById('warningNote').innerHTML = warningMsg;
             
-            // Add pending deposit to history
             addDepositToHistory(depositAmount, selectedCrypto, selectedNetwork, address, 'pending');
             
-            // Reset and start timer
             if (timerInterval) clearInterval(timerInterval);
             timerSeconds = 600;
             startTimer();
             
-            // Reset confirm button
             const confirmBtn = document.getElementById('confirmPaymentBtn');
             confirmBtn.textContent = '✅ I have sent payment';
-            confirmBtn.classList.remove('confirmed');
+            confirmBtn.classList.remove('reported');
             confirmBtn.disabled = false;
             
             document.getElementById('step1').style.display = 'none';
@@ -1410,16 +1387,9 @@
         function copyAddress() {
             const address = document.getElementById('depositAddress').innerHTML;
             navigator.clipboard.writeText(address);
-            showToast('✓ Address copied!');
-        }
-        
-        function showToast(message) {
             const toast = document.getElementById('toastMessage');
-            toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
         
         function openSidebar() {
