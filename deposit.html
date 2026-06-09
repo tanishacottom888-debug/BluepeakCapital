@@ -66,7 +66,6 @@
             --btn-secondary: #374151;
             --btn-secondary-hover: #4b5563;
             --status-pending: #f59e0b;
-            --status-awaiting: #3b82f6;
             --status-completed: #10b981;
             --status-expired: #ef4444;
         }
@@ -789,11 +788,6 @@
             color: #f59e0b;
         }
 
-        .history-status.awaiting {
-            background: rgba(59, 130, 246, 0.15);
-            color: #3b82f6;
-        }
-
         .history-status.completed {
             background: rgba(16, 185, 129, 0.15);
             color: #10b981;
@@ -1263,20 +1257,10 @@
                         <div class="history-date">${deposit.date}</div>
                     </div>
                     <div>
-                        <span class="history-status ${deposit.status}">${getStatusText(deposit.status)}</span>
+                        <span class="history-status ${deposit.status}">${deposit.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
                     </div>
                 </div>
             `).join('');
-        }
-        
-        function getStatusText(status) {
-            switch(status) {
-                case 'pending': return '⏳ Pending';
-                case 'awaiting': return '🔵 Awaiting Verification';
-                case 'completed': return '✅ Completed';
-                case 'expired': return '❌ Expired';
-                default: return status;
-            }
         }
         
         function addDepositToHistory(amount, crypto, network, address, status) {
@@ -1301,15 +1285,17 @@
                 return;
             }
             
-            // Update the pending deposit to "awaiting" status (admin needs to verify)
+            // Update the pending deposit status (remains "pending" for user view)
+            // Admin will see the internal status and approve
             if (depositHistory.length > 0 && depositHistory[0].status === 'pending') {
-                depositHistory[0].status = 'awaiting';
+                // Keep status as pending - admin will approve later
+                // We just mark it as reported internally
                 localStorage.setItem('depositHistory', JSON.stringify(depositHistory));
                 renderDepositHistory();
-                showToast('✅ Payment confirmation sent! Admin will verify your deposit shortly.');
+                showToast('✅ Payment reported! Admin will verify and credit your account shortly.');
             }
             
-            // Change button to show confirmed state and disable it
+            // Change button to show reported state and disable it
             const confirmBtn = document.getElementById('confirmPaymentBtn');
             confirmBtn.textContent = '✓ Payment Reported';
             confirmBtn.classList.add('confirmed');
