@@ -65,6 +65,9 @@
             --btn-primary-hover: #2563eb;
             --btn-secondary: #374151;
             --btn-secondary-hover: #4b5563;
+            --status-pending: #f59e0b;
+            --status-completed: #10b981;
+            --status-expired: #ef4444;
         }
 
         /* Light Mode */
@@ -668,6 +671,59 @@
             margin-top: 0.8rem;
         }
 
+        /* Timer Styles */
+        .timer-section {
+            text-align: center;
+            margin: 1rem 0;
+            padding: 0.8rem;
+            background: var(--bg-input);
+            border-radius: 12px;
+        }
+
+        .timer-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .timer-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f59e0b;
+            font-family: monospace;
+        }
+
+        .timer-value.expired {
+            color: #ef4444;
+        }
+
+        .confirm-section {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .btn-confirm {
+            width: 100%;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm:hover {
+            background: #059669;
+        }
+
+        .btn-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .history-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -684,10 +740,63 @@
         }
 
         .history-list {
-            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .history-amount {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .history-crypto {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .history-status {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .history-status.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .history-status.completed {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .history-status.expired {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .history-date {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
         }
 
         .empty-history {
@@ -779,6 +888,11 @@
             }
             .crypto-selected-info {
                 flex-wrap: wrap;
+            }
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -918,7 +1032,6 @@
 
                 <div class="form-group">
                     <label class="form-label">Select Cryptocurrency</label>
-                    <!-- Custom Crypto Selector with Real Icons -->
                     <div class="crypto-selector" id="cryptoSelector">
                         <div class="crypto-selected" onclick="toggleCryptoDropdown()">
                             <div class="crypto-selected-info">
@@ -945,7 +1058,7 @@
                 </div>
             </div>
 
-            <!-- Step 3: Deposit Address -->
+            <!-- Step 3: Deposit Address with Timer and Confirmation -->
             <div id="step3" style="display: none;">
                 <div class="deposit-header">
                     <span class="new-deposit-title">New Deposit</span>
@@ -987,11 +1100,22 @@
                     <div class="warning-note" id="warningNote">⚠️ Send only BTC to this address. Other coins will be lost.</div>
                 </div>
 
+                <!-- Timer Section -->
+                <div class="timer-section">
+                    <div class="timer-label">⏱️ Address expires in</div>
+                    <div class="timer-value" id="timerValue">10:00</div>
+                </div>
+
+                <!-- Confirm Payment Section -->
+                <div class="confirm-section">
+                    <button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ I have sent payment</button>
+                </div>
+
                 <button class="btn-back" onclick="goToStep2()">Back</button>
             </div>
         </div>
 
-        <!-- Deposit History - Blank/Empty until first deposit -->
+        <!-- Deposit History -->
         <div class="history-card">
             <div class="history-title">Deposit History</div>
             <div class="history-list" id="depositHistoryList">
@@ -1010,7 +1134,12 @@
         let depositAmount = 0;
         let selectedCrypto = 'BTC';
         let selectedNetwork = 'Bitcoin Network';
-        let depositHistory = [];
+        let currentDepositId = null;
+        let timerInterval = null;
+        let timerSeconds = 600; // 10 minutes = 600 seconds
+        
+        // Load deposit history from localStorage
+        let depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || [];
         
         // Cryptocurrency list with real icons from CoinCap
         const cryptoList = [
@@ -1075,6 +1204,102 @@
             MATIC: { POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' }
         };
         
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerSeconds = 600; // 10 minutes
+            const timerElement = document.getElementById('timerValue');
+            timerElement.classList.remove('expired');
+            
+            timerInterval = setInterval(() => {
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerElement.textContent = '00:00';
+                    timerElement.classList.add('expired');
+                    document.getElementById('confirmPaymentBtn').disabled = true;
+                    showToast('⚠️ Address expired! Please generate a new address.');
+                } else {
+                    timerSeconds--;
+                    timerElement.textContent = formatTime(timerSeconds);
+                }
+            }, 1000);
+        }
+        
+        function renderDepositHistory() {
+            const container = document.getElementById('depositHistoryList');
+            
+            if (depositHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-history">
+                        <div class="empty-icon">📭</div>
+                        <div class="empty-title">No deposits yet</div>
+                        <div class="empty-subtitle">Your deposit history will appear here</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = depositHistory.map(deposit => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-amount">$${deposit.amount.toFixed(2)}</div>
+                        <div class="history-crypto">${deposit.crypto} • ${deposit.network}</div>
+                        <div class="history-date">${deposit.date}</div>
+                    </div>
+                    <div>
+                        <span class="history-status ${deposit.status}">${deposit.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function addDepositToHistory(amount, crypto, network, address, status) {
+            const newDeposit = {
+                id: Date.now(),
+                amount: amount,
+                crypto: crypto,
+                network: network,
+                address: address,
+                status: status,
+                date: new Date().toLocaleString()
+            };
+            
+            depositHistory.unshift(newDeposit);
+            localStorage.setItem('depositHistory', JSON.stringify(depositHistory));
+            renderDepositHistory();
+        }
+        
+        function confirmPayment() {
+            if (timerSeconds <= 0) {
+                showToast('❌ Address expired! Please generate a new address.');
+                return;
+            }
+            
+            // Update the pending deposit to completed
+            if (depositHistory.length > 0 && depositHistory[0].status === 'pending') {
+                depositHistory[0].status = 'completed';
+                localStorage.setItem('depositHistory', JSON.stringify(depositHistory));
+                renderDepositHistory();
+                showToast('✅ Payment confirmed! Your deposit will be credited shortly.');
+            } else {
+                // If no pending deposit exists, add completed directly
+                addDepositToHistory(depositAmount, selectedCrypto, selectedNetwork, depositAddresses[selectedCrypto]?.[selectedNetwork], 'completed');
+                showToast('✅ Payment confirmed! Your deposit will be credited shortly.');
+            }
+            
+            // Stop timer
+            if (timerInterval) clearInterval(timerInterval);
+            
+            // Disable confirm button
+            document.getElementById('confirmPaymentBtn').disabled = true;
+        }
+        
         function setAmount(amount) {
             document.getElementById('depositAmount').value = amount;
         }
@@ -1101,6 +1326,7 @@
         }
         
         function goToStep1() {
+            if (timerInterval) clearInterval(timerInterval);
             document.getElementById('step1').style.display = 'block';
             document.getElementById('step2').style.display = 'none';
             document.getElementById('step3').style.display = 'none';
@@ -1117,10 +1343,7 @@
             document.getElementById('selectedCryptoName').innerHTML = name;
             document.getElementById('selectedCryptoSymbol').innerHTML = symbol;
             
-            // Close dropdown
             document.getElementById('cryptoDropdown').classList.remove('show');
-            
-            // Update network options
             updateNetworkOptions();
         }
         
@@ -1151,7 +1374,6 @@
             document.getElementById('depositAddress').innerHTML = address;
             document.getElementById('finalDepositAmount').innerHTML = `$${depositAmount.toFixed(2)} ${selectedCrypto}`;
             
-            // Generate QR Code
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`;
             document.getElementById('qrImage').src = qrUrl;
             
@@ -1160,6 +1382,17 @@
                 warningMsg += ` Make sure to use the ${selectedNetwork} network.`;
             }
             document.getElementById('warningNote').innerHTML = warningMsg;
+            
+            // Add pending deposit to history
+            addDepositToHistory(depositAmount, selectedCrypto, selectedNetwork, address, 'pending');
+            
+            // Reset and start timer
+            if (timerInterval) clearInterval(timerInterval);
+            timerSeconds = 600;
+            startTimer();
+            
+            // Enable confirm button
+            document.getElementById('confirmPaymentBtn').disabled = false;
             
             document.getElementById('step1').style.display = 'none';
             document.getElementById('step2').style.display = 'none';
@@ -1189,7 +1422,6 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         }
         
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(event) {
             const selector = document.getElementById('cryptoSelector');
             const dropdown = document.getElementById('cryptoDropdown');
@@ -1198,9 +1430,9 @@
             }
         });
         
-        // Initialize
         renderCryptoDropdown();
         updateNetworkOptions();
+        renderDepositHistory();
         document.getElementById('currentBalance').innerHTML = '$0.00';
     </script>
 </body>
