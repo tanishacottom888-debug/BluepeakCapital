@@ -38,6 +38,10 @@
                 return
             }
             currentUser = session.user
+            
+            // Store user globally for other functions
+            window.currentUserId = currentUser.id
+            
             await loadUserBalance()
             await loadUserDeposits()
         }
@@ -56,6 +60,8 @@
         }
         
         async function loadUserDeposits() {
+            if (!currentUser) return
+            
             const { data } = await supabase
                 .from('deposits')
                 .select('*')
@@ -88,9 +94,10 @@
         
         async function saveDepositToSupabase(amount, crypto, network, address) {
             if (!currentUser) {
-                console.log('No user found');
+                console.error('No user found');
                 return;
             }
+            
             const { error } = await supabase.from('deposits').insert({
                 user_id: currentUser.id,
                 amount: amount,
@@ -100,14 +107,45 @@
                 status: 'pending',
                 created_at: new Date().toISOString()
             })
-            if (error) console.error('Error saving deposit:', error)
-            // Reload deposits immediately after saving
+            
+            if (error) {
+                console.error('Error saving deposit:', error)
+                alert('Error saving deposit: ' + error.message)
+                return
+            }
+            
+            // Reload deposits immediately
             await loadUserDeposits()
         }
         
-        window.saveDepositToSupabase = saveDepositToSupabase
-        window.loadUserDeposits = loadUserDeposits
-        window.getCurrentUser = () => currentUser
+        // Make function globally available
+        window.saveDepositToSupabaseGlobal = async function(amount, crypto, network, address) {
+            if (!window.currentUserId) {
+                console.error('No user logged in');
+                return false;
+            }
+            
+            const { error } = await supabase.from('deposits').insert({
+                user_id: window.currentUserId,
+                amount: amount,
+                crypto: crypto,
+                network: network,
+                address: address,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            })
+            
+            if (error) {
+                console.error('Error saving deposit:', error)
+                return false
+            }
+            
+            await loadUserDeposits()
+            return true
+        }
+        
+        window.loadUserDepositsGlobal = loadUserDeposits
+        
         checkAuth()
     </script>
     
@@ -410,9 +448,14 @@
             if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML=msg; 
             
-            // Save to Supabase
-            if (window.saveDepositToSupabase) {
-                await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address);
+            // Save to Supabase using global function
+            if (window.saveDepositToSupabaseGlobal) {
+                const success = await window.saveDepositToSupabaseGlobal(depositAmount, selectedCrypto, selectedNetwork, address);
+                if (!success) {
+                    alert('Failed to save deposit. Please try again.');
+                }
+            } else {
+                alert('System not ready. Please refresh the page.');
             }
             
             if (timerInterval) clearInterval(timerInterval); 
