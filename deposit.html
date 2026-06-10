@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,8 +53,10 @@
                 .single()
             
             const balance = data?.balance || 0
-            document.getElementById('currentBalance').innerHTML = `$${balance.toFixed(2)}`
-            document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
+            const currentBalanceEl = document.getElementById('currentBalance')
+            const balanceDisplayEl = document.getElementById('balanceDisplay')
+            if (currentBalanceEl) currentBalanceEl.innerHTML = `$${balance.toFixed(2)}`
+            if (balanceDisplayEl) balanceDisplayEl.innerHTML = `$${balance.toFixed(2)}`
             window.userBalance = balance
         }
         
@@ -69,6 +72,8 @@
         
         function renderDepositHistory(deposits) {
             const container = document.getElementById('depositHistoryList')
+            if (!container) return
+            
             if (!deposits || deposits.length === 0) {
                 container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
                 return
@@ -86,6 +91,7 @@
         }
         
         async function saveDepositToSupabase(amount, crypto, network, address, status) {
+            if (!currentUser) return
             const { error } = await supabase.from('deposits').insert({
                 user_id: currentUser.id,
                 amount: amount,
@@ -101,6 +107,13 @@
         async function confirmPayment() {
             if (timerSeconds <= 0) return
             
+            const confirmBtn = document.getElementById('confirmPaymentBtn')
+            confirmBtn.textContent = '✓ Payment Reported'
+            confirmBtn.classList.add('reported')
+            confirmBtn.disabled = true
+            if (timerInterval) clearInterval(timerInterval)
+            
+            // Update the most recent pending deposit
             const { data: deposits } = await supabase
                 .from('deposits')
                 .select('*')
@@ -113,13 +126,12 @@
                 await supabase.from('deposits').update({ status: 'pending' }).eq('id', deposits[0].id)
                 await loadUserDeposits()
             }
-            
-            const confirmBtn = document.getElementById('confirmPaymentBtn')
-            confirmBtn.textContent = '✓ Payment Reported'
-            confirmBtn.classList.add('reported')
-            confirmBtn.disabled = true
-            if (timerInterval) clearInterval(timerInterval)
         }
+        
+        // Make functions available globally for onclick handlers
+        window.saveDepositToSupabase = saveDepositToSupabase
+        window.loadUserDeposits = loadUserDeposits
+        window.currentUserGetter = () => currentUser
         
         checkAuth()
     </script>
@@ -550,7 +562,6 @@
             color: white;
         }
 
-        /* Custom Crypto Selector */
         .crypto-selector {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -754,7 +765,6 @@
             margin-top: 0.8rem;
         }
 
-        /* Timer Styles */
         .timer-section {
             text-align: center;
             margin: 1rem 0;
@@ -1385,9 +1395,13 @@
             }
             document.getElementById('warningNote').innerHTML = warningMsg;
             
-            // Save to Supabase instead of localStorage
-            await saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, 'pending');
-            await loadUserDeposits();
+            // Save to Supabase
+            if (window.saveDepositToSupabase) {
+                await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, 'pending');
+            }
+            if (window.loadUserDeposits) {
+                await window.loadUserDeposits();
+            }
             
             if (timerInterval) clearInterval(timerInterval);
             timerSeconds = 600;
@@ -1430,7 +1444,7 @@
         renderCryptoDropdown();
         updateNetworkOptions();
         
-        // Make functions global
+        // Make functions global for onclick
         window.setAmount = setAmount;
         window.goToStep2 = goToStep2;
         window.goToStep1 = goToStep1;
