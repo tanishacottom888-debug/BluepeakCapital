@@ -87,7 +87,10 @@
         }
         
         async function saveDepositToSupabase(amount, crypto, network, address) {
-            if (!currentUser) return
+            if (!currentUser) {
+                console.log('No user found');
+                return;
+            }
             const { error } = await supabase.from('deposits').insert({
                 user_id: currentUser.id,
                 amount: amount,
@@ -104,7 +107,7 @@
         
         window.saveDepositToSupabase = saveDepositToSupabase
         window.loadUserDeposits = loadUserDeposits
-        window.currentUser = currentUser
+        window.getCurrentUser = () => currentUser
         checkAuth()
     </script>
     
