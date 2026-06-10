@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,36 +101,13 @@
                 created_at: new Date().toISOString()
             })
             if (error) console.error('Error saving deposit:', error)
+            else await loadUserDeposits()
         }
         
-        async function confirmPayment() {
-            if (timerSeconds <= 0) return
-            
-            const confirmBtn = document.getElementById('confirmPaymentBtn')
-            confirmBtn.textContent = '✓ Payment Reported'
-            confirmBtn.classList.add('reported')
-            confirmBtn.disabled = true
-            if (timerInterval) clearInterval(timerInterval)
-            
-            // Update the most recent pending deposit
-            const { data: deposits } = await supabase
-                .from('deposits')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .eq('status', 'pending')
-                .order('created_at', { ascending: false })
-                .limit(1)
-            
-            if (deposits && deposits.length > 0) {
-                await supabase.from('deposits').update({ status: 'pending' }).eq('id', deposits[0].id)
-                await loadUserDeposits()
-            }
-        }
-        
-        // Make functions available globally for onclick handlers
+        // Make functions available globally
         window.saveDepositToSupabase = saveDepositToSupabase
         window.loadUserDeposits = loadUserDeposits
-        window.currentUserGetter = () => currentUser
+        window.currentUser = () => currentUser
         
         checkAuth()
     </script>
@@ -1395,7 +1371,7 @@
             }
             document.getElementById('warningNote').innerHTML = warningMsg;
             
-            // Save to Supabase
+            // Save to Supabase as PENDING
             if (window.saveDepositToSupabase) {
                 await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, 'pending');
             }
@@ -1415,6 +1391,22 @@
             document.getElementById('step1').style.display = 'none';
             document.getElementById('step2').style.display = 'none';
             document.getElementById('step3').style.display = 'block';
+        }
+        
+        async function confirmPayment() {
+            if (timerSeconds <= 0) return;
+            
+            // Just change the button text - deposit remains PENDING in database
+            const confirmBtn = document.getElementById('confirmPaymentBtn');
+            confirmBtn.textContent = '✓ Payment Reported - Pending Admin Approval';
+            confirmBtn.classList.add('reported');
+            confirmBtn.disabled = true;
+            
+            // Stop the timer
+            if (timerInterval) clearInterval(timerInterval);
+            
+            // Optional: You could update a field in the database that user has reported
+            // But deposit status stays 'pending' until admin approves
         }
         
         function copyAddress() {
