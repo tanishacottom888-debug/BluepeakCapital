@@ -69,30 +69,56 @@
         
         function renderDepositHistory(deposits) {
             const container = document.getElementById('depositHistoryList')
-            
             if (!deposits || deposits.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-history">
-                        <div class="empty-icon">📭</div>
-                        <div class="empty-title">No deposits yet</div>
-                        <div class="empty-subtitle">Your deposit history will appear here</div>
-                    </div>
-                `
+                container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
                 return
             }
-            
-            container.innerHTML = deposits.map(deposit => `
+            container.innerHTML = deposits.map(d => `
                 <div class="history-item">
                     <div class="history-info">
-                        <div class="history-amount">$${deposit.amount.toFixed(2)}</div>
-                        <div class="history-crypto">${deposit.crypto} • ${deposit.network}</div>
-                        <div class="history-date">${new Date(deposit.created_at).toLocaleString()}</div>
+                        <div class="history-amount">$${d.amount.toFixed(2)}</div>
+                        <div class="history-crypto">${d.crypto} • ${d.network}</div>
+                        <div class="history-date">${new Date(d.created_at).toLocaleString()}</div>
                     </div>
-                    <div>
-                        <span class="history-status ${deposit.status}">${deposit.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
-                    </div>
+                    <div><span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span></div>
                 </div>
             `).join('')
+        }
+        
+        async function saveDepositToSupabase(amount, crypto, network, address, status) {
+            const { error } = await supabase.from('deposits').insert({
+                user_id: currentUser.id,
+                amount: amount,
+                crypto: crypto,
+                network: network,
+                address: address,
+                status: status,
+                created_at: new Date().toISOString()
+            })
+            if (error) console.error('Error saving deposit:', error)
+        }
+        
+        async function confirmPayment() {
+            if (timerSeconds <= 0) return
+            
+            const { data: deposits } = await supabase
+                .from('deposits')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false })
+                .limit(1)
+            
+            if (deposits && deposits.length > 0) {
+                await supabase.from('deposits').update({ status: 'pending' }).eq('id', deposits[0].id)
+                await loadUserDeposits()
+            }
+            
+            const confirmBtn = document.getElementById('confirmPaymentBtn')
+            confirmBtn.textContent = '✓ Payment Reported'
+            confirmBtn.classList.add('reported')
+            confirmBtn.disabled = true
+            if (timerInterval) clearInterval(timerInterval)
         }
         
         checkAuth()
@@ -105,6 +131,7 @@
             box-sizing: border-box;
         }
 
+        /* Dark Mode as Default */
         :root {
             --bg-primary: #0a0e17;
             --bg-secondary: #111827;
@@ -126,6 +153,7 @@
             --status-completed: #10b981;
         }
 
+        /* Light Mode */
         [data-theme="light"] {
             --bg-primary: #f5f7fb;
             --bg-secondary: #ffffff;
@@ -142,6 +170,8 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
+            overflow-x: hidden;
+            width: 100%;
             transition: background 0.3s ease, color 0.3s ease;
         }
 
@@ -261,6 +291,13 @@
         .sidebar-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
         }
 
         .sidebar-nav {
@@ -478,6 +515,11 @@
             color: var(--text-primary);
         }
 
+        .amount-input:focus {
+            outline: none;
+            border-color: var(--step-active);
+        }
+
         .min-deposit-note {
             font-size: 0.65rem;
             color: #f59e0b;
@@ -499,13 +541,16 @@
             font-size: 0.8rem;
             cursor: pointer;
             color: var(--text-primary);
+            transition: all 0.2s;
         }
 
         .quick-amount-btn:hover {
             background: var(--step-active);
+            border-color: var(--step-active);
             color: white;
         }
 
+        /* Custom Crypto Selector */
         .crypto-selector {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -534,6 +579,22 @@
             object-fit: contain;
         }
 
+        .crypto-selected-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .crypto-selected-symbol {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-arrow {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
         .crypto-dropdown {
             position: absolute;
             top: 100%;
@@ -559,6 +620,7 @@
             gap: 0.8rem;
             padding: 0.7rem 0.8rem;
             cursor: pointer;
+            transition: background 0.2s;
         }
 
         .crypto-option:hover {
@@ -572,6 +634,21 @@
             object-fit: contain;
         }
 
+        .crypto-option-info {
+            flex: 1;
+        }
+
+        .crypto-option-name {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .crypto-option-symbol {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
         .select-dropdown {
             width: 100%;
             padding: 0.8rem;
@@ -581,6 +658,10 @@
             font-size: 0.9rem;
             color: var(--text-primary);
             cursor: pointer;
+        }
+
+        .select-dropdown option {
+            background: var(--bg-card);
         }
 
         .button-group {
@@ -599,6 +680,7 @@
             font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
         .btn-back:hover {
@@ -615,6 +697,7 @@
             font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
         .btn-continue:hover, .btn-generate:hover {
@@ -662,6 +745,7 @@
             border-radius: 6px;
             font-size: 0.7rem;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         .warning-note {
@@ -670,6 +754,7 @@
             margin-top: 0.8rem;
         }
 
+        /* Timer Styles */
         .timer-section {
             text-align: center;
             margin: 1rem 0;
@@ -678,11 +763,21 @@
             border-radius: 12px;
         }
 
+        .timer-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
         .timer-value {
             font-size: 1.4rem;
             font-weight: 700;
             color: #f59e0b;
             font-family: monospace;
+        }
+
+        .timer-value.expired {
+            color: #ef4444;
         }
 
         .confirm-section {
@@ -700,6 +795,16 @@
             font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm:hover {
+            background: #059669;
+        }
+
+        .btn-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .btn-confirm.reported {
@@ -719,6 +824,7 @@
             font-weight: 600;
             padding: 1rem;
             border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
 
         .history-list {
@@ -732,6 +838,10 @@
             align-items: center;
             padding: 0.8rem 1rem;
             border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
         }
 
         .history-info {
@@ -778,6 +888,23 @@
             color: var(--text-secondary);
         }
 
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+
+        .empty-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -804,21 +931,46 @@
             nav {
                 padding: 0.8rem 1rem;
             }
+            .nav-links {
+                display: none;
+            }
+            .mobile-menu-btn {
+                display: block;
+            }
+            .trust-bar {
+                display: none;
+            }
             .deposit-container {
                 padding: 1rem;
                 margin-top: 60px;
             }
+            .step-indicator {
+                gap: 1rem;
+            }
+            .step-label {
+                display: none;
+            }
             .quick-amounts {
                 gap: 0.5rem;
             }
+            .quick-amount-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+            }
             .button-group {
                 flex-direction: column;
+            }
+            .btn-back, .btn-continue, .btn-generate {
+                width: 100%;
             }
             .address-box {
                 flex-direction: column;
             }
             .copy-btn {
                 width: 100%;
+            }
+            .crypto-selected-info {
+                flex-wrap: wrap;
             }
             .history-item {
                 flex-direction: column;
@@ -851,15 +1003,15 @@
                 <button class="close-sidebar" onclick="closeSidebar()">✕</button>
             </div>
             <div class="sidebar-nav">
-                <a href="dashboard.html">Dashboard</a>
-                <a href="trade.html">Trade</a>
-                <a href="markets.html">Markets</a>
-                <a href="orders.html">Orders</a>
-                <a href="bots.html">Bots</a>
-                <a href="#" class="active">Deposit</a>
-                <a href="withdraw.html">Withdraw</a>
-                <a href="settings.html">Settings</a>
-                <a href="support.html">Support</a>
+                <a href="dashboard.html" onclick="closeSidebar()">Dashboard</a>
+                <a href="trade.html" onclick="closeSidebar()">Trade</a>
+                <a href="markets.html" onclick="closeSidebar()">Markets</a>
+                <a href="orders.html" onclick="closeSidebar()">Orders</a>
+                <a href="bots.html" onclick="closeSidebar()">Bots</a>
+                <a href="#" class="active" onclick="closeSidebar()">Deposit</a>
+                <a href="withdraw.html" onclick="closeSidebar()">Withdraw</a>
+                <a href="settings.html" onclick="closeSidebar()">Settings</a>
+                <a href="support.html" onclick="closeSidebar()">Support</a>
             </div>
         </div>
     </div>
@@ -883,7 +1035,7 @@
         </div>
 
         <div class="deposit-card" id="depositCard">
-            <!-- Step 1 -->
+            <!-- Step 1: Enter Amount -->
             <div id="step1">
                 <div class="deposit-header">
                     <span class="new-deposit-title">New Deposit</span>
@@ -892,13 +1044,25 @@
                         <div class="current-balance-value" id="currentBalance">$0.00</div>
                     </div>
                 </div>
+
                 <div class="step-indicator">
-                    <div class="step"><div class="step-number active">1</div><span class="step-label active">Amount</span></div>
-                    <div class="step"><div class="step-number inactive">2</div><span class="step-label">Currency</span></div>
-                    <div class="step"><div class="step-number inactive">3</div><span class="step-label">Confirm</span></div>
+                    <div class="step">
+                        <div class="step-number active">1</div>
+                        <span class="step-label active">Amount</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-number inactive">2</div>
+                        <span class="step-label">Currency</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-number inactive">3</div>
+                        <span class="step-label">Confirm</span>
+                    </div>
                 </div>
+
                 <div class="section-title">Enter Amount</div>
                 <div class="section-subtitle">How much do you want to deposit?</div>
+
                 <div class="form-group">
                     <label class="form-label">Amount (USD)</label>
                     <div class="amount-input-wrapper">
@@ -907,79 +1071,142 @@
                     </div>
                     <div class="min-deposit-note">⚠️ Minimum deposit: $50 USD</div>
                 </div>
+
                 <div class="quick-amounts">
                     <button class="quick-amount-btn" onclick="setAmount(50)">$50</button>
                     <button class="quick-amount-btn" onclick="setAmount(100)">$100</button>
                     <button class="quick-amount-btn" onclick="setAmount(250)">$250</button>
                     <button class="quick-amount-btn" onclick="setAmount(500)">$500</button>
                 </div>
+
                 <button class="btn-continue" onclick="goToStep2()">Continue</button>
             </div>
 
-            <!-- Step 2 -->
+            <!-- Step 2: Select Currency & Network -->
             <div id="step2" style="display: none;">
                 <div class="deposit-header">
                     <span class="new-deposit-title">New Deposit</span>
-                    <div class="current-balance"><div class="current-balance-label">Current Balance</div><div class="current-balance-value">$0.00</div></div>
+                    <div class="current-balance">
+                        <div class="current-balance-label">Current Balance</div>
+                        <div class="current-balance-value">$0.00</div>
+                    </div>
                 </div>
+
                 <div class="step-indicator">
-                    <div class="step"><div class="step-number completed">1</div><span class="step-label">Amount</span></div>
-                    <div class="step"><div class="step-number active">2</div><span class="step-label active">Currency</span></div>
-                    <div class="step"><div class="step-number inactive">3</div><span class="step-label">Confirm</span></div>
+                    <div class="step">
+                        <div class="step-number completed">1</div>
+                        <span class="step-label">Amount</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-number active">2</div>
+                        <span class="step-label active">Currency</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-number inactive">3</div>
+                        <span class="step-label">Confirm</span>
+                    </div>
                 </div>
+
                 <div class="section-title">Select Currency & Network</div>
-                <div class="depositing-amount"><div class="depositing-label">Depositing</div><div class="depositing-value" id="depositingAmount">$0.00</div></div>
+                <div class="depositing-amount">
+                    <div class="depositing-label">Depositing</div>
+                    <div class="depositing-value" id="depositingAmount">$0.00</div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Select Cryptocurrency</label>
                     <div class="crypto-selector" id="cryptoSelector">
                         <div class="crypto-selected" onclick="toggleCryptoDropdown()">
                             <div class="crypto-selected-info">
-                                <img id="selectedCryptoIcon" class="crypto-selected-icon" src="https://assets.coincap.io/assets/icons/btc@2x.png">
-                                <div><div class="crypto-selected-name" id="selectedCryptoName">Bitcoin</div><div class="crypto-selected-symbol" id="selectedCryptoSymbol">BTC</div></div>
+                                <img id="selectedCryptoIcon" class="crypto-selected-icon" src="https://assets.coincap.io/assets/icons/btc@2x.png" alt="BTC">
+                                <div>
+                                    <div class="crypto-selected-name" id="selectedCryptoName">Bitcoin</div>
+                                    <div class="crypto-selected-symbol" id="selectedCryptoSymbol">BTC</div>
+                                </div>
                             </div>
                             <span class="dropdown-arrow">▼</span>
                         </div>
                         <div class="crypto-dropdown" id="cryptoDropdown"></div>
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Select Network</label>
                     <select class="select-dropdown" id="networkSelect"></select>
                 </div>
+
                 <div class="button-group">
                     <button class="btn-back" onclick="goToStep1()">Back</button>
                     <button class="btn-generate" onclick="generateDepositAddress()">Generate Address</button>
                 </div>
             </div>
 
-            <!-- Step 3 -->
+            <!-- Step 3: Deposit Address with Timer and Confirmation -->
             <div id="step3" style="display: none;">
                 <div class="deposit-header">
                     <span class="new-deposit-title">New Deposit</span>
-                    <div class="current-balance"><div class="current-balance-label">Current Balance</div><div class="current-balance-value">$0.00</div></div>
+                    <div class="current-balance">
+                        <div class="current-balance-label">Current Balance</div>
+                        <div class="current-balance-value">$0.00</div>
+                    </div>
                 </div>
+
                 <div class="step-indicator">
-                    <div class="step"><div class="step-number completed">1</div><span class="step-label">Amount</span></div>
-                    <div class="step"><div class="step-number completed">2</div><span class="step-label">Currency</span></div>
-                    <div class="step"><div class="step-number active">3</div><span class="step-label active">Confirm</span></div>
+                    <div class="step">
+                        <div class="step-number completed">1</div>
+                        <span class="step-label">Amount</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-number completed">2</div>
+                        <span class="step-label">Currency</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-number active">3</div>
+                        <span class="step-label active">Confirm</span>
+                    </div>
                 </div>
+
                 <div class="section-title">Deposit Address</div>
-                <div class="depositing-amount"><div class="depositing-label">Depositing</div><div class="depositing-value" id="finalDepositAmount">$0.00</div></div>
+                <div class="depositing-amount">
+                    <div class="depositing-label">Depositing</div>
+                    <div class="depositing-value" id="finalDepositAmount">$0.00</div>
+                </div>
+
                 <div class="qr-section">
-                    <div class="qr-code"><img id="qrImage" src=""></div>
-                    <div class="address-box"><span id="depositAddress"></span><button class="copy-btn" onclick="copyAddress()">Copy Address</button></div>
+                    <div class="qr-code">
+                        <img id="qrImage" src="" alt="QR Code">
+                    </div>
+                    <div class="address-box">
+                        <span id="depositAddress"></span>
+                        <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
+                    </div>
                     <div class="warning-note" id="warningNote">⚠️ Send only BTC to this address. Other coins will be lost.</div>
                 </div>
-                <div class="timer-section"><div class="timer-value" id="timerValue">10:00</div></div>
-                <div class="confirm-section"><button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ I have sent payment</button></div>
+
+                <!-- Timer Section -->
+                <div class="timer-section">
+                    <div class="timer-label">⏱️ Address expires in</div>
+                    <div class="timer-value" id="timerValue">10:00</div>
+                </div>
+
+                <!-- Confirm Payment Section -->
+                <div class="confirm-section">
+                    <button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ I have sent payment</button>
+                </div>
+
                 <button class="btn-back" onclick="goToStep2()">Back</button>
             </div>
         </div>
 
+        <!-- Deposit History -->
         <div class="history-card">
             <div class="history-title">Deposit History</div>
             <div class="history-list" id="depositHistoryList">
-                <div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>
+                <div class="empty-history">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">No deposits yet</div>
+                    <div class="empty-subtitle">Your deposit history will appear here</div>
+                </div>
             </div>
         </div>
     </div>
@@ -987,9 +1214,13 @@
     <div id="toastMessage" class="toast-notification">✓ Copied!</div>
 
     <script>
-        let depositAmount = 0, selectedCrypto = 'BTC', selectedNetwork = 'Bitcoin Network', timerInterval = null, timerSeconds = 600;
-        let currentUser = null;
+        let depositAmount = 0;
+        let selectedCrypto = 'BTC';
+        let selectedNetwork = 'Bitcoin Network';
+        let timerInterval = null;
+        let timerSeconds = 600;
         
+        // Cryptocurrency list with real icons from CoinCap
         const cryptoList = [
             { symbol: 'BTC', name: 'Bitcoin', iconUrl: 'https://assets.coincap.io/assets/icons/btc@2x.png' },
             { symbol: 'ETH', name: 'Ethereum', iconUrl: 'https://assets.coincap.io/assets/icons/eth@2x.png' },
@@ -1004,13 +1235,23 @@
             { symbol: 'MATIC', name: 'Polygon', iconUrl: 'https://assets.coincap.io/assets/icons/matic@2x.png' }
         ];
         
+        // Network options for each cryptocurrency
         const networkOptions = {
             BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
             ETH: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
-            USDT: [{ value: 'TRC20', label: 'Tron (TRC20)' }, { value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'BEP20', label: 'BNB Smart Chain' }],
-            USDC: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'TRC20', label: 'Tron (TRC20)' }],
+            USDT: [
+                { value: 'TRC20', label: 'Tron (TRC20) - Low Fee' },
+                { value: 'ERC20', label: 'Ethereum (ERC20)' },
+                { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' },
+                { value: 'POLYGON', label: 'Polygon - Low Fee' }
+            ],
+            USDC: [
+                { value: 'ERC20', label: 'Ethereum (ERC20)' },
+                { value: 'TRC20', label: 'Tron (TRC20) - Low Fee' },
+                { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }
+            ],
             SOL: [{ value: 'SOL', label: 'Solana Network' }],
-            BNB: [{ value: 'BEP20', label: 'BNB Smart Chain' }],
+            BNB: [{ value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }],
             DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }],
             XRP: [{ value: 'XRP', label: 'Ripple Network' }],
             TRX: [{ value: 'TRC20', label: 'Tron (TRC20)' }],
@@ -1018,11 +1259,21 @@
             MATIC: [{ value: 'POLYGON', label: 'Polygon Network' }]
         };
         
+        // Deposit addresses for each cryptocurrency and network
         const depositAddresses = {
             BTC: { BTC: '112NvxwyYBycQwhuKboLstQQMWjm8qk88W' },
             ETH: { ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
-            USDT: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4', BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
-            USDC: { ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4', TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae' },
+            USDT: {
+                TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae',
+                ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4',
+                BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4',
+                POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4'
+            },
+            USDC: {
+                ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4',
+                TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae',
+                BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4'
+            },
             SOL: { SOL: '6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w' },
             BNB: { BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
             DOGE: { DOGE: 'DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm' },
@@ -1032,99 +1283,44 @@
             MATIC: { POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' }
         };
         
-        function setAmount(amount) { document.getElementById('depositAmount').value = amount; }
-        
-        async function getCurrentUser() {
-            const { data: { session } } = await window.supabase.auth.getSession();
-            if (session) currentUser = session.user;
-            return currentUser;
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
         
-        async function saveDepositToSupabase(amount, crypto, network, address, status) {
-            const user = await getCurrentUser();
-            if (!user) return;
-            
-            const { error } = await window.supabase.from('deposits').insert({
-                user_id: user.id,
-                amount: amount,
-                crypto: crypto,
-                network: network,
-                address: address,
-                status: status,
-                created_at: new Date().toISOString()
-            });
-            
-            if (error) console.error('Error saving deposit:', error);
-        }
-        
-        async function confirmPayment() {
-            if (timerSeconds <= 0) return;
-            
-            const user = await getCurrentUser();
-            if (!user) return;
-            
-            // Update the most recent pending deposit to 'completed' in Supabase
-            const { data: deposits } = await window.supabase
-                .from('deposits')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('status', 'pending')
-                .order('created_at', { ascending: false })
-                .limit(1);
-            
-            if (deposits && deposits.length > 0) {
-                await window.supabase
-                    .from('deposits')
-                    .update({ status: 'completed' })
-                    .eq('id', deposits[0].id);
-                
-                await loadUserDeposits();
-            }
-            
-            const confirmBtn = document.getElementById('confirmPaymentBtn');
-            confirmBtn.textContent = '✓ Payment Reported';
-            confirmBtn.classList.add('reported');
-            confirmBtn.disabled = true;
+        function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
-            
-            showToastMessage('Payment reported! Admin will verify.');
+            timerSeconds = 600;
+            const timerElement = document.getElementById('timerValue');
+            timerElement.classList.remove('expired');
+            timerInterval = setInterval(() => {
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerElement.textContent = '00:00';
+                    timerElement.classList.add('expired');
+                    document.getElementById('confirmPaymentBtn').disabled = true;
+                } else {
+                    timerSeconds--;
+                    timerElement.textContent = formatTime(timerSeconds);
+                }
+            }, 1000);
         }
         
-        async function loadUserDeposits() {
-            const user = await getCurrentUser();
-            if (!user) return;
-            
-            const { data } = await window.supabase
-                .from('deposits')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
-            
-            renderDepositHistory(data || []);
-        }
-        
-        function renderDepositHistory(deposits) {
-            const container = document.getElementById('depositHistoryList');
-            if (!deposits || deposits.length === 0) {
-                container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`;
-                return;
-            }
-            container.innerHTML = deposits.map(d => `
-                <div class="history-item">
-                    <div class="history-info">
-                        <div class="history-amount">$${d.amount.toFixed(2)}</div>
-                        <div class="history-crypto">${d.crypto} • ${d.network}</div>
-                        <div class="history-date">${new Date(d.created_at).toLocaleString()}</div>
-                    </div>
-                    <div><span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span></div>
-                </div>
-            `).join('');
+        function setAmount(amount) {
+            document.getElementById('depositAmount').value = amount;
         }
         
         function goToStep2() {
             const amount = parseFloat(document.getElementById('depositAmount').value);
-            if (!amount || amount <= 0) { alert('Please enter a valid amount'); return; }
-            if (amount < 50) { alert('Minimum deposit is $50 USD'); return; }
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            if (amount < 50) {
+                alert('Minimum deposit is $50 USD');
+                return;
+            }
             depositAmount = amount;
             document.getElementById('depositingAmount').innerHTML = `$${depositAmount.toFixed(2)}`;
             document.getElementById('step1').style.display = 'none';
@@ -1133,9 +1329,17 @@
             updateNetworkOptions();
         }
         
-        function goToStep1() { if (timerInterval) clearInterval(timerInterval); document.getElementById('step1').style.display = 'block'; document.getElementById('step2').style.display = 'none'; document.getElementById('step3').style.display = 'none'; }
+        function goToStep1() {
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step3').style.display = 'none';
+        }
         
-        function toggleCryptoDropdown() { document.getElementById('cryptoDropdown').classList.toggle('show'); }
+        function toggleCryptoDropdown() {
+            const dropdown = document.getElementById('cryptoDropdown');
+            dropdown.classList.toggle('show');
+        }
         
         function selectCrypto(symbol, name, iconUrl) {
             selectedCrypto = symbol;
@@ -1148,7 +1352,15 @@
         
         function renderCryptoDropdown() {
             const dropdown = document.getElementById('cryptoDropdown');
-            dropdown.innerHTML = cryptoList.map(c => `<div class="crypto-option" onclick="selectCrypto('${c.symbol}', '${c.name}', '${c.iconUrl}')"><img src="${c.iconUrl}" class="crypto-option-icon"><div><div class="crypto-option-name">${c.name}</div><div class="crypto-option-symbol">${c.symbol}</div></div></div>`).join('');
+            dropdown.innerHTML = cryptoList.map(crypto => `
+                <div class="crypto-option" onclick="selectCrypto('${crypto.symbol}', '${crypto.name}', '${crypto.iconUrl}')">
+                    <img src="${crypto.iconUrl}" class="crypto-option-icon" alt="${crypto.symbol}">
+                    <div class="crypto-option-info">
+                        <div class="crypto-option-name">${crypto.name}</div>
+                        <div class="crypto-option-symbol">${crypto.symbol}</div>
+                    </div>
+                </div>
+            `).join('');
         }
         
         function updateNetworkOptions() {
@@ -1160,14 +1372,20 @@
         
         async function generateDepositAddress() {
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available';
+            
             document.getElementById('depositAddress').innerHTML = address;
             document.getElementById('finalDepositAmount').innerHTML = `$${depositAmount.toFixed(2)} ${selectedCrypto}`;
-            document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`;
+            
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`;
+            document.getElementById('qrImage').src = qrUrl;
             
             let warningMsg = `⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`;
-            if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') warningMsg += ` Make sure to use the ${selectedNetwork} network.`;
+            if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') {
+                warningMsg += ` Make sure to use the ${selectedNetwork} network.`;
+            }
             document.getElementById('warningNote').innerHTML = warningMsg;
             
+            // Save to Supabase instead of localStorage
             await saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, 'pending');
             await loadUserDeposits();
             
@@ -1185,24 +1403,6 @@
             document.getElementById('step3').style.display = 'block';
         }
         
-        function startTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            timerSeconds = 600;
-            const timerElement = document.getElementById('timerValue');
-            timerInterval = setInterval(() => {
-                if (timerSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    timerElement.textContent = '00:00';
-                    document.getElementById('confirmPaymentBtn').disabled = true;
-                } else {
-                    timerSeconds--;
-                    const mins = Math.floor(timerSeconds / 60);
-                    const secs = timerSeconds % 60;
-                    timerElement.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                }
-            }, 1000);
-        }
-        
         function copyAddress() {
             const address = document.getElementById('depositAddress').innerHTML;
             navigator.clipboard.writeText(address);
@@ -1211,19 +1411,26 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
         
-        function showToastMessage(msg) { alert(msg); }
-        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
-        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
+        function openSidebar() {
+            document.getElementById('sidebarOverlay').classList.add('active');
+        }
         
-        document.addEventListener('click', function(e) {
+        function closeSidebar() {
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+        
+        document.addEventListener('click', function(event) {
             const selector = document.getElementById('cryptoSelector');
             const dropdown = document.getElementById('cryptoDropdown');
-            if (selector && !selector.contains(e.target)) dropdown.classList.remove('show');
+            if (selector && !selector.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
         });
         
         renderCryptoDropdown();
         updateNetworkOptions();
         
+        // Make functions global
         window.setAmount = setAmount;
         window.goToStep2 = goToStep2;
         window.goToStep1 = goToStep1;
@@ -1232,6 +1439,8 @@
         window.generateDepositAddress = generateDepositAddress;
         window.confirmPayment = confirmPayment;
         window.copyAddress = copyAddress;
+        window.openSidebar = openSidebar;
+        window.closeSidebar = closeSidebar;
     </script>
 </body>
 </html>
