@@ -98,11 +98,13 @@
                 created_at: new Date().toISOString()
             })
             if (error) console.error('Error saving deposit:', error)
+            // Reload deposits immediately after saving
             await loadUserDeposits()
         }
         
         window.saveDepositToSupabase = saveDepositToSupabase
         window.loadUserDeposits = loadUserDeposits
+        window.currentUser = currentUser
         checkAuth()
     </script>
     
@@ -404,9 +406,13 @@
             let msg=`⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`; 
             if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML=msg; 
-            await saveDepositToSupabase(depositAmount,selectedCrypto,selectedNetwork,address); 
-            await loadUserDeposits(); 
-            if(timerInterval) clearInterval(timerInterval); 
+            
+            // Save to Supabase
+            if (window.saveDepositToSupabase) {
+                await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address);
+            }
+            
+            if (timerInterval) clearInterval(timerInterval); 
             timerSeconds=600; 
             startTimer(); 
             const btn=document.getElementById('confirmPaymentBtn'); 
