@@ -38,12 +38,8 @@
                 return
             }
             currentUser = session.user
-            
-            // Store user globally for other functions
-            window.currentUserId = currentUser.id
-            
             await loadUserBalance()
-            await loadUserDeposits()
+            loadDepositHistory()
         }
         
         async function loadUserBalance() {
@@ -59,92 +55,40 @@
             document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
         }
         
-        async function loadUserDeposits() {
-            if (!currentUser) return
-            
-            const { data } = await supabase
-                .from('deposits')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false })
-            
-            renderDepositHistory(data || [])
-        }
-        
-        function renderDepositHistory(deposits) {
+        function loadDepositHistory() {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
             const container = document.getElementById('depositHistoryList')
-            if (!container) return
             
-            if (!deposits || deposits.length === 0) {
+            if (history.length === 0) {
                 container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
                 return
             }
             
-            container.innerHTML = deposits.map(d => `
+            container.innerHTML = history.map(d => `
                 <div class="history-item">
                     <div class="history-info">
                         <div class="history-amount">$${d.amount.toFixed(2)}</div>
                         <div class="history-crypto">${d.crypto} • ${d.network}</div>
-                        <div class="history-date">${new Date(d.created_at).toLocaleString()}</div>
+                        <div class="history-date">${d.date}</div>
                     </div>
                     <div><span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span></div>
                 </div>
             `).join('')
         }
         
-        async function saveDepositToSupabase(amount, crypto, network, address) {
-            if (!currentUser) {
-                console.error('No user found');
-                return;
-            }
-            
-            const { error } = await supabase.from('deposits').insert({
-                user_id: currentUser.id,
+        function saveDepositToLocalStorage(amount, crypto, network, address) {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.unshift({
                 amount: amount,
                 crypto: crypto,
                 network: network,
                 address: address,
                 status: 'pending',
-                created_at: new Date().toISOString()
+                date: new Date().toLocaleString()
             })
-            
-            if (error) {
-                console.error('Error saving deposit:', error)
-                alert('Error saving deposit: ' + error.message)
-                return
-            }
-            
-            // Reload deposits immediately
-            await loadUserDeposits()
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            loadDepositHistory()
         }
-        
-        // Make function globally available
-        window.saveDepositToSupabaseGlobal = async function(amount, crypto, network, address) {
-            if (!window.currentUserId) {
-                console.error('No user logged in');
-                return false;
-            }
-            
-            const { error } = await supabase.from('deposits').insert({
-                user_id: window.currentUserId,
-                amount: amount,
-                crypto: crypto,
-                network: network,
-                address: address,
-                status: 'pending',
-                created_at: new Date().toISOString()
-            })
-            
-            if (error) {
-                console.error('Error saving deposit:', error)
-                return false
-            }
-            
-            await loadUserDeposits()
-            return true
-        }
-        
-        window.loadUserDepositsGlobal = loadUserDeposits
         
         checkAuth()
     </script>
@@ -448,14 +392,34 @@
             if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML=msg; 
             
-            // Save to Supabase using global function
-            if (window.saveDepositToSupabaseGlobal) {
-                const success = await window.saveDepositToSupabaseGlobal(depositAmount, selectedCrypto, selectedNetwork, address);
-                if (!success) {
-                    alert('Failed to save deposit. Please try again.');
-                }
+            // Save to localStorage
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.unshift({
+                amount: depositAmount,
+                crypto: selectedCrypto,
+                network: selectedNetwork,
+                address: address,
+                status: 'pending',
+                date: new Date().toLocaleString()
+            })
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            
+            // Reload the history display
+            const container = document.getElementById('depositHistoryList')
+            const newHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
+            if (newHistory.length === 0) {
+                container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
             } else {
-                alert('System not ready. Please refresh the page.');
+                container.innerHTML = newHistory.map(d => `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div class="history-amount">$${d.amount.toFixed(2)}</div>
+                            <div class="history-crypto">${d.crypto} • ${d.network}</div>
+                            <div class="history-date">${d.date}</div>
+                        </div>
+                        <div><span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span></div>
+                    </div>
+                `).join('')
             }
             
             if (timerInterval) clearInterval(timerInterval); 
