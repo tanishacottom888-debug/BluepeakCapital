@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
         function initTheme() {
@@ -64,14 +65,19 @@
                 return
             }
             
-            container.innerHTML = history.map(d => `
+            container.innerHTML = history.map((d, index) => `
                 <div class="history-item">
                     <div class="history-info">
                         <div class="history-amount">$${d.amount.toFixed(2)}</div>
                         <div class="history-crypto">${d.crypto} • ${d.network}</div>
                         <div class="history-date">${d.date}</div>
                     </div>
-                    <div><span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span></div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
+                        <button class="delete-history-btn" onclick="deleteDepositHistory(${index})" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
                 </div>
             `).join('')
         }
@@ -86,6 +92,13 @@
                 status: 'pending',
                 date: new Date().toLocaleString()
             })
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            loadDepositHistory()
+        }
+        
+        window.deleteDepositHistory = function(index) {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.splice(index, 1)
             localStorage.setItem('depositHistory', JSON.stringify(history))
             loadDepositHistory()
         }
@@ -199,13 +212,48 @@
         .history-status.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
         .history-status.completed { background: rgba(16,185,129,0.15); color: #10b981; }
         .history-date { font-size: 0.6rem; color: var(--text-secondary); }
+        
+        /* Delete button styles */
+        .delete-history-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+            opacity: 0.6;
+        }
+        .delete-history-btn:hover {
+            opacity: 1;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
         .empty-history { text-align: center; padding: 2rem; color: var(--text-secondary); }
         .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
         .empty-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; }
         .empty-subtitle { font-size: 0.7rem; color: var(--text-secondary); }
         .toast-notification { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; z-index: 3000; opacity: 0; transition: all 0.3s; pointer-events: none; }
         .toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        @media (max-width: 768px) { nav { padding: 0.8rem 1rem; } .nav-links { display: none; } .mobile-menu-btn { display: block; } .trust-bar { display: none; } .deposit-container { padding: 1rem; margin-top: 60px; } .step-indicator { gap: 1rem; } .step-label { display: none; } .quick-amounts { gap: 0.5rem; } .quick-amount-btn { padding: 0.4rem 0.8rem; font-size: 0.7rem; } .button-group { flex-direction: column; } .btn-back, .btn-continue, .btn-generate { width: 100%; } .address-box { flex-direction: column; } .copy-btn { width: 100%; } .crypto-selected-info { flex-wrap: wrap; } .history-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; } }
+        @media (max-width: 768px) { 
+            nav { padding: 0.8rem 1rem; } 
+            .nav-links { display: none; } 
+            .mobile-menu-btn { display: block; } 
+            .trust-bar { display: none; } 
+            .deposit-container { padding: 1rem; margin-top: 60px; } 
+            .step-indicator { gap: 1rem; } 
+            .step-label { display: none; } 
+            .quick-amounts { gap: 0.5rem; } 
+            .quick-amount-btn { padding: 0.4rem 0.8rem; font-size: 0.7rem; } 
+            .button-group { flex-direction: column; } 
+            .btn-back, .btn-continue, .btn-generate { width: 100%; } 
+            .address-box { flex-direction: column; } 
+            .copy-btn { width: 100%; } 
+            .crypto-selected-info { flex-wrap: wrap; } 
+            .history-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .delete-history-btn { font-size: 0.7rem; }
+        }
     </style>
 </head>
 <body>
@@ -410,14 +458,19 @@
             if (newHistory.length === 0) {
                 container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
             } else {
-                container.innerHTML = newHistory.map(d => `
+                container.innerHTML = newHistory.map((d, idx) => `
                     <div class="history-item">
                         <div class="history-info">
                             <div class="history-amount">$${d.amount.toFixed(2)}</div>
                             <div class="history-crypto">${d.crypto} • ${d.network}</div>
                             <div class="history-date">${d.date}</div>
                         </div>
-                        <div><span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span></div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
+                            <button class="delete-history-btn" onclick="deleteDepositHistory(${idx})" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('')
             }
@@ -447,6 +500,12 @@
         document.addEventListener('click',function(e){ const sel=document.getElementById('cryptoSelector'); const drop=document.getElementById('cryptoDropdown'); if(sel&&!sel.contains(e.target)) drop.classList.remove('show'); });
         renderCryptoDropdown(); updateNetworkOptions();
         window.setAmount=setAmount; window.goToStep2=goToStep2; window.goToStep1=goToStep1; window.toggleCryptoDropdown=toggleCryptoDropdown; window.selectCrypto=selectCrypto; window.generateDepositAddress=generateDepositAddress; window.confirmPayment=confirmPayment; window.copyAddress=copyAddress; window.openSidebar=openSidebar; window.closeSidebar=closeSidebar;
+        window.deleteDepositHistory = function(index) {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.splice(index, 1)
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            location.reload()
+        }
     </script>
 </body>
 </html>
