@@ -67,10 +67,13 @@
         
         function renderDepositHistory(deposits) {
             const container = document.getElementById('depositHistoryList')
+            if (!container) return
+            
             if (!deposits || deposits.length === 0) {
                 container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
                 return
             }
+            
             container.innerHTML = deposits.map(d => `
                 <div class="history-item">
                     <div class="history-info">
@@ -85,7 +88,7 @@
         
         async function saveDepositToSupabase(amount, crypto, network, address) {
             if (!currentUser) return
-            await supabase.from('deposits').insert({
+            const { error } = await supabase.from('deposits').insert({
                 user_id: currentUser.id,
                 amount: amount,
                 crypto: crypto,
@@ -94,6 +97,7 @@
                 status: 'pending',
                 created_at: new Date().toISOString()
             })
+            if (error) console.error('Error saving deposit:', error)
             await loadUserDeposits()
         }
         
@@ -325,7 +329,7 @@
                     <div class="warning-note" id="warningNote">⚠️ Send only BTC to this address. Other coins will be lost.</div>
                 </div>
                 <div class="timer-section"><div class="timer-label">⏱️ Address expires in</div><div class="timer-value" id="timerValue">10:00</div></div>
-                <div class="confirm-section"><button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ I have sent payment</button></div>
+                <div class="confirm-section"><button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ I have made deposit</button></div>
                 <button class="btn-back" onclick="goToStep2()">Back</button>
             </div>
         </div>
@@ -392,8 +396,35 @@
         function selectCrypto(symbol,name,iconUrl) { selectedCrypto=symbol; document.getElementById('selectedCryptoIcon').src=iconUrl; document.getElementById('selectedCryptoName').innerHTML=name; document.getElementById('selectedCryptoSymbol').innerHTML=symbol; document.getElementById('cryptoDropdown').classList.remove('show'); updateNetworkOptions(); }
         function renderCryptoDropdown() { const dropdown=document.getElementById('cryptoDropdown'); dropdown.innerHTML=cryptoList.map(c=>`<div class="crypto-option" onclick="selectCrypto('${c.symbol}','${c.name}','${c.iconUrl}')"><img src="${c.iconUrl}" class="crypto-option-icon"><div class="crypto-option-info"><div class="crypto-option-name">${c.name}</div><div class="crypto-option-symbol">${c.symbol}</div></div></div>`).join(''); }
         function updateNetworkOptions() { const netSelect=document.getElementById('networkSelect'); const opts=networkOptions[selectedCrypto]||[{value:selectedCrypto,label:`${selectedCrypto} Network`}]; netSelect.innerHTML=opts.map(opt=>`<option value="${opt.value}">${opt.label}</option>`).join(''); selectedNetwork=opts[0].value; }
-        async function generateDepositAddress() { const address=depositAddresses[selectedCrypto]?.[selectedNetwork]||'Address not available'; document.getElementById('depositAddress').innerHTML=address; document.getElementById('finalDepositAmount').innerHTML=`$${depositAmount.toFixed(2)} ${selectedCrypto}`; document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`; let msg=`⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`; if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; document.getElementById('warningNote').innerHTML=msg; if(window.saveDepositToSupabase) await window.saveDepositToSupabase(depositAmount,selectedCrypto,selectedNetwork,address); if(window.loadUserDeposits) await window.loadUserDeposits(); if(timerInterval) clearInterval(timerInterval); timerSeconds=600; startTimer(); const btn=document.getElementById('confirmPaymentBtn'); btn.textContent='✅ I have sent payment'; btn.classList.remove('reported'); btn.disabled=false; document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='none'; document.getElementById('step3').style.display='block'; }
-        async function confirmPayment() { if(timerSeconds<=0) return; const btn=document.getElementById('confirmPaymentBtn'); btn.textContent='Payment Reported'; btn.classList.add('reported'); btn.disabled=true; if(timerInterval) clearInterval(timerInterval); }
+        async function generateDepositAddress() { 
+            const address=depositAddresses[selectedCrypto]?.[selectedNetwork]||'Address not available'; 
+            document.getElementById('depositAddress').innerHTML=address; 
+            document.getElementById('finalDepositAmount').innerHTML=`$${depositAmount.toFixed(2)} ${selectedCrypto}`; 
+            document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`; 
+            let msg=`⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`; 
+            if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
+            document.getElementById('warningNote').innerHTML=msg; 
+            await saveDepositToSupabase(depositAmount,selectedCrypto,selectedNetwork,address); 
+            await loadUserDeposits(); 
+            if(timerInterval) clearInterval(timerInterval); 
+            timerSeconds=600; 
+            startTimer(); 
+            const btn=document.getElementById('confirmPaymentBtn'); 
+            btn.textContent='✅ I have made deposit'; 
+            btn.classList.remove('reported'); 
+            btn.disabled=false; 
+            document.getElementById('step1').style.display='none'; 
+            document.getElementById('step2').style.display='none'; 
+            document.getElementById('step3').style.display='block'; 
+        }
+        async function confirmPayment() { 
+            if(timerSeconds<=0) return; 
+            const btn=document.getElementById('confirmPaymentBtn'); 
+            btn.textContent='Deposit Reported'; 
+            btn.classList.add('reported'); 
+            btn.disabled=true; 
+            if(timerInterval) clearInterval(timerInterval); 
+        }
         function copyAddress() { const addr=document.getElementById('depositAddress').innerHTML; navigator.clipboard.writeText(addr); const toast=document.getElementById('toastMessage'); toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2000); }
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
