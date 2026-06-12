@@ -56,30 +56,26 @@
             document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
         }
         
-        async function loadDepositHistory() {
-            const { data } = await supabase
-                .from('deposits')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false })
-            
+        function loadDepositHistory() {
+            // ALWAYS read from localStorage first - this works immediately
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
             const container = document.getElementById('depositHistoryList')
             
-            if (!data || data.length === 0) {
+            if (history.length === 0) {
                 container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
                 return
             }
             
-            container.innerHTML = data.map((d, index) => `
+            container.innerHTML = history.map((d, index) => `
                 <div class="history-item">
                     <div class="history-info">
                         <div class="history-amount">$${d.amount.toFixed(2)}</div>
                         <div class="history-crypto">${d.crypto} • ${d.network}</div>
-                        <div class="history-date">${new Date(d.created_at).toLocaleString()}</div>
+                        <div class="history-date">${d.date}</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
-                        <button class="delete-history-btn" onclick="deleteDepositHistory('${d.id}')" title="Delete">
+                        <button class="delete-history-btn" onclick="deleteDepositHistory(${index})" title="Delete">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -87,33 +83,44 @@
             `).join('')
         }
         
-        async function saveDepositToSupabase(amount, crypto, network, address) {
-            if (!currentUser) return false
-            
-            const { error } = await supabase.from('deposits').insert({
-                user_id: currentUser.id,
+        function saveDepositToLocalStorage(amount, crypto, network, address) {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.unshift({
+                id: Date.now(),
                 amount: amount,
                 crypto: crypto,
                 network: network,
                 address: address,
                 status: 'pending',
-                created_at: new Date().toISOString()
+                date: new Date().toLocaleString()
             })
-            
-            if (error) {
-                console.error('Error saving deposit:', error)
-                return false
-            }
-            
-            await loadDepositHistory()
-            return true
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            loadDepositHistory()
         }
         
-        window.deleteDepositHistory = async function(depositId) {
-            if (confirm('Delete this deposit record?')) {
-                await supabase.from('deposits').delete().eq('id', depositId).eq('user_id', currentUser.id)
-                await loadDepositHistory()
+        // Also try to save to Supabase (for admin) but don't block the user
+        async function saveDepositToSupabase(amount, crypto, network, address) {
+            if (!currentUser) return
+            try {
+                await supabase.from('deposits').insert({
+                    user_id: currentUser.id,
+                    amount: amount,
+                    crypto: crypto,
+                    network: network,
+                    address: address,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                })
+            } catch (e) {
+                console.log('Supabase save failed, but deposit saved locally')
             }
+        }
+        
+        window.deleteDepositHistory = function(index) {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.splice(index, 1)
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            loadDepositHistory()
         }
         
         checkAuth()
@@ -452,7 +459,10 @@
             if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML=msg; 
             
-            // Save to Supabase
+            // Save to localStorage (ALWAYS works)
+            saveDepositToLocalStorage(depositAmount, selectedCrypto, selectedNetwork, address);
+            
+            // Also try to save to Supabase (for admin) - doesn't block the user
             await saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address);
             
             if (timerInterval) clearInterval(timerInterval); 
@@ -480,6 +490,8 @@
         document.addEventListener('click',function(e){ const sel=document.getElementById('cryptoSelector'); const drop=document.getElementById('cryptoDropdown'); if(sel&&!sel.contains(e.target)) drop.classList.remove('show'); });
         renderCryptoDropdown(); updateNetworkOptions();
         window.setAmount=setAmount; window.goToStep2=goToStep2; window.goToStep1=goToStep1; window.toggleCryptoDropdown=toggleCryptoDropdown; window.selectCrypto=selectCrypto; window.generateDepositAddress=generateDepositAddress; window.confirmPayment=confirmPayment; window.copyAddress=copyAddress; window.openSidebar=openSidebar; window.closeSidebar=closeSidebar;
+        window.deleteDepositHistory = deleteDepositHistory;
+        window.saveDepositToLocalStorage = saveDepositToLocalStorage;
         window.saveDepositToSupabase = saveDepositToSupabase;
     </script>
 </body>
