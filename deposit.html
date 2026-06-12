@@ -40,7 +40,7 @@
             }
             currentUser = session.user
             await loadUserBalance()
-            await loadUserDeposits()
+            loadDepositHistory()
         }
         
         async function loadUserBalance() {
@@ -56,26 +56,21 @@
             document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
         }
         
-        async function loadUserDeposits() {
+        async function loadDepositHistory() {
             const { data } = await supabase
                 .from('deposits')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false })
             
-            renderDepositHistory(data || [])
-        }
-        
-        function renderDepositHistory(deposits) {
             const container = document.getElementById('depositHistoryList')
-            if (!container) return
             
-            if (!deposits || deposits.length === 0) {
+            if (!data || data.length === 0) {
                 container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
                 return
             }
             
-            container.innerHTML = deposits.map((d, index) => `
+            container.innerHTML = data.map((d, index) => `
                 <div class="history-item">
                     <div class="history-info">
                         <div class="history-amount">$${d.amount.toFixed(2)}</div>
@@ -93,12 +88,9 @@
         }
         
         async function saveDepositToSupabase(amount, crypto, network, address) {
-            if (!currentUser) {
-                console.error('No user found');
-                return false;
-            }
+            if (!currentUser) return
             
-            const { error } = await supabase.from('deposits').insert({
+            await supabase.from('deposits').insert({
                 user_id: currentUser.id,
                 amount: amount,
                 crypto: crypto,
@@ -108,29 +100,13 @@
                 created_at: new Date().toISOString()
             })
             
-            if (error) {
-                console.error('Error saving deposit:', error)
-                alert('Error: ' + error.message)
-                return false
-            }
-            
-            await loadUserDeposits()
-            return true
+            await loadDepositHistory()
         }
         
         window.deleteDepositHistory = async function(depositId) {
             if (confirm('Delete this deposit record?')) {
-                const { error } = await supabase
-                    .from('deposits')
-                    .delete()
-                    .eq('id', depositId)
-                    .eq('user_id', currentUser.id)
-                
-                if (error) {
-                    alert('Error deleting: ' + error.message)
-                    return
-                }
-                await loadUserDeposits()
+                await supabase.from('deposits').delete().eq('id', depositId).eq('user_id', currentUser.id)
+                await loadDepositHistory()
             }
         }
         
@@ -244,7 +220,6 @@
         .history-status.completed { background: rgba(16,185,129,0.15); color: #10b981; }
         .history-date { font-size: 0.6rem; color: var(--text-secondary); }
         
-        /* Delete button styles */
         .delete-history-btn {
             background: none;
             border: none;
@@ -471,14 +446,8 @@
             if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML=msg; 
             
-            // Save to Supabase (not localStorage)
-            if (window.saveDepositToSupabase) {
-                const success = await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address);
-                if (!success) {
-                    alert('Failed to save deposit. Please try again.');
-                    return;
-                }
-            }
+            // Save to Supabase
+            await saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address);
             
             if (timerInterval) clearInterval(timerInterval); 
             timerSeconds=600; 
