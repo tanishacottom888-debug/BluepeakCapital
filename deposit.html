@@ -57,7 +57,6 @@
         }
         
         function loadDepositHistory() {
-            // ALWAYS read from localStorage first - this works immediately
             const history = JSON.parse(localStorage.getItem('depositHistory')) || []
             const container = document.getElementById('depositHistoryList')
             
@@ -83,6 +82,13 @@
             `).join('')
         }
         
+        function deleteDepositHistory(index) {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.splice(index, 1)
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            loadDepositHistory()
+        }
+        
         function saveDepositToLocalStorage(amount, crypto, network, address) {
             const history = JSON.parse(localStorage.getItem('depositHistory')) || []
             history.unshift({
@@ -98,7 +104,6 @@
             loadDepositHistory()
         }
         
-        // Also try to save to Supabase (for admin) but don't block the user
         async function saveDepositToSupabase(amount, crypto, network, address) {
             if (!currentUser) return
             try {
@@ -112,15 +117,8 @@
                     created_at: new Date().toISOString()
                 })
             } catch (e) {
-                console.log('Supabase save failed, but deposit saved locally')
+                console.log('Supabase save failed')
             }
-        }
-        
-        window.deleteDepositHistory = function(index) {
-            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
-            history.splice(index, 1)
-            localStorage.setItem('depositHistory', JSON.stringify(history))
-            loadDepositHistory()
         }
         
         checkAuth()
@@ -450,7 +448,7 @@
         function selectCrypto(symbol,name,iconUrl) { selectedCrypto=symbol; document.getElementById('selectedCryptoIcon').src=iconUrl; document.getElementById('selectedCryptoName').innerHTML=name; document.getElementById('selectedCryptoSymbol').innerHTML=symbol; document.getElementById('cryptoDropdown').classList.remove('show'); updateNetworkOptions(); }
         function renderCryptoDropdown() { const dropdown=document.getElementById('cryptoDropdown'); dropdown.innerHTML=cryptoList.map(c=>`<div class="crypto-option" onclick="selectCrypto('${c.symbol}','${c.name}','${c.iconUrl}')"><img src="${c.iconUrl}" class="crypto-option-icon"><div class="crypto-option-info"><div class="crypto-option-name">${c.name}</div><div class="crypto-option-symbol">${c.symbol}</div></div></div>`).join(''); }
         function updateNetworkOptions() { const netSelect=document.getElementById('networkSelect'); const opts=networkOptions[selectedCrypto]||[{value:selectedCrypto,label:`${selectedCrypto} Network`}]; netSelect.innerHTML=opts.map(opt=>`<option value="${opt.value}">${opt.label}</option>`).join(''); selectedNetwork=opts[0].value; }
-        async function generateDepositAddress() { 
+        function generateDepositAddress() { 
             const address=depositAddresses[selectedCrypto]?.[selectedNetwork]||'Address not available'; 
             document.getElementById('depositAddress').innerHTML=address; 
             document.getElementById('finalDepositAmount').innerHTML=`$${depositAmount.toFixed(2)} ${selectedCrypto}`; 
@@ -459,11 +457,21 @@
             if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML=msg; 
             
-            // Save to localStorage (ALWAYS works)
-            saveDepositToLocalStorage(depositAmount, selectedCrypto, selectedNetwork, address);
+            // Save to localStorage
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.unshift({
+                id: Date.now(),
+                amount: depositAmount,
+                crypto: selectedCrypto,
+                network: selectedNetwork,
+                address: address,
+                status: 'pending',
+                date: new Date().toLocaleString()
+            })
+            localStorage.setItem('depositHistory', JSON.stringify(history))
             
-            // Also try to save to Supabase (for admin) - doesn't block the user
-            await saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address);
+            // Reload display
+            loadDepositHistory()
             
             if (timerInterval) clearInterval(timerInterval); 
             timerSeconds=600; 
@@ -476,7 +484,7 @@
             document.getElementById('step2').style.display='none'; 
             document.getElementById('step3').style.display='block'; 
         }
-        async function confirmPayment() { 
+        function confirmPayment() { 
             if(timerSeconds<=0) return; 
             const btn=document.getElementById('confirmPaymentBtn'); 
             btn.textContent='Deposit Reported'; 
@@ -488,11 +496,43 @@
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
         document.addEventListener('click',function(e){ const sel=document.getElementById('cryptoSelector'); const drop=document.getElementById('cryptoDropdown'); if(sel&&!sel.contains(e.target)) drop.classList.remove('show'); });
+        
+        function loadDepositHistory() {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            const container = document.getElementById('depositHistoryList')
+            
+            if (history.length === 0) {
+                container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
+                return
+            }
+            
+            container.innerHTML = history.map((d, index) => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-amount">$${d.amount.toFixed(2)}</div>
+                        <div class="history-crypto">${d.crypto} • ${d.network}</div>
+                        <div class="history-date">${d.date}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
+                        <button class="delete-history-btn" onclick="deleteDepositHistory(${index})" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('')
+        }
+        
+        function deleteDepositHistory(index) {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            history.splice(index, 1)
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            loadDepositHistory()
+        }
+        
         renderCryptoDropdown(); updateNetworkOptions();
         window.setAmount=setAmount; window.goToStep2=goToStep2; window.goToStep1=goToStep1; window.toggleCryptoDropdown=toggleCryptoDropdown; window.selectCrypto=selectCrypto; window.generateDepositAddress=generateDepositAddress; window.confirmPayment=confirmPayment; window.copyAddress=copyAddress; window.openSidebar=openSidebar; window.closeSidebar=closeSidebar;
         window.deleteDepositHistory = deleteDepositHistory;
-        window.saveDepositToLocalStorage = saveDepositToLocalStorage;
-        window.saveDepositToSupabase = saveDepositToSupabase;
     </script>
 </body>
 </html>
