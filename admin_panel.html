@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
+    <title>BluepeakCapital | Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Admin authentication check
+        if (localStorage.getItem('admin_authenticated') !== 'true') {
+            window.location.href = 'admin_login.html';
+        }
+    </script>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+        window.supabase = supabase
+
+        let currentPage = 1
+        let usersPerPage = 10
+        let allUsers = []
+        let allDeposits = []
+        let allWithdrawals = []
+        let allBots = []
+
+        async function loadDashboard() {
+            await loadUsers()
+            await loadDeposits()
+            await loadWithdrawals()
+            await loadBots()
+            updateStats()
+            loadCharts()
+        }
+
+        async function loadUsers() {
+            const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+            const { data: balances } = await supabase.from('balances').select('*')
+            const { data: trades } = await supabase.from('trades').select('*')
+            
+            allUsers = profiles || []
+            
+            const userBalances = {}
+            if (balances) {
+                balances.forEach(b => {
+                    if (!userBalances[b.user_id]) userBalances[b.user_id] = {}
+                    userBalances[b.user_id][b.asset] = b.balance
+                })
+            }
+            
+            const userTrades = {}
+            if (trades) {
+                trades.forEach(t => {
+                    if (!userTrades[t.user_id]) userTrades[t.user_id] = 0
+                    userTrades[t.user_id] += t.total || 0
+                })
+            }
+            
+            renderUsersTable(userBalances, userTrades)
+        }
+
+        function renderUsersTable(userBalances, userTrades) {
+            const tbody = document.getElementById('usersTableBody')
+            const start = (currentPage - 1) * usersPerPage
+            const paginated = allUsers.slice(start, start + usersPerPage)
+            
+            if (paginated.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;">No users found</div></div> </div>'
+                return
+            }
+            
+            tbody.innerHTML = paginated.map(user => {
+                const balances = userBalances[user.id] || {}
+                const tradeVolume = userTrades[user.id] || 0
+                return `
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">${(user.full_name || 'U').charAt(0).toUpperCase()}</div>
+                                <div class="user-info">
+                                    <div class="user-name">${user.full_name || 'User'}</div>
+                                    <div class="user-email">${user.email || 'N/A'}</div>
+                                </div>
+                            </div>
+                         </div>
+                         <td class="balance-cell">
+                            <div class="balance-item"><span class="balance-label">USD</span><span id="usd-${user.id}">$${(balances.USD || 0).toFixed(2)}</span></div>
+                            <div class="balance-item"><span class="balance-label">BTC</span><span id="btc-${user.id}">${(balances.BTC || 0).toFixed(4)} BTC</span></div>
+                            <div class="balance-item"><span class="balance-label">ETH</span><span id="eth-${user.id}">${(balances.ETH || 0).toFixed(4)} ETH</span></div>
+                         </div>
+                         <td class="trade-volume">$${tradeVolume.toLocaleString()}</div>
+                         <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</div>
+                         <td>
+                            <div class="balance-edit">
+                                <select id="asset-select-${user.id}" class="asset-select">
+                                    <option value="USD">USD</option>
+                                    <option value="BTC">BTC</option>
+                                    <option value="ETH">ETH</option>
+                                </select>
+                                <input type="number" id="edit-amount-${user.id}" placeholder="Amount" step="0.01" class="edit-input">
+                                <button class="edit-btn" onclick="updateUserBalance('${user.id}')"><i class="fas fa-save"></i></button>
+                            </div>
+                         </td>
+                         <td>
+                            <button class="action-btn view" onclick="viewUserDetails('${user.id}')"><i class="fas fa-eye"></i></button>
+                            <button class="action-btn suspend" onclick="suspendUser('${user.id}')"><i class="fas fa-ban"></i></button>
+                         </td>
+                     </tr>
+                `
+            }).join('')
+            
+            updatePagination()
+        }
+
+        window.updateUserBalance = async function(userId) {
+            const assetSelect = document.getElementById(`asset-select-${userId}`)
+            const amountInput = document.getElementById(`edit-amount-${userId}`)
+            const asset = assetSelect.value
+            const newBalance = parseFloat(amountInput.value)
+            
+            if (isNaN(newBalance)) {
+                alert('Please enter a valid amount')
+                return
+            }
+            
+            const { error } = await supabase.from('balances').upsert({
+                user_id: userId,
+                asset: asset,
+                balance: newBalance,
+                updated_at: new Date().toISOString()
+            })
+            
+            if (error) {
+                alert('Error updating balance: ' + error.message)
+                return
+            }
+            
+            const displaySpan = document.getElementById(`${asset.toLowerCase()}-${userId}`)
+            if (asset === 'USD') {
+                displaySpan.innerHTML = `$${newBalance.toFixed(2)}`
+            } else {
+                displaySpan.innerHTML = `${newBalance.toFixed(4)} ${asset}`
+            }
+            
+            amountInput.value = ''
+            showToast(`${asset} balance updated!`, 'success')
+        }
+
+        async function loadDeposits() {
+            const { data: deposits } = await supabase
+                .from('deposits')
+                .select('*')
+                .order('created_at', { ascending: false })
+            
+            allDeposits = deposits || []
+            renderPendingDeposits()
+        }
+
+        function renderPendingDeposits() {
+            const pending = allDeposits.filter(d => d.status === 'pending')
+            const container = document.getElementById('pendingDepositsList')
+            
+            if (pending.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i><h3>All Clear!</h3><p>No pending deposits to review</p></div>`
+                return
+            }
+            
+            container.innerHTML = pending.map(deposit => `
+                <div class="deposit-card">
+                    <div class="deposit-status pending"><i class="fas fa-clock"></i> Pending</div>
+                    <div class="deposit-body">
+                        <div class="deposit-icon"><i class="fas fa-coins"></i></div>
+                        <div class="deposit-info">
+                            <div class="deposit-amount">$${deposit.amount.toFixed(2)}</div>
+                            <div class="deposit-crypto"><i class="fab fa-bitcoin"></i> ${deposit.crypto} • ${deposit.network}</div>
+                            <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${new Date(deposit.created_at).toLocaleString()}</div>
+                            <div class="deposit-user"><i class="fas fa-user"></i> User ID: ${deposit.user_id?.substring(0, 8)}...</div>
+                        </div>
+                    </div>
+                    <div class="deposit-actions">
+                        <button class="approve-btn" onclick="approveDeposit('${deposit.id}', '${deposit.user_id}', ${deposit.amount})"><i class="fas fa-check"></i> Approve</button>
+                        <button class="reject-btn" onclick="rejectDeposit('${deposit.id}')"><i class="fas fa-times"></i> Reject</button>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        window.approveDeposit = async function(depositId, userId, amount) {
+            await supabase.from('deposits').update({ status: 'completed' }).eq('id', depositId)
+            
+            const { data: currentBalance } = await supabase
+                .from('balances')
+                .select('balance')
+                .eq('user_id', userId)
+                .eq('asset', 'USD')
+                .single()
+            
+            const newBalance = (currentBalance?.balance || 0) + amount
+            
+            await supabase.from('balances').upsert({
+                user_id: userId,
+                asset: 'USD',
+                balance: newBalance,
+                updated_at: new Date().toISOString()
+            })
+            
+            await loadDashboard()
+            showToast('✅ Deposit approved!', 'success')
+        }
+
+        window.rejectDeposit = async function(depositId) {
+            if (confirm('Reject this deposit?')) {
+                await supabase.from('deposits').update({ status: 'rejected' }).eq('id', depositId)
+                await loadDashboard()
+                showToast('❌ Deposit rejected', 'info')
+            }
+        }
+
+        async function loadWithdrawals() {
+            const { data: withdrawals } = await supabase
+                .from('withdrawals')
+                .select('*')
+                .order('created_at', { ascending: false })
+            
+            allWithdrawals = withdrawals || []
+            renderPendingWithdrawals()
+        }
+
+        function renderPendingWithdrawals() {
+            const pending = allWithdrawals.filter(w => w.status === 'pending')
+            const container = document.getElementById('pendingWithdrawalsList')
+            
+            if (pending.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i><p>No pending withdrawals</p></div>`
+                return
+            }
+            
+            container.innerHTML = pending.map(withdrawal => `
+                <div class="withdrawal-card">
+                    <div class="withdrawal-status pending"><i class="fas fa-clock"></i> Pending</div>
+                    <div class="withdrawal-body">
+                        <div class="withdrawal-icon"><i class="fas fa-money-bill-wave"></i></div>
+                        <div class="withdrawal-info">
+                            <div class="withdrawal-amount">${withdrawal.amount} ${withdrawal.asset}</div>
+                            <div class="withdrawal-address"><i class="fas fa-wallet"></i> ${withdrawal.address?.substring(0, 30)}...</div>
+                            <div class="withdrawal-date"><i class="far fa-calendar-alt"></i> ${new Date(withdrawal.created_at).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="withdrawal-actions">
+                        <button class="approve-btn" onclick="approveWithdrawal('${withdrawal.id}', '${withdrawal.user_id}', '${withdrawal.asset}', ${withdrawal.amount})"><i class="fas fa-check"></i> Approve</button>
+                        <button class="reject-btn" onclick="rejectWithdrawal('${withdrawal.id}')"><i class="fas fa-times"></i> Reject</button>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        window.approveWithdrawal = async function(withdrawalId, userId, asset, amount) {
+            const { data: currentBalance } = await supabase
+                .from('balances')
+                .select('balance')
+                .eq('user_id', userId)
+                .eq('asset', asset)
+                .single()
+            
+            if ((currentBalance?.balance || 0) < amount) {
+                alert('Insufficient balance for this withdrawal')
+                return
+            }
+            
+            const newBalance = (currentBalance?.balance || 0) - amount
+            
+            await supabase.from('balances').upsert({
+                user_id: userId,
+                asset: asset,
+                balance: newBalance,
+                updated_at: new Date().toISOString()
+            })
+            
+            await supabase.from('withdrawals').update({ status: 'completed' }).eq('id', withdrawalId)
+            
+            await loadDashboard()
+            showToast('✅ Withdrawal approved!', 'success')
+        }
+
+        window.rejectWithdrawal = async function(withdrawalId) {
+            if (confirm('Reject this withdrawal?')) {
+                await supabase.from('withdrawals').update({ status: 'rejected' }).eq('id', withdrawalId)
+                await loadDashboard()
+                showToast('❌ Withdrawal rejected', 'info')
+            }
+        }
+
+        async function loadBots() {
+            const { data: bots } = await supabase.from('user_bots').select('*').order('created_at', { ascending: false })
+            allBots = bots || []
+            renderBotsList()
+        }
+
+        function renderBotsList() {
+            const container = document.getElementById('botsList')
+            
+            if (allBots.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-robot"></i><h3>No Bots Active</h3><p>Users haven't activated any trading bots yet</p></div>`
+                return
+            }
+            
+            container.innerHTML = allBots.map(bot => `
+                <div class="bot-card">
+                    <div class="bot-header">
+                        <div class="bot-icon"><i class="fas fa-robot"></i></div>
+                        <div class="bot-info">
+                            <div class="bot-name">${bot.bot_name || 'Trading Bot'}</div>
+                            <div class="bot-version">${bot.bot_version || 'v1.0'}</div>
+                        </div>
+                        <div class="bot-status ${bot.status}">${bot.status === 'running' ? '🟢 RUNNING' : '🔴 STOPPED'}</div>
+                    </div>
+                    <div class="bot-body">
+                        <div class="bot-detail"><i class="fas fa-chart-line"></i> Strategy: ${bot.strategy || 'balanced'}</div>
+                        <div class="bot-detail"><i class="far fa-calendar-alt"></i> Created: ${new Date(bot.created_at).toLocaleDateString()}</div>
+                        <div class="bot-detail"><i class="fas fa-user"></i> User: ${bot.user_id?.substring(0, 8)}...</div>
+                    </div>
+                    <div class="bot-actions">
+                        <button class="bot-control start" onclick="controlBot('${bot.id}', 'start')"><i class="fas fa-play"></i> Start</button>
+                        <button class="bot-control stop" onclick="controlBot('${bot.id}', 'stop')"><i class="fas fa-stop"></i> Stop</button>
+                        <button class="bot-control delete" onclick="deleteBot('${bot.id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        window.controlBot = async function(botId, action) {
+            const newStatus = action === 'start' ? 'running' : 'stopped'
+            await supabase.from('user_bots').update({ status: newStatus }).eq('id', botId)
+            showToast(`Bot ${action}ed!`, 'success')
+            await loadBots()
+        }
+
+        window.deleteBot = async function(botId) {
+            if (confirm('Delete this bot permanently?')) {
+                await supabase.from('user_bots').delete().eq('id', botId)
+                showToast('Bot deleted', 'info')
+                await loadBots()
+            }
+        }
+
+        async function updateStats() {
+            const users = allUsers.length
+            const pendingDeposits = allDeposits.filter(d => d.status === 'pending').length
+            const completedDeposits = allDeposits.filter(d => d.status === 'completed').length
+            const totalVolume = allDeposits.filter(d => d.status === 'completed').reduce((s, d) => s + d.amount, 0)
+            const pendingWithdrawals = allWithdrawals.filter(w => w.status === 'pending').length
+            const activeBots = allBots.filter(b => b.status === 'running').length
+            
+            document.getElementById('totalUsers').textContent = users
+            document.getElementById('pendingDepositsCount').textContent = pendingDeposits
+            document.getElementById('completedDepositsCount').textContent = completedDeposits
+            document.getElementById('totalVolume').textContent = `$${totalVolume.toLocaleString()}`
+            document.getElementById('pendingWithdrawalsCount').textContent = pendingWithdrawals
+            document.getElementById('activeBotsCount').textContent = activeBots
+        }
+
+        function loadCharts() {
+            const ctx = document.getElementById('volumeChart').getContext('2d')
+            
+            const last7Days = []
+            const volumes = []
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date()
+                date.setDate(date.getDate() - i)
+                last7Days.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+                
+                const dayVolume = allDeposits
+                    .filter(d => d.status === 'completed' && new Date(d.created_at).toDateString() === date.toDateString())
+                    .reduce((s, d) => s + d.amount, 0)
+                volumes.push(dayVolume)
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: last7Days,
+                    datasets: [{
+                        label: 'Daily Deposit Volume',
+                        data: volumes,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#9ca3af' } }
+                    },
+                    scales: {
+                        y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+                    }
+                }
+            })
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(allUsers.length / usersPerPage)
+            document.getElementById('pageInfo').innerHTML = `Page ${currentPage} of ${totalPages || 1}`
+            document.getElementById('prevPage').disabled = currentPage === 1
+            document.getElementById('nextPage').disabled = currentPage === totalPages
+        }
+
+        window.prevPage = function() { if (currentPage > 1) { currentPage--; loadUsers() } }
+        window.nextPage = function() { if (currentPage < Math.ceil(allUsers.length / usersPerPage)) { currentPage++; loadUsers() } }
+
+        window.viewUserDetails = function(userId) {
+            navigator.clipboard.writeText(userId)
+            showToast('User ID copied to clipboard', 'info')
+        }
+
+        window.suspendUser = function(userId) {
+            if (confirm('Suspend this user?')) {
+                showToast('User suspended (demo)', 'info')
+            }
+        }
+
+        window.refreshAll = function() { loadDashboard(); showToast('Dashboard refreshed!', 'success') }
+        window.logout = function() { localStorage.removeItem('admin_authenticated'); window.location.href = 'admin_login.html' }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.createElement('div')
+            toast.className = `toast ${type}`
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${msg}`
+            document.body.appendChild(toast)
+            setTimeout(() => toast.remove(), 3000)
+        }
+
+        loadDashboard()
+    </script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0a0e17 0%, #0f1322 100%); color: #fff; min-height: 100vh; }
+        
+        /* Navigation */
+        .navbar { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(59, 130, 246, 0.2); padding: 0.8rem 2rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 0.8rem; cursor: pointer; }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .logo-text { font-size: 1.2rem; font-weight: 700; background: linear-gradient(135deg, #fff, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .admin-badge { background: linear-gradient(135deg, #ef4444, #dc2626); padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.7rem; font-weight: 600; }
+        .nav-buttons { display: flex; gap: 0.8rem; }
+        .nav-btn { background: rgba(55, 65, 81, 0.8); border: none; padding: 0.5rem 1.2rem; border-radius: 10px; color: white; cursor: pointer; transition: all 0.2s; }
+        .nav-btn:hover { background: #3b82f6; transform: translateY(-2px); }
+        
+        /* Container */
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #fff, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .page-header p { color: #9ca3af; margin-top: 0.3rem; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: rgba(31, 41, 55, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
+        .stat-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
+        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .stat-icon { width: 40px; height: 40px; background: rgba(59, 130, 246, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.65rem; color: #9ca3af; margin-top: 0.3rem; }
+        
+        /* Chart Section */
+        .chart-section { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; }
+        .chart-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .chart-container { height: 300px; }
+        
+        /* Section Headers */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem; }
+        .section-title { font-size: 1.2rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        .section-title i { color: #3b82f6; }
+        .badge { background: #f59e0b; color: #1a1f36; padding: 0.2rem 0.7rem; border-radius: 30px; font-size: 0.7rem; font-weight: 600; margin-left: 0.5rem; }
+        
+        /* Users Table */
+        .table-wrapper { background: rgba(31, 41, 55, 0.8); border-radius: 20px; border: 1px solid rgba(59, 130, 246, 0.1); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { text-align: left; padding: 1rem; background: rgba(17, 24, 39, 0.8); color: #9ca3af; font-size: 0.75rem; font-weight: 600; border-bottom: 1px solid #374151; }
+        td { padding: 1rem; border-bottom: 1px solid #374151; }
+        
+        .user-cell { display: flex; align-items: center; gap: 0.8rem; }
+        .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .user-name { font-weight: 600; }
+        .user-email { font-size: 0.7rem; color: #9ca3af; }
+        
+        .balance-item { margin: 0.2rem 0; font-size: 0.8rem; }
+        .balance-label { background: #374151; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.6rem; margin-right: 0.5rem; }
+        .trade-volume { font-weight: 600; color: #10b981; }
+        .join-date { font-size: 0.7rem; color: #9ca3af; }
+        
+        .balance-edit { display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap; }
+        .asset-select { padding: 0.3rem 0.5rem; background: #1f2937; border: 1px solid #374151; border-radius: 6px; color: white; font-size: 0.7rem; }
+        .edit-input { width: 80px; padding: 0.3rem 0.4rem; background: #1f2937; border: 1px solid #374151; border-radius: 6px; color: white; font-size: 0.7rem; }
+        .edit-btn { background: #3b82f6; border: none; padding: 0.3rem 0.5rem; border-radius: 6px; cursor: pointer; }
+        .action-btn { background: none; border: none; padding: 0.3rem 0.5rem; border-radius: 6px; cursor: pointer; margin: 0 0.2rem; }
+        .action-btn.view { color: #3b82f6; }
+        .action-btn.suspend { color: #ef4444; }
+        
+        /* Pagination */
+        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
+        .page-btn { background: #374151; border: none; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; color: white; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Deposits Grid */
+        .deposits-grid, .withdrawals-grid, .bots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1rem; }
+        .deposit-card, .withdrawal-card, .bot-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
+        .deposit-card:hover, .withdrawal-card:hover, .bot-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
+        
+        .deposit-status, .withdrawal-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.6rem; font-weight: 600; margin-bottom: 0.8rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .deposit-body, .withdrawal-body { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .deposit-icon, .withdrawal-icon { width: 50px; height: 50px; background: rgba(16, 185, 129, 0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #10b981; }
+        .deposit-amount { font-size: 1.2rem; font-weight: 700; }
+        .deposit-crypto, .withdrawal-address { font-size: 0.7rem; color: #9ca3af; margin: 0.2rem 0; }
+        .deposit-date, .withdrawal-date { font-size: 0.6rem; color: #6b7280; }
+        .deposit-user { font-size: 0.6rem; color: #6b7280; margin-top: 0.3rem; }
+        .deposit-actions, .withdrawal-actions { display: flex; gap: 0.5rem; }
+        .approve-btn { flex: 1; background: #10b981; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .reject-btn { flex: 1; background: #ef4444; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        
+        /* Bot Card */
+        .bot-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; }
+        .bot-icon { width: 45px; height: 45px; background: rgba(59, 130, 246, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .bot-name { font-weight: 700; }
+        .bot-version { font-size: 0.6rem; color: #9ca3af; }
+        .bot-status { margin-left: auto; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.6rem; font-weight: 600; }
+        .bot-status.running { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .bot-status.stopped { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .bot-detail { font-size: 0.7rem; color: #9ca3af; margin: 0.3rem 0; display: flex; align-items: center; gap: 0.5rem; }
+        .bot-actions { display: flex; gap: 0.5rem; }
+        .bot-control { flex: 1; padding: 0.4rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.7rem; font-weight: 600; }
+        .bot-control.start { background: #10b981; color: white; }
+        .bot-control.stop { background: #ef4444; color: white; }
+        .bot-control.delete { background: #6b7280; color: white; }
+        
+        /* Empty State */
+        .empty-state { text-align: center; padding: 2rem; color: #6b7280; }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; z-index: 1000; animation: slideIn 0.3s ease; }
+        .toast.success { background: #10b981; color: white; }
+        .toast.error { background: #ef4444; color: white; }
+        .toast.info { background: #3b82f6; color: white; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) { 
+            .container { padding: 1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
+            .deposits-grid, .withdrawals-grid, .bots-grid { grid-template-columns: 1fr; }
+            .navbar { padding: 0.8rem 1rem; }
+            .nav-buttons .nav-btn span { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="location.href='dashboard.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span class="admin-badge"><i class="fas fa-shield-alt"></i> Super Admin</span>
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
+                <button class="nav-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-chart-line"></i> Admin Dashboard</h1>
+            <p>Manage users, approve deposits/withdrawals, and control trading bots</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-users"></i></div></div><div class="stat-value" id="totalUsers">0</div><div class="stat-label">Total Users</div></div>
+            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="pendingDepositsCount">0</div><div class="stat-label">Pending Deposits</div></div>
+            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="completedDepositsCount">0</div><div class="stat-label">Completed Deposits</div></div>
+            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-dollar-sign"></i></div></div><div class="stat-value" id="totalVolume">$0</div><div class="stat-label">Total Volume</div></div>
+            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-arrow-up"></i></div></div><div class="stat-value" id="pendingWithdrawalsCount">0</div><div class="stat-label">Pending Withdrawals</div></div>
+            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-robot"></i></div></div><div class="stat-value" id="activeBotsCount">0</div><div class="stat-label">Active Bots</div></div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-section">
+            <div class="chart-title"><i class="fas fa-chart-line"></i> Deposit Volume (Last 7 Days)</div>
+            <div class="chart-container"><canvas id="volumeChart"></canvas></div>
+        </div>
+
+        <!-- User Management -->
+        <div class="section-header"><div class="section-title"><i class="fas fa-users"></i> User Management</div></div>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>User</th><th>Balances</th><th>Trade Volume</th><th>Joined</th><th>Edit Balance</th><th>Actions</th></tr></thead>
+                <tbody id="usersTableBody"><tr><td colspan="6" style="text-align:center;padding:2rem;">Loading users...</td></tr></tbody>
+            </table>
+        </div>
+        <div class="pagination"><button class="page-btn" id="prevPage" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Prev</button><span id="pageInfo">Page 1</span><button class="page-btn" id="nextPage" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button></div>
+
+        <!-- Pending Deposits -->
+        <div class="section-header"><div class="section-title"><i class="fas fa-hourglass-half"></i> Pending Deposits <span class="badge" id="pendingDepositsBadge">0</span></div></div>
+        <div id="pendingDepositsList" class="deposits-grid"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading...</p></div></div>
+
+        <!-- Pending Withdrawals -->
+        <div class="section-header"><div class="section-title"><i class="fas fa-arrow-up"></i> Pending Withdrawals <span class="badge" id="pendingWithdrawalsBadge">0</span></div></div>
+        <div id="pendingWithdrawalsList" class="withdrawals-grid"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading...</p></div></div>
+
+        <!-- Bot Management -->
+        <div class="section-header"><div class="section-title"><i class="fas fa-robot"></i> Bot Management</div></div>
+        <div id="botsList" class="bots-grid"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading bots...</p></div></div>
+    </div>
+
+    <script>
+        window.updateUserBalance = window.updateUserBalance
+        window.approveDeposit = window.approveDeposit
+        window.rejectDeposit = window.rejectDeposit
+        window.approveWithdrawal = window.approveWithdrawal
+        window.rejectWithdrawal = window.rejectWithdrawal
+        window.controlBot = window.controlBot
+        window.deleteBot = window.deleteBot
+        window.viewUserDetails = window.viewUserDetails
+        window.suspendUser = window.suspendUser
+        window.refreshAll = window.refreshAll
+        window.logout = window.logout
+        window.prevPage = window.prevPage
+        window.nextPage = window.nextPage
+    </script>
+</body>
+</html>
