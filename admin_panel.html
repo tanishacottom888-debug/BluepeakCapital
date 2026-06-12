@@ -27,7 +27,7 @@
 
         async function loadDashboard() {
             await loadUsers()
-            loadPendingDeposits()  // Now reads from localStorage
+            loadPendingDeposits()
             await loadBots()
             updateStats()
         }
@@ -133,7 +133,6 @@
             showToast(`${asset} balance updated!`, 'success')
         }
 
-        // THIS IS THE FIX - Reads deposits from localStorage, NOT Supabase
         function loadPendingDeposits() {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const pendingDeposits = depositHistory.filter(d => d.status === 'pending')
@@ -385,18 +384,20 @@
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
             .deposits-grid, .bots-grid { grid-template-columns: 1fr; }
             .navbar { padding: 0.8rem 1rem; }
+            .nav-buttons .nav-btn span { display: none; }
         }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo" onclick="location.href='dashboard.html'">
+        <div class="logo" onclick="location.href='admin_panel.html'">
             <div class="logo-icon">⛰️</div>
             <div class="logo-text">BluepeakCapital</div>
         </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
             <span class="admin-badge"><i class="fas fa-shield-alt"></i> Super Admin</span>
             <div class="nav-buttons">
+                <button class="nav-btn" onclick="location.href='admin_bot.html'"><i class="fas fa-robot"></i> <span>Trading Bot</span></button>
                 <button class="nav-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
                 <button class="nav-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
             </div>
@@ -421,7 +422,8 @@
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>User</th><th>Balances</th><th>Joined</th><th>Edit Balance</th><th>Actions</th></tr></thead>
-                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</td></tr></tbody>
+                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</div></div> </div>
+                </tbody>
             </table>
         </div>
         <div class="pagination"><button class="page-btn" id="prevPage" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Prev</button><span id="pageInfo">Page 1</span><button class="page-btn" id="nextPage" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button></div>
