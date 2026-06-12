@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
+    <title>BluepeakCapital | Admin Trading Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        if (localStorage.getItem('admin_authenticated') !== 'true') {
+            window.location.href = 'admin_login.html';
+        }
+    </script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0a0e17 0%, #0f1322 100%); color: #fff; min-height: 100vh; }
+        
+        .navbar { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(59, 130, 246, 0.2); padding: 0.8rem 2rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 0.8rem; cursor: pointer; }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .logo-text { font-size: 1.2rem; font-weight: 700; background: linear-gradient(135deg, #fff, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .nav-buttons { display: flex; gap: 0.8rem; }
+        .nav-btn { background: rgba(55, 65, 81, 0.8); border: none; padding: 0.5rem 1.2rem; border-radius: 10px; color: white; cursor: pointer; transition: all 0.2s; }
+        .nav-btn:hover { background: #3b82f6; transform: translateY(-2px); }
+        
+        .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #fff, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .page-header p { color: #9ca3af; margin-top: 0.3rem; }
+        
+        /* Bot Status Card */
+        .bot-status-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; }
+        .bot-status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+        .bot-name { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+        .bot-status-badge { padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.8rem; font-weight: 600; }
+        .bot-status-badge.stopped { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .bot-status-badge.running { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .bot-status-badge.paused { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        
+        .bot-controls { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .control-btn { padding: 0.5rem 1.2rem; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+        .control-btn.start { background: #10b981; color: white; }
+        .control-btn.start:hover { background: #059669; transform: scale(1.02); }
+        .control-btn.stop { background: #ef4444; color: white; }
+        .control-btn.stop:hover { background: #dc2626; transform: scale(1.02); }
+        .control-btn.pause { background: #f59e0b; color: white; }
+        .control-btn.pause:hover { background: #d97706; transform: scale(1.02); }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
+        .stat-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
+        .stat-label { font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.3rem; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-change { font-size: 0.6rem; margin-top: 0.3rem; color: #10b981; }
+        
+        /* Settings Grid */
+        .settings-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .setting-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; }
+        .setting-label { font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.3rem; display: block; }
+        .setting-select, .setting-input { width: 100%; padding: 0.6rem; background: #1f2937; border: 1px solid #374151; border-radius: 10px; color: white; font-size: 0.85rem; }
+        
+        /* Strategy Cards */
+        .strategies-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .strategy-card { background: rgba(31, 41, 55, 0.9); border: 2px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; cursor: pointer; transition: all 0.3s; }
+        .strategy-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
+        .strategy-card.active { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .strategy-name { font-weight: 700; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+        .strategy-desc { font-size: 0.65rem; color: #9ca3af; }
+        
+        /* Price Section */
+        .price-section { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; }
+        .price-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+        .current-price { font-size: 2rem; font-weight: 700; color: #10b981; }
+        .price-change { font-size: 0.9rem; }
+        
+        /* Trade Log */
+        .trade-log { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 20px; padding: 1.5rem; }
+        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .log-title { font-size: 1rem; font-weight: 600; }
+        .log-table { width: 100%; border-collapse: collapse; }
+        .log-table th { text-align: left; padding: 0.5rem; color: #9ca3af; font-size: 0.7rem; border-bottom: 1px solid #374151; }
+        .log-table td { padding: 0.5rem; font-size: 0.75rem; border-bottom: 1px solid #374151; }
+        .trade-buy { color: #10b981; font-weight: 600; }
+        .trade-sell { color: #ef4444; font-weight: 600; }
+        
+        @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } .settings-grid { grid-template-columns: repeat(2, 1fr); } .strategies-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .container { padding: 1rem; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .settings-grid { grid-template-columns: 1fr; } .bot-status-header { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="location.href='admin_panel.html'">
+            <div class="logo-icon">⛰️</div>
+            <div class="logo-text">BluepeakCapital Bot</div>
+        </div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="location.href='admin_panel.html'"><i class="fas fa-chart-line"></i> Dashboard</button>
+            <button class="nav-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-robot"></i> Admin Trading Bot</h1>
+            <p>Automated trading bot with Grid, Simple, and RSI strategies</p>
+        </div>
+
+        <!-- Bot Status -->
+        <div class="bot-status-card">
+            <div class="bot-status-header">
+                <div class="bot-name"><i class="fas fa-robot"></i> AI Trading Bot</div>
+                <div class="bot-controls">
+                    <button class="control-btn start" id="startBtn" onclick="startBot()"><i class="fas fa-play"></i> Start</button>
+                    <button class="control-btn pause" id="pauseBtn" onclick="pauseBot()"><i class="fas fa-pause"></i> Pause</button>
+                    <button class="control-btn stop" id="stopBtn" onclick="stopBot()"><i class="fas fa-stop"></i> Stop</button>
+                </div>
+                <div><span class="bot-status-badge stopped" id="botStatus">STOPPED</span></div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Trades</div><div class="stat-value" id="totalTrades">0</div><div class="stat-change">All time</div></div>
+            <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="winRate">0%</div><div class="stat-change">Success rate</div></div>
+            <div class="stat-card"><div class="stat-label">Total P&L</div><div class="stat-value" id="totalPnL">$0</div><div class="stat-change" id="pnlChange">0%</div></div>
+            <div class="stat-card"><div class="stat-label">Best Trade</div><div class="stat-value" id="bestTrade">$0</div><div class="stat-change">Highest profit</div></div>
+            <div class="stat-card"><div class="stat-label">Worst Trade</div><div class="stat-value" id="worstTrade">$0</div><div class="stat-change">Highest loss</div></div>
+            <div class="stat-card"><div class="stat-label">Bot Version</div><div class="stat-value">v2.0</div><div class="stat-change">AI Enhanced</div></div>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-grid">
+            <div class="setting-card">
+                <label class="setting-label">Trading Asset</label>
+                <select class="setting-select" id="tradingAsset">
+                    <option value="BTC">₿ Bitcoin (BTC)</option>
+                    <option value="ETH">Ξ Ethereum (ETH)</option>
+                    <option value="SOL">◎ Solana (SOL)</option>
+                    <option value="BNB">ⓑ Binance (BNB)</option>
+                    <option value="DOGE">Ð Dogecoin (DOGE)</option>
+                    <option value="XRP">✕ Ripple (XRP)</option>
+                    <option value="ADA">₳ Cardano (ADA)</option>
+                    <option value="DOT">● Polkadot (DOT)</option>
+                    <option value="LTC">Ł Litecoin (LTC)</option>
+                    <option value="TRX">💧 TRON (TRX)</option>
+                </select>
+            </div>
+            <div class="setting-card">
+                <label class="setting-label">Trade Amount ($)</label>
+                <input type="number" class="setting-input" id="tradeAmount" value="100" step="10">
+            </div>
+            <div class="setting-card">
+                <label class="setting-label">Grid Levels</label>
+                <input type="number" class="setting-input" id="gridLevels" value="5" min="2" max="20">
+            </div>
+            <div class="setting-card">
+                <label class="setting-label">Grid Spacing (%)</label>
+                <input type="number" class="setting-input" id="gridSpacing" value="2" step="0.5">
+            </div>
+        </div>
+
+        <!-- Strategy Selection -->
+        <div class="strategies-grid">
+            <div class="strategy-card" onclick="selectStrategy('grid')" id="strategyGrid">
+                <div class="strategy-name"><i class="fas fa-th"></i> Grid Trading</div>
+                <div class="strategy-desc">Buy low, sell high within a price range. Places multiple limit orders at different price levels.</div>
+            </div>
+            <div class="strategy-card active" onclick="selectStrategy('simple')" id="strategySimple">
+                <div class="strategy-name"><i class="fas fa-chart-line"></i> Simple Strategy</div>
+                <div class="strategy-desc">Buy when price drops X%, sell when price rises Y%. Simple and effective.</div>
+            </div>
+            <div class="strategy-card" onclick="selectStrategy('rsi')" id="strategyRSI">
+                <div class="strategy-name"><i class="fas fa-waveform"></i> RSI Strategy</div>
+                <div class="strategy-desc">Buy when RSI is oversold (&lt;30), sell when RSI is overbought (&gt;70).</div>
+            </div>
+        </div>
+
+        <!-- Price Section -->
+        <div class="price-section">
+            <div class="price-header">
+                <div>
+                    <span id="assetName">Bitcoin (BTC)</span>
+                    <div class="current-price" id="currentPrice">$0</div>
+                </div>
+                <div>
+                    <div class="price-change" id="priceChange">24h Change: 0%</div>
+                    <div class="price-range" id="priceRange">24h Range: $0 - $0</div>
+                </div>
+                <div>
+                    <div class="price-range" id="strategySignal">📊 Waiting for signal...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trade Log -->
+        <div class="trade-log">
+            <div class="log-header">
+                <div class="log-title"><i class="fas fa-list"></i> Trade Log</div>
+                <button class="nav-btn" onclick="clearTradeLog()" style="padding: 0.3rem 0.8rem;">Clear Log</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="log-table">
+                    <thead>
+                        <tr><th>Time</th><th>Asset</th><th>Type</th><th>Price</th><th>Amount</th><th>Total</th><th>P&L</th></tr>
+                    </thead>
+                    <tbody id="tradeLogBody">
+                        <tr><td colspan="7" style="text-align:center;padding:2rem;">No trades yet. Start the bot to begin trading.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Bot state
+        let botRunning = false;
+        let botPaused = false;
+        let currentStrategy = 'simple';
+        let currentAsset = 'BTC';
+        let currentPrice = 0;
+        let priceHistory = [];
+        let tradeHistory = [];
+        let botInterval = null;
+        
+        // Asset price data (simulated with CoinCap API)
+        const assetIds = {
+            BTC: 'bitcoin',
+            ETH: 'ethereum',
+            SOL: 'solana',
+            BNB: 'binance-coin',
+            DOGE: 'dogecoin',
+            XRP: 'ripple',
+            ADA: 'cardano',
+            DOT: 'polkadot',
+            LTC: 'litecoin',
+            TRX: 'tron'
+        };
+        
+        const assetNames = {
+            BTC: 'Bitcoin (BTC)',
+            ETH: 'Ethereum (ETH)',
+            SOL: 'Solana (SOL)',
+            BNB: 'Binance (BNB)',
+            DOGE: 'Dogecoin (DOGE)',
+            XRP: 'Ripple (XRP)',
+            ADA: 'Cardano (ADA)',
+            DOT: 'Polkadot (DOT)',
+            LTC: 'Litecoin (LTC)',
+            TRX: 'TRON (TRX)'
+        };
+        
+        // Fetch real price from CoinCap API
+        async function fetchPrice() {
+            try {
+                const assetId = assetIds[currentAsset];
+                const response = await fetch(`https://api.coincap.io/v2/assets/${assetId}`);
+                const data = await response.json();
+                if (data && data.data) {
+                    currentPrice = parseFloat(data.data.priceUsd);
+                    const change24h = parseFloat(data.data.changePercent24Hr).toFixed(2);
+                    const high24h = parseFloat(data.data.highUsd).toFixed(2);
+                    const low24h = parseFloat(data.data.lowUsd).toFixed(2);
+                    
+                    document.getElementById('currentPrice').innerHTML = `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    document.getElementById('priceChange').innerHTML = `24h Change: ${change24h >= 0 ? '▲' : '▼'} ${Math.abs(change24h)}%`;
+                    document.getElementById('priceRange').innerHTML = `24h Range: $${low24h} - $${high24h}`;
+                    
+                    // Add to history for RSI calculation
+                    priceHistory.push(currentPrice);
+                    if (priceHistory.length > 20) priceHistory.shift();
+                    
+                    // Update signal display
+                    updateSignalDisplay();
+                    
+                    return currentPrice;
+                }
+            } catch (error) {
+                console.error('Error fetching price:', error);
+                // Fallback to simulated price
+                currentPrice = currentPrice || (currentAsset === 'BTC' ? 43250 : currentAsset === 'ETH' ? 2250 : 100);
+                return currentPrice;
+            }
+        }
+        
+        // Calculate RSI
+        function calculateRSI(prices, period = 14) {
+            if (prices.length < period + 1) return 50;
+            
+            let gains = 0, losses = 0;
+            for (let i = prices.length - period; i < prices.length - 1; i++) {
+                const change = prices[i + 1] - prices[i];
+                if (change >= 0) gains += change;
+                else losses -= change;
+            }
+            
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            
+            if (avgLoss === 0) return 100;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+        
+        function updateSignalDisplay() {
+            const signalDiv = document.getElementById('strategySignal');
+            if (currentStrategy === 'grid') {
+                signalDiv.innerHTML = '📊 Grid Trading Active - Placing orders at multiple levels';
+            } else if (currentStrategy === 'simple') {
+                signalDiv.innerHTML = '📊 Simple Strategy - Waiting for price movement';
+            } else if (currentStrategy === 'rsi') {
+                const rsi = calculateRSI(priceHistory);
+                signalDiv.innerHTML = `📊 RSI: ${rsi.toFixed(1)} - ${rsi < 30 ? 'Oversold (BUY Signal)' : rsi > 70 ? 'Overbought (SELL Signal)' : 'Neutral'}`;
+            }
+        }
+        
+        // Execute trade based on strategy
+        async function executeStrategy() {
+            if (!botRunning || botPaused) return;
+            
+            const tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
+            const assetSymbol = currentAsset;
+            const price = await fetchPrice();
+            
+            let shouldBuy = false;
+            let shouldSell = false;
+            let signal = '';
+            
+            if (currentStrategy === 'simple') {
+                // Simple strategy - check if we have a position
+                const lastTrade = tradeHistory[tradeHistory.length - 1];
+                const buyTrigger = 0.02; // 2% drop to buy
+                const sellTrigger = 0.03; // 3% rise to sell
+                
+                if (priceHistory.length >= 2) {
+                    const prevPrice = priceHistory[priceHistory.length - 2];
+                    const change = (price - prevPrice) / prevPrice;
+                    
+                    if (!lastTrade || lastTrade.type === 'SELL') {
+                        if (change <= -buyTrigger) {
+                            shouldBuy = true;
+                            signal = `Price dropped ${Math.abs(change * 100).toFixed(1)}% → BUY signal`;
+                        }
+                    } else if (lastTrade.type === 'BUY') {
+                        if (change >= sellTrigger) {
+                            shouldSell = true;
+                            signal = `Price rose ${(change * 100).toFixed(1)}% → SELL signal`;
+                        }
+                    }
+                }
+            } else if (currentStrategy === 'rsi') {
+                const rsi = calculateRSI(priceHistory);
+                if (rsi < 30) {
+                    shouldBuy = true;
+                    signal = `RSI ${rsi.toFixed(1)} (Oversold) → BUY signal`;
+                } else if (rsi > 70) {
+                    shouldSell = true;
+                    signal = `RSI ${rsi.toFixed(1)} (Overbought) → SELL signal`;
+                }
+            } else if (currentStrategy === 'grid') {
+                // Grid strategy - simplified for demo
+                const gridLevels = parseInt(document.getElementById('gridLevels').value);
+                const gridSpacing = parseFloat(document.getElementById('gridSpacing').value);
+                
+                if (priceHistory.length >= 2) {
+                    const prevPrice = priceHistory[priceHistory.length - 2];
+                    const change = (price - prevPrice) / prevPrice;
+                    
+                    if (change <= -gridSpacing / 100) {
+                        shouldBuy = true;
+                        signal = `Grid: Price dropped ${Math.abs(change * 100).toFixed(1)}% → BUY at grid level`;
+                    } else if (change >= gridSpacing / 100) {
+                        shouldSell = true;
+                        signal = `Grid: Price rose ${(change * 100).toFixed(1)}% → SELL at grid level`;
+                    }
+                }
+            }
+            
+            if (shouldBuy) {
+                executeBuy(assetSymbol, tradeAmount, price, signal);
+            } else if (shouldSell) {
+                executeSell(assetSymbol, tradeAmount, price, signal);
+            } else {
+                document.getElementById('strategySignal').innerHTML = `📊 ${signal || 'Waiting for signal...'}`;
+            }
+        }
+        
+        function executeBuy(asset, amountUSD, price, signal) {
+            const cryptoAmount = amountUSD / price;
+            const trade = {
+                id: Date.now(),
+                time: new Date().toLocaleTimeString(),
+                asset: asset,
+                type: 'BUY',
+                price: price,
+                amount: cryptoAmount.toFixed(6),
+                total: amountUSD,
+                pnl: 0,
+                signal: signal
+            };
+            
+            tradeHistory.push(trade);
+            addTradeToLog(trade);
+            updateStats();
+            
+            document.getElementById('strategySignal').innerHTML = `🟢 BUY EXECUTED: ${signal}`;
+            setTimeout(() => updateSignalDisplay(), 3000);
+        }
+        
+        function executeSell(asset, amountUSD, price, signal) {
+            // Find the last BUY trade to calculate P&L
+            const lastBuy = [...tradeHistory].reverse().find(t => t.type === 'BUY' && t.asset === asset);
+            let pnl = 0;
+            
+            if (lastBuy) {
+                const sellValue = amountUSD;
+                const buyValue = lastBuy.total;
+                pnl = sellValue - buyValue;
+            }
+            
+            const trade = {
+                id: Date.now(),
+                time: new Date().toLocaleTimeString(),
+                asset: asset,
+                type: 'SELL',
+                price: price,
+                amount: (amountUSD / price).toFixed(6),
+                total: amountUSD,
+                pnl: pnl,
+                signal: signal
+            };
+            
+            tradeHistory.push(trade);
+            addTradeToLog(trade);
+            updateStats();
+            
+            const pnlText = pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`;
+            document.getElementById('strategySignal').innerHTML = `🔴 SELL EXECUTED: ${signal} | P&L: ${pnlText}`;
+            setTimeout(() => updateSignalDisplay(), 3000);
+        }
+        
+        function addTradeToLog(trade) {
+            const tbody = document.getElementById('tradeLogBody');
+            const pnlClass = trade.pnl >= 0 ? 'trade-buy' : 'trade-sell';
+            const pnlText = trade.pnl !== 0 ? (trade.pnl >= 0 ? `+$${trade.pnl.toFixed(2)}` : `-$${Math.abs(trade.pnl).toFixed(2)}`) : '-';
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${trade.time}</td>
+                <td>${trade.asset}</td>
+                <td class="${trade.type === 'BUY' ? 'trade-buy' : 'trade-sell'}">${trade.type}</td>
+                <td>$${trade.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <td>${trade.amount}</td>
+                <td>$${trade.total}</td>
+                <td class="${pnlClass}">${pnlText}</td>
+            `;
+            
+            tbody.prepend(row);
+            if (tbody.children.length > 50) tbody.removeChild(tbody.lastChild);
+        }
+        
+        function updateStats() {
+            const trades = tradeHistory;
+            const totalTrades = trades.length;
+            const buyTrades = trades.filter(t => t.type === 'BUY');
+            const sellTrades = trades.filter(t => t.type === 'SELL');
+            const winningTrades = trades.filter(t => t.pnl > 0);
+            const winRate = totalTrades > 0 ? (winningTrades.length / totalTrades * 100).toFixed(1) : 0;
+            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
+            const bestTrade = Math.max(...trades.map(t => t.pnl), 0);
+            const worstTrade = Math.min(...trades.map(t => t.pnl), 0);
+            
+            document.getElementById('totalTrades').innerHTML = totalTrades;
+            document.getElementById('winRate').innerHTML = `${winRate}%`;
+            document.getElementById('totalPnL').innerHTML = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
+            document.getElementById('bestTrade').innerHTML = `+$${bestTrade.toFixed(2)}`;
+            document.getElementById('worstTrade').innerHTML = `$${worstTrade.toFixed(2)}`;
+            
+            const pnlChange = document.getElementById('pnlChange');
+            if (pnlChange) pnlChange.innerHTML = totalPnL >= 0 ? `↑ ${((totalPnL / (totalPnL - totalPnL + 100)) * 100).toFixed(1)}%` : `↓ ${((Math.abs(totalPnL) / 100) * 100).toFixed(1)}%`;
+            pnlChange.style.color = totalPnL >= 0 ? '#10b981' : '#ef4444';
+        }
+        
+        function clearTradeLog() {
+            if (confirm('Clear all trade history?')) {
+                tradeHistory = [];
+                document.getElementById('tradeLogBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;">No trades yet. Start the bot to begin trading.</td></tr>';
+                updateStats();
+                showToast('Trade log cleared');
+            }
+        }
+        
+        async function startBot() {
+            if (botRunning && !botPaused) {
+                showToast('Bot is already running');
+                return;
+            }
+            
+            botRunning = true;
+            botPaused = false;
+            document.getElementById('botStatus').innerHTML = 'RUNNING';
+            document.getElementById('botStatus').className = 'bot-status-badge running';
+            showToast('Bot started!');
+            
+            await fetchPrice();
+            if (botInterval) clearInterval(botInterval);
+            botInterval = setInterval(async () => {
+                await fetchPrice();
+                await executeStrategy();
+            }, 30000); // Check every 30 seconds
+        }
+        
+        function pauseBot() {
+            if (!botRunning || botPaused) {
+                showToast('Bot is not running');
+                return;
+            }
+            botPaused = true;
+            document.getElementById('botStatus').innerHTML = 'PAUSED';
+            document.getElementById('botStatus').className = 'bot-status-badge paused';
+            showToast('Bot paused');
+        }
+        
+        function stopBot() {
+            botRunning = false;
+            botPaused = false;
+            if (botInterval) clearInterval(botInterval);
+            document.getElementById('botStatus').innerHTML = 'STOPPED';
+            document.getElementById('botStatus').className = 'bot-status-badge stopped';
+            showToast('Bot stopped');
+        }
+        
+        function selectStrategy(strategy) {
+            currentStrategy = strategy;
+            document.querySelectorAll('.strategy-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(`strategy${strategy.charAt(0).toUpperCase() + strategy.slice(1)}`).classList.add('active');
+            showToast(`${strategy.toUpperCase()} strategy selected`);
+            updateSignalDisplay();
+        }
+        
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white; padding: 10px 20px; border-radius: 10px; font-size: 0.8rem; z-index: 1000; animation: slideIn 0.3s ease;';
+            toast.innerHTML = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+        
+        function logout() {
+            localStorage.removeItem('admin_authenticated');
+            window.location.href = 'admin_login.html';
+        }
+        
+        // Event listeners
+        document.getElementById('tradingAsset').addEventListener('change', async (e) => {
+            currentAsset = e.target.value;
+            document.getElementById('assetName').innerHTML = assetNames[currentAsset];
+            await fetchPrice();
+            showToast(`Switched to ${assetNames[currentAsset]}`);
+        });
+        
+        // Initialize
+        async function init() {
+            await fetchPrice();
+            setInterval(fetchPrice, 10000);
+        }
+        
+        init();
+        
+        // Make functions global
+        window.startBot = startBot;
+        window.pauseBot = pauseBot;
+        window.stopBot = stopBot;
+        window.selectStrategy = selectStrategy;
+        window.clearTradeLog = clearTradeLog;
+        window.logout = logout;
+    </script>
+</body>
+</html>
