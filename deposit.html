@@ -88,9 +88,9 @@
         }
         
         async function saveDepositToSupabase(amount, crypto, network, address) {
-            if (!currentUser) return
+            if (!currentUser) return false
             
-            await supabase.from('deposits').insert({
+            const { error } = await supabase.from('deposits').insert({
                 user_id: currentUser.id,
                 amount: amount,
                 crypto: crypto,
@@ -100,7 +100,13 @@
                 created_at: new Date().toISOString()
             })
             
+            if (error) {
+                console.error('Error saving deposit:', error)
+                return false
+            }
+            
             await loadDepositHistory()
+            return true
         }
         
         window.deleteDepositHistory = async function(depositId) {
