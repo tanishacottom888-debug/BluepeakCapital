@@ -2,15 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
-    <title>BluepeakCapital | Admin Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes, viewport-fit=cover" />
+    <meta name="description" content="BluepeakCapital - Deposit cryptocurrency to fund your account" />
+    <title>BluepeakCapital | Deposit Crypto</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
-        if (localStorage.getItem('admin_authenticated') !== 'true') {
-            window.location.href = 'admin_login.html';
+        function initTheme() {
+            const savedTheme = localStorage.getItem('bluepeak_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('bluepeak_theme', 'dark');
+            }
         }
+        initTheme();
     </script>
     
     <script type="module">
@@ -19,496 +29,703 @@
         const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
         const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
-        window.supabase = supabase
 
-        let currentPage = 1
-        let usersPerPage = 10
-        let allUsers = []
-        let currentDeposits = []
+        let currentUser = null
 
-        async function loadDashboard() {
-            await loadUsers()
-            loadPendingDeposits()
-            await loadBots()
-            updateStats()
-        }
-
-        async function loadUsers() {
-            const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
-            const { data: balances } = await supabase.from('user_balances').select('*')
-            
-            allUsers = profiles || []
-            
-            const userBalances = {}
-            if (balances) {
-                balances.forEach(b => {
-                    if (!userBalances[b.user_id]) userBalances[b.user_id] = {}
-                    userBalances[b.user_id][b.asset || 'USD'] = b.balance
-                })
-            }
-            
-            renderUsersTable(userBalances)
-        }
-
-        function renderUsersTable(userBalances) {
-            const tbody = document.getElementById('usersTableBody')
-            const start = (currentPage - 1) * usersPerPage
-            const paginated = allUsers.slice(start, start + usersPerPage)
-            
-            if (paginated.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No users found</td></tr>'
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                window.location.href = 'login.html'
                 return
             }
-            
-            tbody.innerHTML = paginated.map(user => {
-                const balances = userBalances[user.id] || {}
-                return `
-                    <tr>
-                        <td>
-                            <div class="user-cell">
-                                <div class="user-avatar">${(user.full_name || 'U').charAt(0).toUpperCase()}</div>
-                                <div class="user-info">
-                                    <div class="user-name">${user.full_name || 'User'}</div>
-                                    <div class="user-email">${user.email || 'N/A'}</div>
-                                    <div class="user-id" style="font-size:0.6rem; color:#6b7280;">ID: ${user.id.substring(0, 8)}...</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="balance-cell">
-                            <div class="balance-item"><span class="balance-label">USD</span><span id="usd-${user.id}">$${(balances.USD || 0).toFixed(2)}</span></div>
-                            <div class="balance-item"><span class="balance-label">BTC</span><span id="btc-${user.id}">${(balances.BTC || 0).toFixed(4)} BTC</span></div>
-                            <div class="balance-item"><span class="balance-label">ETH</span><span id="eth-${user.id}">${(balances.ETH || 0).toFixed(4)} ETH</span></div>
-                        </td>
-                        <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</td>
-                        <td>
-                            <div class="balance-edit">
-                                <select id="asset-select-${user.id}" class="asset-select">
-                                    <option value="USD">USD</option>
-                                    <option value="BTC">BTC</option>
-                                    <option value="ETH">ETH</option>
-                                </select>
-                                <input type="number" id="edit-amount-${user.id}" placeholder="Amount" step="0.01" class="edit-input">
-                                <button class="edit-btn" onclick="updateUserBalance('${user.id}')"><i class="fas fa-save"></i></button>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="action-btn view" onclick="viewUserDetails('${user.id}')"><i class="fas fa-eye"></i></button>
-                        </td>
-                    </tr>
-                `
-            }).join('')
-            
-            updatePagination()
-        }
-
-        window.updateUserBalance = async function(userId) {
-            const assetSelect = document.getElementById(`asset-select-${userId}`)
-            const amountInput = document.getElementById(`edit-amount-${userId}`)
-            const asset = assetSelect.value
-            const newBalance = parseFloat(amountInput.value)
-            
-            if (isNaN(newBalance)) {
-                alert('Please enter a valid amount')
-                return
-            }
-            
-            const { error } = await supabase.from('user_balances').upsert({
-                user_id: userId,
-                asset: asset,
-                balance: newBalance,
-                updated_at: new Date().toISOString()
+            currentUser = session.user
+            // Make currentUser available globally
+            window.currentUser = currentUser
+            await loadUserBalance()
+            loadDepositHistory()
+            // Listen for storage changes (when admin approves from another tab)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'depositHistory') {
+                    console.log('Deposit history updated, refreshing...')
+                    loadDepositHistory()
+                    loadUserBalance()
+                }
             })
-            
-            if (error) {
-                alert('Error updating balance: ' + error.message)
-                return
-            }
-            
-            const displaySpan = document.getElementById(`${asset.toLowerCase()}-${userId}`)
-            if (asset === 'USD') {
-                displaySpan.innerHTML = `$${newBalance.toFixed(2)}`
-            } else {
-                displaySpan.innerHTML = `${newBalance.toFixed(4)} ${asset}`
-            }
-            
-            amountInput.value = ''
-            showToast(`${asset} balance updated!`, 'success')
         }
-
-        function loadPendingDeposits() {
-            const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-            const pendingDeposits = depositHistory.filter(d => d.status === 'pending')
-            currentDeposits = pendingDeposits
-            
-            const container = document.getElementById('pendingDepositsList')
-            const countSpan = document.getElementById('pendingCount')
-            
-            countSpan.textContent = pendingDeposits.length
-            document.getElementById('pendingDepositCount').textContent = pendingDeposits.length
-            
-            if (pendingDeposits.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i><h3>All Clear!</h3><p>No pending deposits to review</p></div>`
-                return
-            }
-            
-            container.innerHTML = pendingDeposits.map((deposit, idx) => `
-                <div class="deposit-card">
-                    <div class="deposit-status pending"><i class="fas fa-clock"></i> Pending</div>
-                    <div class="deposit-body">
-                        <div class="deposit-icon"><i class="fas fa-coins"></i></div>
-                        <div class="deposit-info">
-                            <div class="deposit-amount">$${deposit.amount.toFixed(2)}</div>
-                            <div class="deposit-crypto">${deposit.crypto} • ${deposit.network}</div>
-                            <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${deposit.date}</div>
-                            <div class="deposit-user"><i class="fas fa-user"></i> User: ${deposit.userEmail || deposit.userId?.substring(0, 8)}...</div>
-                            <div class="deposit-user-id" style="font-size:0.6rem; color:#6b7280;">User ID: ${deposit.userId}</div>
-                            <div class="deposit-address" style="font-size:0.6rem; word-break:break-all;">Address: ${deposit.address?.substring(0, 30)}...</div>
-                            ${deposit.txId ? `<div class="deposit-txid" style="font-size:0.6rem;">TX: ${deposit.txId}</div>` : ''}
-                        </div>
-                    </div>
-                    <div class="deposit-actions">
-                        <button class="approve-btn" onclick="approveDeposit(${idx})"><i class="fas fa-check"></i> Approve</button>
-                        <button class="reject-btn" onclick="rejectDeposit(${idx})"><i class="fas fa-times"></i> Reject</button>
-                    </div>
-                </div>
-            `).join('')
-        }
-
-        // FIXED: Approve deposit - correctly adds money to user's balance
-        window.approveDeposit = async function(index) {
-            const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-            const deposit = depositHistory[index]
-            
-            if (!deposit || deposit.status !== 'pending') {
-                showToast('Deposit not found or already processed', 'error')
-                return
-            }
-            
-            const userId = deposit.userId
-            const amount = deposit.amount
-            
-            if (!userId) {
-                showToast('ERROR: No user ID found in deposit record!', 'error')
-                return
-            }
-            
+        
+        async function loadUserBalance() {
             try {
-                // STEP 1: Get current user balance from Supabase
-                const { data: currentBalance, error: fetchError } = await supabase
+                const { data } = await supabase
                     .from('user_balances')
                     .select('balance')
-                    .eq('user_id', userId)
+                    .eq('user_id', currentUser.id)
                     .eq('asset', 'USD')
                     .single()
                 
-                if (fetchError && fetchError.code !== 'PGRST116') {
-                    console.error('Error fetching balance:', fetchError)
-                }
-                
-                const oldBalance = currentBalance?.balance || 0
-                const newBalance = oldBalance + amount
-                
-                // STEP 2: Update balance in user_balances table
-                const { error: upsertError } = await supabase
-                    .from('user_balances')
-                    .upsert({
-                        user_id: userId,
-                        asset: 'USD',
-                        balance: newBalance,
-                        updated_at: new Date().toISOString()
-                    })
-                
-                if (upsertError) {
-                    console.error('Error updating balance:', upsertError)
-                    showToast(`Balance update failed: ${upsertError.message}`, 'error')
-                    return
-                }
-                
-                // STEP 3: Update deposit status in localStorage
-                deposit.status = 'completed'
-                depositHistory[index] = deposit
-                localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
-                
-                // STEP 4: Record transaction in Supabase
-                await supabase.from('transactions').insert({
-                    user_id: userId,
-                    type: 'deposit',
-                    amount: amount,
-                    status: 'completed',
-                    reference: deposit.txId || `DEP-${Date.now()}`,
-                    description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network})`,
-                    created_at: new Date().toISOString()
-                }).catch(e => console.log('Transaction record error:', e))
-                
-                // STEP 5: Refresh displays
-                loadPendingDeposits()
-                await loadUsers()
-                updateStats()
-                
-                showToast(`✅ Approved $${amount.toFixed(2)} added to user's balance!`, 'success')
-                
-            } catch (err) {
-                console.error('Error:', err)
-                showToast(`Error: ${err.message}`, 'error')
+                const balance = data?.balance || 0
+                document.getElementById('currentBalance').innerHTML = `$${balance.toFixed(2)}`
+                document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
+                return balance
+            } catch (e) {
+                console.log('Balance load error:', e)
+                document.getElementById('currentBalance').innerHTML = `$0.00`
+                document.getElementById('balanceDisplay').innerHTML = `$0.00`
+                return 0
             }
         }
-
-        window.rejectDeposit = function(index) {
-            if (confirm('Reject this deposit?')) {
-                const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-                depositHistory.splice(index, 1)
-                localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
-                loadPendingDeposits()
-                updateStats()
-                showToast('❌ Deposit rejected', 'info')
-            }
-        }
-
-        async function loadBots() {
-            const { data: bots } = await supabase.from('user_bots').select('*').order('created_at', { ascending: false })
-            const container = document.getElementById('botsList')
+        
+        function loadDepositHistory() {
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            const container = document.getElementById('depositHistoryList')
             
-            if (!bots || bots.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-robot"></i><h3>No Bots Active</h3><p>Users haven't activated any trading bots yet</p></div>`
+            // Filter only current user's deposits
+            const userDeposits = history.filter(d => d.userId === currentUser?.id)
+            
+            if (userDeposits.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-history">
+                        <div class="empty-icon">📭</div>
+                        <div class="empty-title">No deposits yet</div>
+                        <div class="empty-subtitle">Your deposit history will appear here</div>
+                    </div>
+                `
                 return
             }
             
-            container.innerHTML = bots.map(bot => `
-                <div class="bot-card">
-                    <div class="bot-header">
-                        <div class="bot-icon"><i class="fas fa-robot"></i></div>
-                        <div class="bot-info">
-                            <div class="bot-name">${bot.bot_name || 'Trading Bot'}</div>
-                            <div class="bot-version">${bot.bot_version || 'v1.0'}</div>
+            // Sort by date (newest first)
+            userDeposits.sort((a, b) => new Date(b.date) - new Date(a.date))
+            
+            container.innerHTML = userDeposits.map((deposit) => {
+                const isPending = deposit.status === 'pending'
+                const statusClass = isPending ? 'pending' : 'completed'
+                const statusText = isPending ? '⏳ Pending' : '✅ Completed'
+                const statusIcon = isPending ? 'fa-clock' : 'fa-check-circle'
+                
+                return `
+                    <div class="history-item" data-id="${deposit.id}">
+                        <div class="history-info">
+                            <div class="history-amount">$${deposit.amount.toFixed(2)}</div>
+                            <div class="history-crypto">${deposit.crypto} • ${deposit.network}</div>
+                            <div class="history-date"><i class="far fa-calendar-alt"></i> ${deposit.date}</div>
+                            ${deposit.txId ? `<div class="history-txid"><i class="fas fa-hashtag"></i> ${deposit.txId}</div>` : ''}
+                            ${deposit.address ? `<div class="history-address"><i class="fas fa-qrcode"></i> ${deposit.address.substring(0, 20)}...</div>` : ''}
                         </div>
-                        <div class="bot-status ${bot.status}">${bot.status === 'running' ? '🟢 RUNNING' : '🔴 STOPPED'}</div>
+                        <div class="history-status-container">
+                            <span class="history-status ${statusClass}">
+                                <i class="fas ${statusIcon}"></i> ${statusText}
+                            </span>
+                        </div>
                     </div>
-                    <div class="bot-body">
-                        <div class="bot-detail"><i class="fas fa-chart-line"></i> Strategy: ${bot.strategy || 'balanced'}</div>
-                        <div class="bot-detail"><i class="far fa-calendar-alt"></i> Created: ${new Date(bot.created_at).toLocaleDateString()}</div>
-                        <div class="bot-detail"><i class="fas fa-user"></i> User: ${bot.user_id?.substring(0, 8)}...</div>
-                    </div>
-                    <div class="bot-actions">
-                        <button class="bot-control start" onclick="controlBot('${bot.id}', 'start')"><i class="fas fa-play"></i> Start</button>
-                        <button class="bot-control stop" onclick="controlBot('${bot.id}', 'stop')"><i class="fas fa-stop"></i> Stop</button>
-                        <button class="bot-control delete" onclick="deleteBot('${bot.id}')"><i class="fas fa-trash"></i> Delete</button>
-                    </div>
-                </div>
-            `).join('')
-        }
-
-        window.controlBot = async function(botId, action) {
-            const newStatus = action === 'start' ? 'running' : 'stopped'
-            await supabase.from('user_bots').update({ status: newStatus }).eq('id', botId)
-            showToast(`Bot ${action}ed!`, 'success')
-            await loadBots()
-        }
-
-        window.deleteBot = async function(botId) {
-            if (confirm('Delete this bot permanently?')) {
-                await supabase.from('user_bots').delete().eq('id', botId)
-                showToast('Bot deleted', 'info')
-                await loadBots()
+                `
+            }).join('')
+            
+            // Update pending count badge
+            const pendingCount = userDeposits.filter(d => d.status === 'pending').length
+            const pendingBadge = document.getElementById('pendingCountBadge')
+            if (pendingBadge) {
+                if (pendingCount > 0) {
+                    pendingBadge.textContent = pendingCount
+                    pendingBadge.style.display = 'inline-block'
+                } else {
+                    pendingBadge.style.display = 'none'
+                }
             }
         }
-
-        async function updateStats() {
-            const { data: profiles } = await supabase.from('profiles').select('*')
-            const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-            const pendingCount = depositHistory.filter(d => d.status === 'pending').length
-            const completedCount = depositHistory.filter(d => d.status === 'completed').length
-            const totalVolume = depositHistory.filter(d => d.status === 'completed').reduce((s, d) => s + d.amount, 0)
-            const { data: bots } = await supabase.from('user_bots').select('*')
-            
-            document.getElementById('totalUsers').textContent = profiles?.length || 0
-            document.getElementById('pendingDepositCount').textContent = pendingCount
-            document.getElementById('completedDepositsCount').textContent = completedCount
-            document.getElementById('totalVolume').textContent = `$${totalVolume.toLocaleString()}`
-            document.getElementById('activeBotsCount').textContent = bots?.filter(b => b.status === 'running').length || 0
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toastMessage')
+            toast.textContent = message
+            toast.className = `toast-notification ${type}`
+            toast.classList.add('show')
+            setTimeout(() => toast.classList.remove('show'), 4000)
         }
-
-        function updatePagination() {
-            const totalPages = Math.ceil(allUsers.length / usersPerPage)
-            document.getElementById('pageInfo').innerHTML = `Page ${currentPage} of ${totalPages || 1}`
-            document.getElementById('prevPage').disabled = currentPage === 1
-            document.getElementById('nextPage').disabled = currentPage === totalPages
+        
+        async function saveDepositToSupabase(amount, crypto, network, address, txId) {
+            if (!currentUser) return
+            try {
+                await supabase.from('deposits').insert({
+                    user_id: currentUser.id,
+                    amount: amount,
+                    crypto: crypto,
+                    network: network,
+                    address: address,
+                    status: 'pending',
+                    tx_id: txId,
+                    created_at: new Date().toISOString()
+                })
+                console.log('Deposit saved to Supabase')
+            } catch (e) {
+                console.log('Supabase save failed:', e)
+            }
         }
-
-        window.prevPage = function() { if (currentPage > 1) { currentPage--; loadUsers() } }
-        window.nextPage = function() { if (currentPage < Math.ceil(allUsers.length / usersPerPage)) { currentPage++; loadUsers() } }
-
-        window.viewUserDetails = function(userId) {
-            navigator.clipboard.writeText(userId)
-            showToast('User ID copied to clipboard', 'info')
-        }
-
-        window.refreshAll = function() { loadDashboard(); showToast('Dashboard refreshed!', 'success') }
-        window.logout = function() { localStorage.removeItem('admin_authenticated'); window.location.href = 'admin_login.html' }
-
-        function showToast(msg, type = 'success') {
-            const toast = document.createElement('div')
-            toast.className = `toast ${type}`
-            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${msg}`
-            document.body.appendChild(toast)
-            setTimeout(() => toast.remove(), 3000)
-        }
-
-        loadDashboard()
+        
+        // Expose functions globally
+        window.loadUserBalance = loadUserBalance
+        window.loadDepositHistory = loadDepositHistory
+        
+        checkAuth()
     </script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0a0e17 0%, #0f1322 100%); color: #fff; min-height: 100vh; }
+        :root { --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #1f2937; --bg-input: #374151; --text-primary: #f3f4f6; --text-secondary: #9ca3af; --border-color: #374151; --nav-bg: #111827; --hover-bg: #374151; --step-active: #3b82f6; --step-inactive: #4b5563; --step-completed: #10b981; --btn-primary: #3b82f6; --btn-primary-hover: #2563eb; --btn-secondary: #374151; --btn-secondary-hover: #4b5563; --status-pending: #f59e0b; --status-completed: #10b981; }
+        [data-theme="light"] { --bg-primary: #f5f7fb; --bg-secondary: #ffffff; --bg-card: #ffffff; --bg-input: #f8fafc; --text-primary: #1a1f36; --text-secondary: #64748b; --border-color: #e2e8f0; --nav-bg: #ffffff; --hover-bg: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); transition: all 0.3s; }
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.5rem; background: var(--nav-bg); border-bottom: 1px solid var(--border-color); position: fixed; width: 100%; top: 0; z-index: 1000; }
+        .logo-area { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; }
+        .site-name { font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #60a5fa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .right-menu { display: flex; align-items: center; gap: 0.75rem; }
+        .flag-icon { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; cursor: pointer; }
+        .balance-display { font-weight: 600; font-size: 0.85rem; color: var(--text-primary); background: var(--hover-bg); padding: 0.4rem 1rem; border-radius: 30px; }
+        .mobile-menu-btn { background: none; border: none; color: var(--text-primary); font-size: 1.3rem; cursor: pointer; display: none; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; visibility: hidden; opacity: 0; transition: all 0.3s; }
+        .sidebar-overlay.active { visibility: visible; opacity: 1; }
+        .sidebar-menu { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--bg-secondary); box-shadow: -2px 0 8px rgba(0,0,0,0.3); z-index: 2001; transition: right 0.3s; display: flex; flex-direction: column; }
+        .sidebar-overlay.active .sidebar-menu { right: 0; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-header .logo { display: flex; align-items: center; gap: 0.5rem; }
+        .sidebar-nav { flex: 1; display: flex; flex-direction: column; padding: 0.5rem 0; }
+        .sidebar-nav a { display: block; padding: 0.8rem 1.5rem; color: var(--text-primary); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+        .sidebar-nav a:hover { background: var(--hover-bg); color: #3b82f6; }
+        .close-sidebar { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary); }
+        .trust-bar { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 0.4rem 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.65rem; color: var(--text-secondary); margin-top: 65px; }
+        .deposit-container { max-width: 700px; margin: 0 auto; padding: 1.5rem; }
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text-primary); }
+        .page-header p { color: var(--text-secondary); font-size: 0.8rem; }
+        .deposit-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .deposit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .new-deposit-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+        .current-balance { text-align: right; }
+        .current-balance-label { font-size: 0.7rem; color: var(--text-secondary); }
+        .current-balance-value { font-size: 1.2rem; font-weight: 700; color: #10b981; }
+        .step-indicator { display: flex; justify-content: center; align-items: center; gap: 2rem; margin-bottom: 2rem; }
+        .step { display: flex; align-items: center; gap: 0.5rem; }
+        .step-number { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; }
+        .step-number.active { background: var(--step-active); color: white; }
+        .step-number.completed { background: var(--step-completed); color: white; }
+        .step-number.inactive { background: var(--step-inactive); color: var(--text-secondary); }
+        .step-label { font-size: 0.7rem; color: var(--text-secondary); }
+        .step-label.active { color: var(--step-active); }
+        .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .section-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem; }
+        .depositing-amount { background: var(--bg-input); border-radius: 12px; padding: 0.8rem; text-align: center; margin-bottom: 1.5rem; }
+        .depositing-label { font-size: 0.7rem; color: var(--text-secondary); }
+        .depositing-value { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-label { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.3rem; }
+        .amount-input-wrapper { position: relative; }
+        .currency-symbol { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-secondary); }
+        .amount-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2rem; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 12px; font-size: 1rem; color: var(--text-primary); }
+        .amount-input:focus { outline: none; border-color: var(--step-active); }
+        .min-deposit-note { font-size: 0.65rem; color: #f59e0b; margin-top: 0.3rem; }
+        .quick-amounts { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .quick-amount-btn { background: var(--bg-input); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer; color: var(--text-primary); transition: all 0.2s; }
+        .quick-amount-btn:hover { background: var(--step-active); border-color: var(--step-active); color: white; }
+        .crypto-selector { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 12px; cursor: pointer; position: relative; }
+        .crypto-selected { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem; }
+        .crypto-selected-info { display: flex; align-items: center; gap: 0.8rem; }
+        .crypto-selected-icon { width: 28px; height: 28px; border-radius: 50%; object-fit: contain; }
+        .crypto-selected-name { font-weight: 500; font-size: 0.9rem; color: var(--text-primary); }
+        .crypto-selected-symbol { font-size: 0.7rem; color: var(--text-secondary); }
+        .dropdown-arrow { color: var(--text-secondary); font-size: 0.8rem; }
+        .crypto-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-top: 0.3rem; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
+        .crypto-dropdown.show { display: block; }
+        .crypto-option { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.8rem; cursor: pointer; transition: background 0.2s; }
+        .crypto-option:hover { background: var(--hover-bg); }
+        .crypto-option-icon { width: 28px; height: 28px; border-radius: 50%; object-fit: contain; }
+        .crypto-option-info { flex: 1; }
+        .crypto-option-name { font-weight: 500; font-size: 0.85rem; color: var(--text-primary); }
+        .crypto-option-symbol { font-size: 0.65rem; color: var(--text-secondary); }
+        .select-dropdown { width: 100%; padding: 0.8rem; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 12px; font-size: 0.9rem; color: var(--text-primary); cursor: pointer; }
+        .select-dropdown option { background: var(--bg-card); }
+        .button-group { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .btn-back { flex: 1; background: var(--btn-secondary); color: white; border: none; padding: 0.8rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-back:hover { background: var(--btn-secondary-hover); }
+        .btn-continue, .btn-generate { flex: 2; background: var(--btn-primary); color: white; border: none; padding: 0.8rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-continue:hover, .btn-generate:hover { background: var(--btn-primary-hover); }
+        .qr-section { text-align: center; margin-top: 1rem; }
+        .qr-code { display: inline-block; padding: 0.8rem; background: white; border-radius: 16px; margin-bottom: 1rem; }
+        .qr-code img { width: 160px; height: 160px; }
+        .address-box { background: var(--bg-input); padding: 0.8rem; border-radius: 12px; font-family: monospace; font-size: 0.7rem; word-break: break-all; margin-bottom: 0.8rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .copy-btn { background: var(--btn-primary); color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
+        .warning-note { font-size: 0.65rem; color: #f59e0b; margin-top: 0.8rem; }
+        .timer-section { text-align: center; margin: 1rem 0; padding: 0.8rem; background: var(--bg-input); border-radius: 12px; }
+        .timer-label { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.3rem; }
+        .timer-value { font-size: 1.4rem; font-weight: 700; color: #f59e0b; font-family: monospace; }
+        .timer-value.expired { color: #ef4444; }
+        .confirm-section { margin-top: 1rem; text-align: center; }
+        .btn-confirm { width: 100%; background: #10b981; color: white; border: none; padding: 0.8rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-confirm:hover { background: #059669; }
+        .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-confirm.reported { background: #6b7280; cursor: not-allowed; }
+        .history-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; }
+        .history-title { font-size: 0.9rem; font-weight: 600; padding: 1rem; border-bottom: 1px solid var(--border-color); color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; }
+        .pending-badge { background: #f59e0b; color: #1a1f36; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.65rem; font-weight: 600; display: none; }
+        .history-list { max-height: 400px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
+        .history-item:hover { background: var(--hover-bg); }
+        .history-info { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+        .history-amount { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
+        .history-crypto { font-size: 0.7rem; color: var(--text-secondary); }
+        .history-date { font-size: 0.6rem; color: #6b7280; }
+        .history-txid { font-size: 0.55rem; color: #6b7280; font-family: monospace; }
+        .history-address { font-size: 0.55rem; color: #6b7280; font-family: monospace; }
+        .history-status { font-size: 0.65rem; padding: 0.25rem 0.7rem; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .history-status.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .history-status.completed { background: rgba(16,185,129,0.15); color: #10b981; }
+        .history-status-container { margin-left: 0.5rem; }
         
-        .navbar { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(59, 130, 246, 0.2); padding: 0.8rem 2rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        .logo { display: flex; align-items: center; gap: 0.8rem; cursor: pointer; }
-        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .logo-text { font-size: 1.2rem; font-weight: 700; background: linear-gradient(135deg, #fff, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .admin-badge { background: linear-gradient(135deg, #ef4444, #dc2626); padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.7rem; font-weight: 600; }
-        .nav-buttons { display: flex; gap: 0.8rem; }
-        .nav-btn { background: rgba(55, 65, 81, 0.8); border: none; padding: 0.5rem 1.2rem; border-radius: 10px; color: white; cursor: pointer; transition: all 0.2s; }
-        .nav-btn:hover { background: #3b82f6; transform: translateY(-2px); }
-        
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-        .page-header { margin-bottom: 2rem; }
-        .page-header h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #fff, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .page-header p { color: #9ca3af; margin-top: 0.3rem; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
-        .stat-card { background: rgba(31, 41, 55, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
-        .stat-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
-        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .stat-icon { width: 40px; height: 40px; background: rgba(59, 130, 246, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .stat-value { font-size: 1.5rem; font-weight: 700; }
-        .stat-label { font-size: 0.65rem; color: #9ca3af; margin-top: 0.3rem; }
-        
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem; }
-        .section-title { font-size: 1.2rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
-        .section-title i { color: #3b82f6; }
-        .badge { background: #f59e0b; color: #1a1f36; padding: 0.2rem 0.7rem; border-radius: 30px; font-size: 0.7rem; font-weight: 600; margin-left: 0.5rem; }
-        
-        .table-wrapper { background: rgba(31, 41, 55, 0.8); border-radius: 20px; border: 1px solid rgba(59, 130, 246, 0.1); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { text-align: left; padding: 1rem; background: rgba(17, 24, 39, 0.8); color: #9ca3af; font-size: 0.75rem; font-weight: 600; border-bottom: 1px solid #374151; }
-        td { padding: 1rem; border-bottom: 1px solid #374151; }
-        
-        .user-cell { display: flex; align-items: center; gap: 0.8rem; }
-        .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; }
-        .user-name { font-weight: 600; }
-        .user-email { font-size: 0.7rem; color: #9ca3af; }
-        
-        .balance-item { margin: 0.2rem 0; font-size: 0.8rem; }
-        .balance-label { background: #374151; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.6rem; margin-right: 0.5rem; }
-        .join-date { font-size: 0.7rem; color: #9ca3af; }
-        
-        .balance-edit { display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap; }
-        .asset-select { padding: 0.3rem 0.5rem; background: #1f2937; border: 1px solid #374151; border-radius: 6px; color: white; font-size: 0.7rem; }
-        .edit-input { width: 80px; padding: 0.3rem 0.4rem; background: #1f2937; border: 1px solid #374151; border-radius: 6px; color: white; font-size: 0.7rem; }
-        .edit-btn { background: #3b82f6; border: none; padding: 0.3rem 0.5rem; border-radius: 6px; cursor: pointer; }
-        .action-btn { background: none; border: none; padding: 0.3rem 0.5rem; border-radius: 6px; cursor: pointer; margin: 0 0.2rem; }
-        .action-btn.view { color: #3b82f6; }
-        
-        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
-        .page-btn { background: #374151; border: none; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; color: white; }
-        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .deposits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1rem; }
-        .deposit-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
-        .deposit-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
-        .deposit-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.6rem; font-weight: 600; margin-bottom: 0.8rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .deposit-body { display: flex; gap: 1rem; margin-bottom: 1rem; }
-        .deposit-icon { width: 50px; height: 50px; background: rgba(16, 185, 129, 0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #10b981; }
-        .deposit-info { flex: 1; }
-        .deposit-amount { font-size: 1.2rem; font-weight: 700; }
-        .deposit-crypto { font-size: 0.7rem; color: #9ca3af; margin: 0.2rem 0; }
-        .deposit-date { font-size: 0.6rem; color: #6b7280; }
-        .deposit-user { font-size: 0.65rem; color: #3b82f6; margin: 0.2rem 0; }
-        .deposit-user-id { font-size: 0.55rem; color: #6b7280; font-family: monospace; }
-        .deposit-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-        .approve-btn { flex: 1; background: #10b981; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
-        .reject-btn { flex: 1; background: #ef4444; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
-        
-        .bots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1rem; }
-        .bot-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
-        .bot-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
-        .bot-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; }
-        .bot-icon { width: 45px; height: 45px; background: rgba(59, 130, 246, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .bot-name { font-weight: 700; }
-        .bot-version { font-size: 0.6rem; color: #9ca3af; }
-        .bot-status { margin-left: auto; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.6rem; font-weight: 600; }
-        .bot-status.running { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .bot-status.stopped { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .bot-body { margin-bottom: 1rem; }
-        .bot-detail { font-size: 0.7rem; color: #9ca3af; margin: 0.3rem 0; display: flex; align-items: center; gap: 0.5rem; }
-        .bot-actions { display: flex; gap: 0.5rem; }
-        .bot-control { flex: 1; padding: 0.4rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.7rem; font-weight: 600; }
-        .bot-control.start { background: #10b981; color: white; }
-        .bot-control.stop { background: #ef4444; color: white; }
-        .bot-control.delete { background: #6b7280; color: white; }
-        
-        .empty-state { text-align: center; padding: 2rem; color: #6b7280; }
-        .empty-state i { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
-        
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; z-index: 1000; animation: slideIn 0.3s ease; }
-        .toast.success { background: #10b981; color: white; }
-        .toast.error { background: #ef4444; color: white; }
-        .toast.info { background: #3b82f6; color: white; }
-        .toast.warning { background: #f59e0b; color: white; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .empty-history { text-align: center; padding: 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; }
+        .empty-subtitle { font-size: 0.7rem; color: var(--text-secondary); }
+        .toast-notification { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); padding: 12px 24px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; z-index: 3000; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; }
+        .toast-notification.success { background: #10b981; color: white; }
+        .toast-notification.error { background: #ef4444; color: white; }
+        .toast-notification.info { background: #3b82f6; color: white; }
+        .toast-notification.warning { background: #f59e0b; color: white; }
+        .toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         
         @media (max-width: 768px) { 
-            .container { padding: 1rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-            .deposits-grid, .bots-grid { grid-template-columns: 1fr; }
-            .navbar { padding: 0.8rem 1rem; }
-            .nav-buttons .nav-btn span { display: none; }
+            nav { padding: 0.8rem 1rem; } 
+            .nav-links { display: none; } 
+            .mobile-menu-btn { display: block; } 
+            .trust-bar { display: none; } 
+            .deposit-container { padding: 1rem; margin-top: 60px; } 
+            .step-indicator { gap: 1rem; } 
+            .step-label { display: none; } 
+            .quick-amounts { gap: 0.5rem; } 
+            .quick-amount-btn { padding: 0.4rem 0.8rem; font-size: 0.7rem; } 
+            .button-group { flex-direction: column; } 
+            .btn-back, .btn-continue, .btn-generate { width: 100%; } 
+            .address-box { flex-direction: column; } 
+            .copy-btn { width: 100%; } 
+            .history-item { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+            .history-status-container { align-self: flex-start; }
+            .toast-notification { white-space: normal; text-align: center; min-width: 200px; }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo" onclick="location.href='admin_panel.html'">
+    <nav>
+        <div class="logo-area" onclick="location.href='index.html'">
             <div class="logo-icon">⛰️</div>
-            <div class="logo-text">BluepeakCapital</div>
+            <div class="site-name">BluepeakCapital</div>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <span class="admin-badge"><i class="fas fa-shield-alt"></i> Super Admin</span>
-            <div class="nav-buttons">
-                <button class="nav-btn" onclick="location.href='admin_bot.html'"><i class="fas fa-robot"></i> <span>Trading Bot</span></button>
-                <button class="nav-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
-                <button class="nav-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
-            </div>
+        <div class="right-menu">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <div class="balance-display" id="balanceDisplay">$0.00</div>
+            <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="page-header">
-            <h1><i class="fas fa-chart-line"></i> Admin Dashboard</h1>
-            <p>Manage users, approve deposits, and control trading bots</p>
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
+        <div class="sidebar-menu" onclick="event.stopPropagation()">
+            <div class="sidebar-header">
+                <div class="logo"><div class="logo-icon">⛰️</div><div class="site-name">BluepeakCapital</div></div>
+                <button class="close-sidebar" onclick="closeSidebar()">✕</button>
+            </div>
+            <div class="sidebar-nav">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="trade.html">Trade</a>
+                <a href="markets.html">Markets</a>
+                <a href="orders.html">Orders</a>
+                <a href="bots.html">Bots</a>
+                <a href="#" class="active">Deposit</a>
+                <a href="withdraw.html">Withdraw</a>
+                <a href="settings.html">Settings</a>
+                <a href="support.html">Support</a>
+            </div>
         </div>
-
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-users"></i></div></div><div class="stat-value" id="totalUsers">0</div><div class="stat-label">Total Users</div></div>
-            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-clock"></i></div></div><div class="stat-value" id="pendingDepositCount">0</div><div class="stat-label">Pending Deposits</div></div>
-            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-check-circle"></i></div></div><div class="stat-value" id="completedDepositsCount">0</div><div class="stat-label">Completed Deposits</div></div>
-            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-dollar-sign"></i></div></div><div class="stat-value" id="totalVolume">$0</div><div class="stat-label">Total Volume</div></div>
-            <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-robot"></i></div></div><div class="stat-value" id="activeBotsCount">0</div><div class="stat-label">Active Bots</div></div>
-        </div>
-
-        <div class="section-header"><div class="section-title"><i class="fas fa-users"></i> User Management</div></div>
-        <div class="table-wrapper">
-            <table>
-                <thead><tr><th>User</th><th>Balances</th><th>Joined</th><th>Edit Balance</th><th>Actions</th></tr></thead>
-                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</td></tr></tbody>
-            </table>
-        </div>
-        <div class="pagination"><button class="page-btn" id="prevPage" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Prev</button><span id="pageInfo">Page 1</span><button class="page-btn" id="nextPage" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button></div>
-
-        <div class="section-header"><div class="section-title"><i class="fas fa-hourglass-half"></i> Pending Deposits <span class="badge" id="pendingCount">0</span></div></div>
-        <div id="pendingDepositsList" class="deposits-grid"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading...</p></div></div>
-
-        <div class="section-header"><div class="section-title"><i class="fas fa-robot"></i> Bot Management</div></div>
-        <div id="botsList" class="bots-grid"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading bots...</p></div></div>
     </div>
+
+    <div class="trust-bar">
+        <span>FINRA Member</span><span>|</span><span>SIPC Insured</span><span>|</span><span>Cold Storage</span><span>|</span><span>$500M Insurance</span><span>|</span><span>24/7 Support</span>
+    </div>
+
+    <div class="deposit-container">
+        <div class="page-header">
+            <h1><i class="fas fa-plus-circle"></i> Deposit Crypto</h1>
+            <p>Deposit cryptocurrency to fund your account</p>
+        </div>
+
+        <div class="deposit-card">
+            <div id="step1">
+                <div class="deposit-header">
+                    <span class="new-deposit-title"><i class="fas fa-coins"></i> New Deposit</span>
+                    <div class="current-balance">
+                        <div class="current-balance-label">Current Balance</div>
+                        <div class="current-balance-value" id="currentBalance">$0.00</div>
+                    </div>
+                </div>
+                <div class="step-indicator">
+                    <div class="step"><div class="step-number active">1</div><span class="step-label active">Amount</span></div>
+                    <div class="step"><div class="step-number inactive">2</div><span class="step-label">Currency</span></div>
+                    <div class="step"><div class="step-number inactive">3</div><span class="step-label">Confirm</span></div>
+                </div>
+                <div class="section-title">Enter Amount</div>
+                <div class="section-subtitle">How much do you want to deposit?</div>
+                <div class="form-group">
+                    <label class="form-label">Amount (USD)</label>
+                    <div class="amount-input-wrapper">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" class="amount-input" id="depositAmount" placeholder="0.00" value="">
+                    </div>
+                    <div class="min-deposit-note">⚠️ Minimum deposit: $50 USD</div>
+                </div>
+                <div class="quick-amounts">
+                    <button class="quick-amount-btn" onclick="setAmount(50)">$50</button>
+                    <button class="quick-amount-btn" onclick="setAmount(100)">$100</button>
+                    <button class="quick-amount-btn" onclick="setAmount(250)">$250</button>
+                    <button class="quick-amount-btn" onclick="setAmount(500)">$500</button>
+                    <button class="quick-amount-btn" onclick="setAmount(1000)">$1,000</button>
+                </div>
+                <button class="btn-continue" onclick="goToStep2()">Continue <i class="fas fa-arrow-right"></i></button>
+            </div>
+
+            <div id="step2" style="display: none;">
+                <div class="deposit-header">
+                    <span class="new-deposit-title"><i class="fas fa-coins"></i> New Deposit</span>
+                    <div class="current-balance">
+                        <div class="current-balance-label">Current Balance</div>
+                        <div class="current-balance-value" id="currentBalance2">$0.00</div>
+                    </div>
+                </div>
+                <div class="step-indicator">
+                    <div class="step"><div class="step-number completed">1</div><span class="step-label">Amount</span></div>
+                    <div class="step"><div class="step-number active">2</div><span class="step-label active">Currency</span></div>
+                    <div class="step"><div class="step-number inactive">3</div><span class="step-label">Confirm</span></div>
+                </div>
+                <div class="section-title">Select Currency & Network</div>
+                <div class="depositing-amount">
+                    <div class="depositing-label">Depositing</div>
+                    <div class="depositing-value" id="depositingAmount">$0.00</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Select Cryptocurrency</label>
+                    <div class="crypto-selector" id="cryptoSelector">
+                        <div class="crypto-selected" onclick="toggleCryptoDropdown()">
+                            <div class="crypto-selected-info">
+                                <img id="selectedCryptoIcon" class="crypto-selected-icon" src="https://assets.coincap.io/assets/icons/btc@2x.png">
+                                <div>
+                                    <div class="crypto-selected-name" id="selectedCryptoName">Bitcoin</div>
+                                    <div class="crypto-selected-symbol" id="selectedCryptoSymbol">BTC</div>
+                                </div>
+                            </div>
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="crypto-dropdown" id="cryptoDropdown"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Select Network</label>
+                    <select class="select-dropdown" id="networkSelect"></select>
+                </div>
+                <div class="button-group">
+                    <button class="btn-back" onclick="goToStep1()"><i class="fas fa-arrow-left"></i> Back</button>
+                    <button class="btn-generate" onclick="generateDepositAddress()">Generate Address <i class="fas fa-qrcode"></i></button>
+                </div>
+            </div>
+
+            <div id="step3" style="display: none;">
+                <div class="deposit-header">
+                    <span class="new-deposit-title"><i class="fas fa-coins"></i> New Deposit</span>
+                    <div class="current-balance">
+                        <div class="current-balance-label">Current Balance</div>
+                        <div class="current-balance-value" id="currentBalance3">$0.00</div>
+                    </div>
+                </div>
+                <div class="step-indicator">
+                    <div class="step"><div class="step-number completed">1</div><span class="step-label">Amount</span></div>
+                    <div class="step"><div class="step-number completed">2</div><span class="step-label">Currency</span></div>
+                    <div class="step"><div class="step-number active">3</div><span class="step-label active">Confirm</span></div>
+                </div>
+                <div class="section-title">Deposit Address</div>
+                <div class="depositing-amount">
+                    <div class="depositing-label">Depositing</div>
+                    <div class="depositing-value" id="finalDepositAmount">$0.00</div>
+                </div>
+                <div class="qr-section">
+                    <div class="qr-code"><img id="qrImage" src=""></div>
+                    <div class="address-box">
+                        <span id="depositAddress"></span>
+                        <button class="copy-btn" onclick="copyAddress()"><i class="fas fa-copy"></i> Copy Address</button>
+                    </div>
+                    <div class="warning-note" id="warningNote">⚠️ Send only BTC to this address. Other coins will be lost.</div>
+                </div>
+                <div class="timer-section">
+                    <div class="timer-label">⏱️ Address expires in</div>
+                    <div class="timer-value" id="timerValue">10:00</div>
+                </div>
+                <div class="confirm-section">
+                    <button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ I have made deposit</button>
+                </div>
+                <button class="btn-back" onclick="goToStep2()" style="margin-top: 1rem;"><i class="fas fa-arrow-left"></i> Back</button>
+            </div>
+        </div>
+
+        <div class="history-card">
+            <div class="history-title">
+                <span><i class="fas fa-history"></i> Deposit History</span>
+                <span class="pending-badge" id="pendingCountBadge">0</span>
+            </div>
+            <div class="history-list" id="depositHistoryList">
+                <div class="empty-history">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">No deposits yet</div>
+                    <div class="empty-subtitle">Your deposit history will appear here</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastMessage" class="toast-notification success">✓ Copied!</div>
+
+    <script>
+        let depositAmount = 0, selectedCrypto = 'BTC', selectedNetwork = 'Bitcoin Network', timerInterval = null, timerSeconds = 600;
+        
+        const cryptoList = [
+            { symbol: 'BTC', name: 'Bitcoin', iconUrl: 'https://assets.coincap.io/assets/icons/btc@2x.png' },
+            { symbol: 'ETH', name: 'Ethereum', iconUrl: 'https://assets.coincap.io/assets/icons/eth@2x.png' },
+            { symbol: 'USDT', name: 'Tether', iconUrl: 'https://assets.coincap.io/assets/icons/usdt@2x.png' },
+            { symbol: 'USDC', name: 'USD Coin', iconUrl: 'https://assets.coincap.io/assets/icons/usdc@2x.png' },
+            { symbol: 'SOL', name: 'Solana', iconUrl: 'https://assets.coincap.io/assets/icons/sol@2x.png' },
+            { symbol: 'BNB', name: 'Binance', iconUrl: 'https://assets.coincap.io/assets/icons/bnb@2x.png' },
+            { symbol: 'DOGE', name: 'Dogecoin', iconUrl: 'https://assets.coincap.io/assets/icons/doge@2x.png' },
+            { symbol: 'XRP', name: 'Ripple', iconUrl: 'https://assets.coincap.io/assets/icons/xrp@2x.png' },
+            { symbol: 'TRX', name: 'TRON', iconUrl: 'https://assets.coincap.io/assets/icons/trx@2x.png' },
+            { symbol: 'TON', name: 'Toncoin', iconUrl: 'https://assets.coincap.io/assets/icons/ton@2x.png' },
+            { symbol: 'MATIC', name: 'Polygon', iconUrl: 'https://assets.coincap.io/assets/icons/matic@2x.png' }
+        ];
+        
+        const networkOptions = {
+            BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
+            ETH: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
+            USDT: [{ value: 'TRC20', label: 'Tron (TRC20) - Low Fee' }, { value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }, { value: 'POLYGON', label: 'Polygon - Low Fee' }],
+            USDC: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'TRC20', label: 'Tron (TRC20) - Low Fee' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }],
+            SOL: [{ value: 'SOL', label: 'Solana Network' }],
+            BNB: [{ value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }],
+            DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }],
+            XRP: [{ value: 'XRP', label: 'Ripple Network' }],
+            TRX: [{ value: 'TRC20', label: 'Tron (TRC20)' }],
+            TON: [{ value: 'TON', label: 'Toncoin Network' }],
+            MATIC: [{ value: 'POLYGON', label: 'Polygon Network' }]
+        };
+        
+        const depositAddresses = {
+            BTC: { BTC: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' },
+            ETH: { ERC20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
+            USDT: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', ERC20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0', BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0', POLYGON: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
+            USDC: { ERC20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0', TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
+            SOL: { SOL: '6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w' },
+            BNB: { BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
+            DOGE: { DOGE: 'DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm' },
+            XRP: { XRP: 'rhspJoR6Lt3X856Lh3k6pW9ihJQvHT55vD' },
+            TRX: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae' },
+            TON: { TON: 'EQA2JuIow55lkSVjw92hUq_BeKlm99F4MtX6XlOEw871jpuo' },
+            MATIC: { POLYGON: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' }
+        };
+        
+        function formatTime(seconds) { 
+            const m = Math.floor(seconds/60); 
+            const s = seconds%60; 
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
+        }
+        
+        function startTimer() { 
+            if(timerInterval) clearInterval(timerInterval); 
+            timerSeconds=600; 
+            const el=document.getElementById('timerValue'); 
+            el.classList.remove('expired'); 
+            timerInterval=setInterval(()=>{ 
+                if(timerSeconds<=0){ 
+                    clearInterval(timerInterval); 
+                    el.textContent='00:00'; 
+                    el.classList.add('expired'); 
+                    document.getElementById('confirmPaymentBtn').disabled=true; 
+                } else { 
+                    timerSeconds--; 
+                    el.textContent=formatTime(timerSeconds); 
+                } 
+            },1000); 
+        }
+        
+        function setAmount(amount) { 
+            document.getElementById('depositAmount').value=amount; 
+        }
+        
+        function goToStep2() { 
+            const amount=parseFloat(document.getElementById('depositAmount').value); 
+            if(!amount||amount<=0){ 
+                alert('Please enter a valid amount'); 
+                return; 
+            } 
+            if(amount<50){ 
+                alert('Minimum deposit is $50 USD'); 
+                return; 
+            } 
+            depositAmount=amount; 
+            document.getElementById('depositingAmount').innerHTML=`$${depositAmount.toFixed(2)}`; 
+            // Update balance displays
+            const balance = document.getElementById('currentBalance').innerHTML;
+            document.getElementById('currentBalance2').innerHTML = balance;
+            document.getElementById('currentBalance3').innerHTML = balance;
+            document.getElementById('step1').style.display='none'; 
+            document.getElementById('step2').style.display='block'; 
+            document.getElementById('step3').style.display='none'; 
+            updateNetworkOptions(); 
+        }
+        
+        function goToStep1() { 
+            if(timerInterval) clearInterval(timerInterval); 
+            document.getElementById('step1').style.display='block'; 
+            document.getElementById('step2').style.display='none'; 
+            document.getElementById('step3').style.display='none'; 
+        }
+        
+        function toggleCryptoDropdown() { 
+            document.getElementById('cryptoDropdown').classList.toggle('show'); 
+        }
+        
+        function selectCrypto(symbol,name,iconUrl) { 
+            selectedCrypto=symbol; 
+            document.getElementById('selectedCryptoIcon').src=iconUrl; 
+            document.getElementById('selectedCryptoName').innerHTML=name; 
+            document.getElementById('selectedCryptoSymbol').innerHTML=symbol; 
+            document.getElementById('cryptoDropdown').classList.remove('show'); 
+            updateNetworkOptions(); 
+        }
+        
+        function renderCryptoDropdown() { 
+            const dropdown=document.getElementById('cryptoDropdown'); 
+            dropdown.innerHTML=cryptoList.map(c=>`
+                <div class="crypto-option" onclick="selectCrypto('${c.symbol}','${c.name}','${c.iconUrl}')">
+                    <img src="${c.iconUrl}" class="crypto-option-icon">
+                    <div class="crypto-option-info">
+                        <div class="crypto-option-name">${c.name}</div>
+                        <div class="crypto-option-symbol">${c.symbol}</div>
+                    </div>
+                </div>
+            `).join(''); 
+        }
+        
+        function updateNetworkOptions() { 
+            const netSelect=document.getElementById('networkSelect'); 
+            const opts=networkOptions[selectedCrypto]||[{value:selectedCrypto,label:`${selectedCrypto} Network`}]; 
+            netSelect.innerHTML=opts.map(opt=>`<option value="${opt.value}">${opt.label}</option>`).join(''); 
+            selectedNetwork=opts[0].value; 
+        }
+        
+        function generateDepositAddress() { 
+            const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
+            document.getElementById('depositAddress').innerHTML = address; 
+            document.getElementById('finalDepositAmount').innerHTML = `$${depositAmount.toFixed(2)} ${selectedCrypto}`; 
+            document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`; 
+            
+            let msg = `⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`; 
+            if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') msg += ` Make sure to use the ${selectedNetwork} network.`; 
+            document.getElementById('warningNote').innerHTML = msg; 
+            
+            // Get current user from the module
+            const userId = window.currentUser?.id
+            const userEmail = window.currentUser?.email
+            
+            if (!userId) {
+                showToast('Error: User not found. Please refresh the page.', 'error')
+                return
+            }
+            
+            // Save to localStorage with USER ID
+            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+            
+            const newDeposit = {
+                id: Date.now(),
+                userId: userId,
+                userEmail: userEmail,
+                amount: depositAmount,
+                crypto: selectedCrypto,
+                network: selectedNetwork,
+                address: address,
+                status: 'pending',
+                date: new Date().toLocaleString(),
+                txId: 'DEP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8).toUpperCase()
+            }
+            
+            history.unshift(newDeposit)
+            localStorage.setItem('depositHistory', JSON.stringify(history))
+            
+            // Save to Supabase
+            if (typeof saveDepositToSupabase === 'function') {
+                saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
+            }
+            
+            // Reload deposit history
+            if (typeof loadDepositHistory === 'function') {
+                loadDepositHistory()
+            }
+            
+            if (timerInterval) clearInterval(timerInterval); 
+            timerSeconds = 600; 
+            startTimer(); 
+            const btn = document.getElementById('confirmPaymentBtn'); 
+            btn.textContent = '✅ I have made deposit'; 
+            btn.classList.remove('reported'); 
+            btn.disabled = false; 
+            document.getElementById('step1').style.display = 'none'; 
+            document.getElementById('step2').style.display = 'none'; 
+            document.getElementById('step3').style.display = 'block'; 
+            
+            showToast('✅ Deposit request created! Admin will review and approve.', 'success')
+        }
+        
+        function confirmPayment() { 
+            if(timerSeconds<=0) return; 
+            const btn=document.getElementById('confirmPaymentBtn'); 
+            btn.textContent='Deposit Reported'; 
+            btn.classList.add('reported'); 
+            btn.disabled=true; 
+            if(timerInterval) clearInterval(timerInterval); 
+            showToast('📢 Deposit reported! Admin will verify and credit your account.', 'info')
+        }
+        
+        function copyAddress() { 
+            const addr=document.getElementById('depositAddress').innerHTML; 
+            navigator.clipboard.writeText(addr); 
+            showToast('✓ Address copied to clipboard!', 'success')
+        }
+        
+        function openSidebar() { 
+            document.getElementById('sidebarOverlay').classList.add('active'); 
+        }
+        
+        function closeSidebar() { 
+            document.getElementById('sidebarOverlay').classList.remove('active'); 
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e){ 
+            const sel=document.getElementById('cryptoSelector'); 
+            const drop=document.getElementById('cryptoDropdown'); 
+            if(sel && !sel.contains(e.target)) drop.classList.remove('show'); 
+        });
+        
+        // Initialize
+        renderCryptoDropdown(); 
+        updateNetworkOptions();
+        
+        // Expose functions globally
+        window.setAmount = setAmount;
+        window.goToStep2 = goToStep2;
+        window.goToStep1 = goToStep1;
+        window.toggleCryptoDropdown = toggleCryptoDropdown;
+        window.selectCrypto = selectCrypto;
+        window.generateDepositAddress = generateDepositAddress;
+        window.confirmPayment = confirmPayment;
+        window.copyAddress = copyAddress;
+        window.openSidebar = openSidebar;
+        window.closeSidebar = closeSidebar;
+    </script>
 </body>
 </html>
