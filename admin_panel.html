@@ -24,6 +24,7 @@
         let currentPage = 1
         let usersPerPage = 10
         let allUsers = []
+        let currentDeposits = []
 
         async function loadDashboard() {
             await loadUsers()
@@ -34,7 +35,7 @@
 
         async function loadUsers() {
             const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
-            const { data: balances } = await supabase.from('balances').select('*')
+            const { data: balances } = await supabase.from('user_balances').select('*')
             
             allUsers = profiles || []
             
@@ -42,7 +43,7 @@
             if (balances) {
                 balances.forEach(b => {
                     if (!userBalances[b.user_id]) userBalances[b.user_id] = {}
-                    userBalances[b.user_id][b.asset] = b.balance
+                    userBalances[b.user_id][b.asset || 'USD'] = b.balance
                 })
             }
             
@@ -55,7 +56,7 @@
             const paginated = allUsers.slice(start, start + usersPerPage)
             
             if (paginated.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No users found</div></div> </div>'
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No users found</td></tr>'
                 return
             }
             
@@ -71,14 +72,14 @@
                                     <div class="user-email">${user.email || 'N/A'}</div>
                                 </div>
                             </div>
-                         </div>
-                         <td class="balance-cell">
+                        </td>
+                        <td class="balance-cell">
                             <div class="balance-item"><span class="balance-label">USD</span><span id="usd-${user.id}">$${(balances.USD || 0).toFixed(2)}</span></div>
                             <div class="balance-item"><span class="balance-label">BTC</span><span id="btc-${user.id}">${(balances.BTC || 0).toFixed(4)} BTC</span></div>
                             <div class="balance-item"><span class="balance-label">ETH</span><span id="eth-${user.id}">${(balances.ETH || 0).toFixed(4)} ETH</span></div>
-                         </div>
-                         <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</div>
-                         <td>
+                        </td>
+                        <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>
                             <div class="balance-edit">
                                 <select id="asset-select-${user.id}" class="asset-select">
                                     <option value="USD">USD</option>
@@ -88,11 +89,11 @@
                                 <input type="number" id="edit-amount-${user.id}" placeholder="Amount" step="0.01" class="edit-input">
                                 <button class="edit-btn" onclick="updateUserBalance('${user.id}')"><i class="fas fa-save"></i></button>
                             </div>
-                         </div>
-                         <td>
+                        </td>
+                        <td>
                             <button class="action-btn view" onclick="viewUserDetails('${user.id}')"><i class="fas fa-eye"></i></button>
-                          </div>
-                     </div>
+                        </td>
+                    </tr>
                 `
             }).join('')
             
@@ -110,7 +111,7 @@
                 return
             }
             
-            const { error } = await supabase.from('balances').upsert({
+            const { error } = await supabase.from('user_balances').upsert({
                 user_id: userId,
                 asset: asset,
                 balance: newBalance,
@@ -136,6 +137,7 @@
         function loadPendingDeposits() {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const pendingDeposits = depositHistory.filter(d => d.status === 'pending')
+            currentDeposits = pendingDeposits
             
             const container = document.getElementById('pendingDepositsList')
             const countSpan = document.getElementById('pendingCount')
@@ -157,6 +159,7 @@
                             <div class="deposit-amount">$${deposit.amount.toFixed(2)}</div>
                             <div class="deposit-crypto">${deposit.crypto} • ${deposit.network}</div>
                             <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${deposit.date}</div>
+                            <div class="deposit-user"><i class="fas fa-user"></i> User ID: ${deposit.userId?.substring(0, 8)}...</div>
                             <div class="deposit-address">${deposit.address?.substring(0, 30)}...</div>
                         </div>
                     </div>
@@ -168,14 +171,75 @@
             `).join('')
         }
 
-        window.approveDeposit = function(index) {
+        // UPDATED: Approve deposit - ADDS MONEY TO USER BALANCE
+        window.approveDeposit = async function(index) {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-            if (depositHistory[index] && depositHistory[index].status === 'pending') {
-                depositHistory[index].status = 'completed'
-                localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
+            const deposit = depositHistory[index]
+            
+            if (!deposit || deposit.status !== 'pending') {
+                showToast('Deposit not found or already processed', 'error')
+                return
+            }
+            
+            // Mark as completed
+            deposit.status = 'completed'
+            depositHistory[index] = deposit
+            localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
+            
+            // ADD MONEY TO USER'S BALANCE IN SUPABASE
+            if (deposit.userId && deposit.amount > 0) {
+                try {
+                    // Get current balance
+                    const { data: currentBalance } = await supabase
+                        .from('user_balances')
+                        .select('balance')
+                        .eq('user_id', deposit.userId)
+                        .eq('asset', 'USD')
+                        .single()
+                    
+                    const oldBalance = currentBalance?.balance || 0
+                    const newBalance = oldBalance + deposit.amount
+                    
+                    // Update balance
+                    const { error } = await supabase
+                        .from('user_balances')
+                        .upsert({
+                            user_id: deposit.userId,
+                            asset: 'USD',
+                            balance: newBalance,
+                            updated_at: new Date().toISOString()
+                        })
+                    
+                    if (error) {
+                        console.error('Error updating balance:', error)
+                        showToast('Deposit approved but balance update failed!', 'error')
+                    } else {
+                        showToast(`✅ Approved $${deposit.amount.toFixed(2)} added to user balance!`, 'success')
+                        
+                        // Create transaction record
+                        await supabase.from('transactions').insert({
+                            user_id: deposit.userId,
+                            type: 'deposit',
+                            amount: deposit.amount,
+                            status: 'completed',
+                            reference: deposit.txId || deposit.address,
+                            created_at: new Date().toISOString()
+                        })
+                    }
+                    
+                    // Refresh displays
+                    loadPendingDeposits()
+                    await loadUsers()
+                    updateStats()
+                    
+                } catch (err) {
+                    console.error('Error:', err)
+                    showToast('Error updating balance', 'error')
+                }
+            } else {
+                showToast('Deposit approved (no user balance update)', 'info')
                 loadPendingDeposits()
                 updateStats()
-                showToast('✅ Deposit approved!', 'success')
             }
         }
 
@@ -347,6 +411,7 @@
         .deposit-amount { font-size: 1.2rem; font-weight: 700; }
         .deposit-crypto { font-size: 0.7rem; color: #9ca3af; margin: 0.2rem 0; }
         .deposit-date { font-size: 0.6rem; color: #6b7280; }
+        .deposit-user { font-size: 0.6rem; color: #6b7280; margin: 0.2rem 0; }
         .deposit-address { font-size: 0.6rem; font-family: monospace; color: #6b7280; margin-top: 0.3rem; }
         .deposit-actions { display: flex; gap: 0.5rem; }
         .approve-btn { flex: 1; background: #10b981; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
@@ -422,8 +487,7 @@
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>User</th><th>Balances</th><th>Joined</th><th>Edit Balance</th><th>Actions</th></tr></thead>
-                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</div></div> </div>
-                </tbody>
+                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</td></tr></tbody>
             </table>
         </div>
         <div class="pagination"><button class="page-btn" id="prevPage" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Prev</button><span id="pageInfo">Page 1</span><button class="page-btn" id="nextPage" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button></div>
