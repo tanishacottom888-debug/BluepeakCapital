@@ -84,10 +84,10 @@
         
         async function loadUserBalances(userId) {
             try {
-                const { data: balances, error } = await supabase
-                    .from('balances')
-                    .select('*')
-                    .eq('user_id', userId)
+               const { data: balances, error } = await supabase
+    .from('user_balances')
+    .select('*')
+    .eq('user_id', userId)
                 
                 if (error) {
                     console.error('Error loading balances:', error)
@@ -117,8 +117,8 @@
             
             try {
                 const { error } = await supabase
-                    .from('balances')
-                    .insert(defaultBalances)
+    .from('user_balances')
+    .insert(defaultBalances)
                 
                 if (error) {
                     console.error('Error creating default balances:', error)
