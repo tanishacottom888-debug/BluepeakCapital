@@ -44,16 +44,22 @@
         }
         
         async function loadUserBalance() {
-            const { data } = await supabase
-                .from('balances')
-                .select('balance')
-                .eq('user_id', currentUser.id)
-                .eq('asset', 'USD')
-                .single()
-            
-            const balance = data?.balance || 0
-            document.getElementById('currentBalance').innerHTML = `$${balance.toFixed(2)}`
-            document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
+            try {
+                const { data } = await supabase
+                    .from('user_balances')
+                    .select('balance')
+                    .eq('user_id', currentUser.id)
+                    .eq('asset', 'USD')
+                    .single()
+                
+                const balance = data?.balance || 0
+                document.getElementById('currentBalance').innerHTML = `$${balance.toFixed(2)}`
+                document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
+            } catch (e) {
+                console.log('Balance load error:', e)
+                document.getElementById('currentBalance').innerHTML = `$0.00`
+                document.getElementById('balanceDisplay').innerHTML = `$0.00`
+            }
         }
         
         function loadDepositHistory() {
@@ -65,46 +71,46 @@
                 return
             }
             
-            container.innerHTML = history.map((d, index) => `
-                <div class="history-item">
-                    <div class="history-info">
-                        <div class="history-amount">$${d.amount.toFixed(2)}</div>
-                        <div class="history-crypto">${d.crypto} • ${d.network}</div>
-                        <div class="history-date">${d.date}</div>
+            // Filter only current user's deposits
+            const userDeposits = history.filter(d => d.userId === currentUser?.id)
+            
+            if (userDeposits.length === 0) {
+                container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
+                return
+            }
+            
+            container.innerHTML = userDeposits.map((d, idx) => {
+                const originalIndex = history.findIndex(h => h.id === d.id)
+                return `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div class="history-amount">$${d.amount.toFixed(2)}</div>
+                            <div class="history-crypto">${d.crypto} • ${d.network}</div>
+                            <div class="history-date">${d.date}</div>
+                            ${d.txId ? `<div class="history-txid" style="font-size:0.6rem; color:#6b7280; margin-top:0.2rem;">ID: ${d.txId}</div>` : ''}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
+                            <button class="delete-history-btn" onclick="deleteDepositHistory(${originalIndex})" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
-                        <button class="delete-history-btn" onclick="deleteDepositHistory(${index})" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('')
+                `
+            }).join('')
         }
         
-        function deleteDepositHistory(index) {
-            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
-            history.splice(index, 1)
-            localStorage.setItem('depositHistory', JSON.stringify(history))
-            loadDepositHistory()
+        window.deleteDepositHistory = function(index) {
+            if (confirm('Delete this deposit record?')) {
+                const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+                history.splice(index, 1)
+                localStorage.setItem('depositHistory', JSON.stringify(history))
+                loadDepositHistory()
+                showToast('Deposit record deleted', 'info')
+            }
         }
         
-        function saveDepositToLocalStorage(amount, crypto, network, address) {
-            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
-            history.unshift({
-                id: Date.now(),
-                amount: amount,
-                crypto: crypto,
-                network: network,
-                address: address,
-                status: 'pending',
-                date: new Date().toLocaleString()
-            })
-            localStorage.setItem('depositHistory', JSON.stringify(history))
-            loadDepositHistory()
-        }
-        
-        async function saveDepositToSupabase(amount, crypto, network, address) {
+        async function saveDepositToSupabase(amount, crypto, network, address, txId) {
             if (!currentUser) return
             try {
                 await supabase.from('deposits').insert({
@@ -114,11 +120,21 @@
                     network: network,
                     address: address,
                     status: 'pending',
+                    tx_id: txId,
                     created_at: new Date().toISOString()
                 })
+                console.log('Deposit saved to Supabase')
             } catch (e) {
-                console.log('Supabase save failed')
+                console.log('Supabase save failed:', e)
             }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toastMessage')
+            toast.textContent = message
+            toast.className = `toast-notification ${type}`
+            toast.classList.add('show')
+            setTimeout(() => toast.classList.remove('show'), 3000)
         }
         
         checkAuth()
@@ -142,12 +158,12 @@
         .sidebar-overlay.active { visibility: visible; opacity: 1; }
         .sidebar-menu { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--bg-secondary); box-shadow: -2px 0 8px rgba(0,0,0,0.3); z-index: 2001; transition: right 0.3s; display: flex; flex-direction: column; }
         .sidebar-overlay.active .sidebar-menu { right: 0; }
-        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
-        .sidebar-header .logo { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-header .logo { display: flex; align-items: center; gap: 0.5rem; }
         .sidebar-nav { flex: 1; display: flex; flex-direction: column; padding: 0.5rem 0; }
         .sidebar-nav a { display: block; padding: 0.8rem 1.5rem; color: var(--text-primary); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
         .sidebar-nav a:hover { background: var(--hover-bg); color: #3b82f6; }
-        .close-sidebar { margin-left: auto; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary); }
+        .close-sidebar { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary); }
         .trust-bar { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 0.4rem 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.65rem; color: var(--text-secondary); margin-top: 65px; }
         .deposit-container { max-width: 700px; margin: 0 auto; padding: 1.5rem; }
         .page-header { margin-bottom: 1.5rem; }
@@ -230,6 +246,7 @@
         .history-status.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
         .history-status.completed { background: rgba(16,185,129,0.15); color: #10b981; }
         .history-date { font-size: 0.6rem; color: var(--text-secondary); }
+        .history-txid { font-size: 0.6rem; color: #6b7280; }
         
         .delete-history-btn {
             background: none;
@@ -251,7 +268,10 @@
         .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
         .empty-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; }
         .empty-subtitle { font-size: 0.7rem; color: var(--text-secondary); }
-        .toast-notification { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; z-index: 3000; opacity: 0; transition: all 0.3s; pointer-events: none; }
+        .toast-notification { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); padding: 12px 24px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; z-index: 3000; opacity: 0; transition: all 0.3s; pointer-events: none; }
+        .toast-notification.success { background: #10b981; color: white; }
+        .toast-notification.error { background: #ef4444; color: white; }
+        .toast-notification.info { background: #3b82f6; color: white; }
         .toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         @media (max-width: 768px) { 
             nav { padding: 0.8rem 1rem; } 
@@ -392,7 +412,7 @@
         </div>
     </div>
 
-    <div id="toastMessage" class="toast-notification">✓ Copied!</div>
+    <div id="toastMessage" class="toast-notification success">✓ Copied!</div>
 
     <script>
         let depositAmount = 0, selectedCrypto = 'BTC', selectedNetwork = 'Bitcoin Network', timerInterval = null, timerSeconds = 600;
@@ -426,17 +446,17 @@
         };
         
         const depositAddresses = {
-            BTC: { BTC: '112NvxwyYBycQwhuKboLstQQMWjm8qk88W' },
-            ETH: { ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
-            USDT: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4', BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4', POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
-            USDC: { ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4', TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
+            BTC: { BTC: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' },
+            ETH: { ERC20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
+            USDT: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', ERC20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0', BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0', POLYGON: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
+            USDC: { ERC20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0', TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
             SOL: { SOL: '6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w' },
-            BNB: { BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
+            BNB: { BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
             DOGE: { DOGE: 'DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm' },
             XRP: { XRP: 'rhspJoR6Lt3X856Lh3k6pW9ihJQvHT55vD' },
             TRX: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae' },
             TON: { TON: 'EQA2JuIow55lkSVjw92hUq_BeKlm99F4MtX6XlOEw871jpuo' },
-            MATIC: { POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' }
+            MATIC: { POLYGON: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' }
         };
         
         function formatTime(seconds) { const m = Math.floor(seconds/60); const s = seconds%60; return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
@@ -448,42 +468,72 @@
         function selectCrypto(symbol,name,iconUrl) { selectedCrypto=symbol; document.getElementById('selectedCryptoIcon').src=iconUrl; document.getElementById('selectedCryptoName').innerHTML=name; document.getElementById('selectedCryptoSymbol').innerHTML=symbol; document.getElementById('cryptoDropdown').classList.remove('show'); updateNetworkOptions(); }
         function renderCryptoDropdown() { const dropdown=document.getElementById('cryptoDropdown'); dropdown.innerHTML=cryptoList.map(c=>`<div class="crypto-option" onclick="selectCrypto('${c.symbol}','${c.name}','${c.iconUrl}')"><img src="${c.iconUrl}" class="crypto-option-icon"><div class="crypto-option-info"><div class="crypto-option-name">${c.name}</div><div class="crypto-option-symbol">${c.symbol}</div></div></div>`).join(''); }
         function updateNetworkOptions() { const netSelect=document.getElementById('networkSelect'); const opts=networkOptions[selectedCrypto]||[{value:selectedCrypto,label:`${selectedCrypto} Network`}]; netSelect.innerHTML=opts.map(opt=>`<option value="${opt.value}">${opt.label}</option>`).join(''); selectedNetwork=opts[0].value; }
+        
         function generateDepositAddress() { 
-            const address=depositAddresses[selectedCrypto]?.[selectedNetwork]||'Address not available'; 
-            document.getElementById('depositAddress').innerHTML=address; 
-            document.getElementById('finalDepositAmount').innerHTML=`$${depositAmount.toFixed(2)} ${selectedCrypto}`; 
-            document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`; 
-            let msg=`⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`; 
-            if(selectedCrypto==='USDT'||selectedCrypto==='USDC') msg+=` Make sure to use the ${selectedNetwork} network.`; 
-            document.getElementById('warningNote').innerHTML=msg; 
+            const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
+            document.getElementById('depositAddress').innerHTML = address; 
+            document.getElementById('finalDepositAmount').innerHTML = `$${depositAmount.toFixed(2)} ${selectedCrypto}`; 
+            document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(address)}`; 
             
-            // Save to localStorage
+            let msg = `⚠️ Send only ${selectedCrypto} to this address. Other coins will be lost.`; 
+            if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') msg += ` Make sure to use the ${selectedNetwork} network.`; 
+            document.getElementById('warningNote').innerHTML = msg; 
+            
+            // ========== SAVE TO LOCALSTORAGE WITH USER ID ==========
             const history = JSON.parse(localStorage.getItem('depositHistory')) || []
-            history.unshift({
+            
+            // Get current user from Supabase (from the module scope)
+            const userId = window.currentUserId || (document.body.getAttribute('data-user-id'))
+            
+            const newDeposit = {
                 id: Date.now(),
+                userId: currentUserFromModule?.id || 'unknown',
+                userEmail: currentUserFromModule?.email || '',
                 amount: depositAmount,
                 crypto: selectedCrypto,
                 network: selectedNetwork,
                 address: address,
                 status: 'pending',
-                date: new Date().toLocaleString()
-            })
+                date: new Date().toLocaleString(),
+                txId: 'DEP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8).toUpperCase()
+            }
+            
+            history.unshift(newDeposit)
             localStorage.setItem('depositHistory', JSON.stringify(history))
             
+            // Also save to Supabase deposits table
+            if (typeof saveDepositToSupabase === 'function') {
+                saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
+            }
+            
             // Reload display
-            loadDepositHistory()
+            if (typeof loadDepositHistory === 'function') {
+                loadDepositHistory()
+            }
             
             if (timerInterval) clearInterval(timerInterval); 
-            timerSeconds=600; 
+            timerSeconds = 600; 
             startTimer(); 
-            const btn=document.getElementById('confirmPaymentBtn'); 
-            btn.textContent='✅ I have made deposit'; 
+            const btn = document.getElementById('confirmPaymentBtn'); 
+            btn.textContent = '✅ I have made deposit'; 
             btn.classList.remove('reported'); 
-            btn.disabled=false; 
-            document.getElementById('step1').style.display='none'; 
-            document.getElementById('step2').style.display='none'; 
-            document.getElementById('step3').style.display='block'; 
+            btn.disabled = false; 
+            document.getElementById('step1').style.display = 'none'; 
+            document.getElementById('step2').style.display = 'none'; 
+            document.getElementById('step3').style.display = 'block'; 
+            
+            // Show success toast
+            showDepositToast()
         }
+        
+        function showDepositToast() {
+            const toast = document.getElementById('toastMessage')
+            toast.textContent = '✅ Deposit request created! Admin will review and approve.'
+            toast.className = 'toast-notification success'
+            toast.classList.add('show')
+            setTimeout(() => toast.classList.remove('show'), 4000)
+        }
+        
         function confirmPayment() { 
             if(timerSeconds<=0) return; 
             const btn=document.getElementById('confirmPaymentBtn'); 
@@ -491,48 +541,59 @@
             btn.classList.add('reported'); 
             btn.disabled=true; 
             if(timerInterval) clearInterval(timerInterval); 
+            const toast = document.getElementById('toastMessage')
+            toast.textContent = '📢 Deposit reported! Admin will verify and credit your account.'
+            toast.className = 'toast-notification info'
+            toast.classList.add('show')
+            setTimeout(() => toast.classList.remove('show'), 3000)
         }
-        function copyAddress() { const addr=document.getElementById('depositAddress').innerHTML; navigator.clipboard.writeText(addr); const toast=document.getElementById('toastMessage'); toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2000); }
+        
+        function copyAddress() { 
+            const addr=document.getElementById('depositAddress').innerHTML; 
+            navigator.clipboard.writeText(addr); 
+            const toast=document.getElementById('toastMessage'); 
+            toast.textContent = '✓ Address copied!'
+            toast.className = 'toast-notification success'
+            toast.classList.add('show'); 
+            setTimeout(()=>toast.classList.remove('show'),2000); 
+        }
+        
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
+        
+        // Store currentUser from module globally
+        let currentUserFromModule = null
+        const moduleScript = document.querySelector('script[type="module"]')
+        if (moduleScript) {
+            // The module will set this
+            window.setCurrentUser = (user) => { currentUserFromModule = user; window.currentUserId = user?.id }
+        }
+        
         document.addEventListener('click',function(e){ const sel=document.getElementById('cryptoSelector'); const drop=document.getElementById('cryptoDropdown'); if(sel&&!sel.contains(e.target)) drop.classList.remove('show'); });
         
-        function loadDepositHistory() {
-            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
-            const container = document.getElementById('depositHistoryList')
-            
-            if (history.length === 0) {
-                container.innerHTML = `<div class="empty-history"><div class="empty-icon">📭</div><div class="empty-title">No deposits yet</div><div class="empty-subtitle">Your deposit history will appear here</div></div>`
-                return
-            }
-            
-            container.innerHTML = history.map((d, index) => `
-                <div class="history-item">
-                    <div class="history-info">
-                        <div class="history-amount">$${d.amount.toFixed(2)}</div>
-                        <div class="history-crypto">${d.crypto} • ${d.network}</div>
-                        <div class="history-date">${d.date}</div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="history-status ${d.status}">${d.status === 'pending' ? '⏳ Pending' : '✅ Completed'}</span>
-                        <button class="delete-history-btn" onclick="deleteDepositHistory(${index})" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('')
-        }
+        renderCryptoDropdown(); 
+        updateNetworkOptions();
         
-        function deleteDepositHistory(index) {
-            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
-            history.splice(index, 1)
-            localStorage.setItem('depositHistory', JSON.stringify(history))
-            loadDepositHistory()
-        }
-        
-        renderCryptoDropdown(); updateNetworkOptions();
-        window.setAmount=setAmount; window.goToStep2=goToStep2; window.goToStep1=goToStep1; window.toggleCryptoDropdown=toggleCryptoDropdown; window.selectCrypto=selectCrypto; window.generateDepositAddress=generateDepositAddress; window.confirmPayment=confirmPayment; window.copyAddress=copyAddress; window.openSidebar=openSidebar; window.closeSidebar=closeSidebar;
+        // Expose functions globally
+        window.setAmount = setAmount;
+        window.goToStep2 = goToStep2;
+        window.goToStep1 = goToStep1;
+        window.toggleCryptoDropdown = toggleCryptoDropdown;
+        window.selectCrypto = selectCrypto;
+        window.generateDepositAddress = generateDepositAddress;
+        window.confirmPayment = confirmPayment;
+        window.copyAddress = copyAddress;
+        window.openSidebar = openSidebar;
+        window.closeSidebar = closeSidebar;
         window.deleteDepositHistory = deleteDepositHistory;
+        
+        // Capture currentUser from module
+        setTimeout(() => {
+            if (typeof currentUser !== 'undefined' && currentUser) {
+                currentUserFromModule = currentUser
+                window.currentUserId = currentUser.id
+            }
+        }, 500)
     </script>
 </body>
 </html>
