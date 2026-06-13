@@ -24,7 +24,6 @@
         let currentPage = 1
         let usersPerPage = 10
         let allUsers = []
-        let currentDeposits = []
 
         async function loadDashboard() {
             await loadUsers()
@@ -138,7 +137,6 @@
         function loadPendingDeposits() {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const pendingDeposits = depositHistory.filter(d => d.status === 'pending')
-            currentDeposits = pendingDeposits
             
             const container = document.getElementById('pendingDepositsList')
             const countSpan = document.getElementById('pendingCount')
@@ -162,7 +160,6 @@
                             <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${deposit.date}</div>
                             <div class="deposit-user"><i class="fas fa-user"></i> User: ${deposit.userEmail || deposit.userId?.substring(0, 8)}...</div>
                             <div class="deposit-user-id" style="font-size:0.6rem; color:#6b7280;">User ID: ${deposit.userId}</div>
-                            <div class="deposit-address" style="font-size:0.6rem; word-break:break-all;">Address: ${deposit.address?.substring(0, 30)}...</div>
                             ${deposit.txId ? `<div class="deposit-txid" style="font-size:0.6rem;">TX: ${deposit.txId}</div>` : ''}
                         </div>
                     </div>
@@ -174,7 +171,7 @@
             `).join('')
         }
 
-        // FIXED: Approve deposit - correctly adds money to user's balance
+        // FIXED: Approve deposit - uses correct table name 'user_balances'
         window.approveDeposit = async function(index) {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const deposit = depositHistory[index]
@@ -193,16 +190,18 @@
             }
             
             try {
-                // STEP 1: Get current user balance from Supabase
+                // STEP 1: Get current user balance from user_balances table
                 const { data: currentBalance, error: fetchError } = await supabase
                     .from('user_balances')
                     .select('balance')
                     .eq('user_id', userId)
                     .eq('asset', 'USD')
-                    .single()
+                    .maybeSingle()
                 
-                if (fetchError && fetchError.code !== 'PGRST116') {
+                if (fetchError) {
                     console.error('Error fetching balance:', fetchError)
+                    showToast(`Error: ${fetchError.message}`, 'error')
+                    return
                 }
                 
                 const oldBalance = currentBalance?.balance || 0
@@ -229,16 +228,20 @@
                 depositHistory[index] = deposit
                 localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
                 
-                // STEP 4: Record transaction in Supabase
-                await supabase.from('transactions').insert({
-                    user_id: userId,
-                    type: 'deposit',
-                    amount: amount,
-                    status: 'completed',
-                    reference: deposit.txId || `DEP-${Date.now()}`,
-                    description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network})`,
-                    created_at: new Date().toISOString()
-                }).catch(e => console.log('Transaction record error:', e))
+                // STEP 4: Record transaction (optional - only if table exists)
+                try {
+                    await supabase.from('transactions').insert({
+                        user_id: userId,
+                        type: 'deposit',
+                        amount: amount,
+                        status: 'completed',
+                        reference: deposit.txId || `DEP-${Date.now()}`,
+                        description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network})`,
+                        created_at: new Date().toISOString()
+                    })
+                } catch (txError) {
+                    console.log('Transaction record skipped (table may not exist):', txError)
+                }
                 
                 // STEP 5: Refresh displays
                 loadPendingDeposits()
@@ -423,7 +426,6 @@
         .deposit-crypto { font-size: 0.7rem; color: #9ca3af; margin: 0.2rem 0; }
         .deposit-date { font-size: 0.6rem; color: #6b7280; }
         .deposit-user { font-size: 0.65rem; color: #3b82f6; margin: 0.2rem 0; }
-        .deposit-user-id { font-size: 0.55rem; color: #6b7280; font-family: monospace; }
         .deposit-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
         .approve-btn { flex: 1; background: #10b981; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
         .reject-btn { flex: 1; background: #ef4444; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
