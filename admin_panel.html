@@ -55,7 +55,7 @@
             const paginated = allUsers.slice(start, start + usersPerPage)
             
             if (paginated.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No users found</td></tr>'
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No users found</div></div> </div>'
                 return
             }
             
@@ -111,12 +111,13 @@
                 return
             }
             
+            // Use upsert to avoid duplicate key error
             const { error } = await supabase.from('user_balances').upsert({
                 user_id: userId,
                 asset: asset,
                 balance: newBalance,
                 updated_at: new Date().toISOString()
-            })
+            }, { onConflict: 'user_id, asset' })
             
             if (error) {
                 alert('Error updating balance: ' + error.message)
@@ -171,7 +172,7 @@
             `).join('')
         }
 
-        // FIXED: Approve deposit - uses correct table name 'user_balances'
+        // FIXED: Approve deposit - handles duplicate key with proper upsert
         window.approveDeposit = async function(index) {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const deposit = depositHistory[index]
@@ -190,7 +191,7 @@
             }
             
             try {
-                // STEP 1: Get current user balance from user_balances table
+                // STEP 1: Get current user balance
                 const { data: currentBalance, error: fetchError } = await supabase
                     .from('user_balances')
                     .select('balance')
@@ -200,14 +201,12 @@
                 
                 if (fetchError) {
                     console.error('Error fetching balance:', fetchError)
-                    showToast(`Error: ${fetchError.message}`, 'error')
-                    return
                 }
                 
                 const oldBalance = currentBalance?.balance || 0
                 const newBalance = oldBalance + amount
                 
-                // STEP 2: Update balance in user_balances table
+                // STEP 2: Update or Insert using upsert with onConflict
                 const { error: upsertError } = await supabase
                     .from('user_balances')
                     .upsert({
@@ -215,7 +214,7 @@
                         asset: 'USD',
                         balance: newBalance,
                         updated_at: new Date().toISOString()
-                    })
+                    }, { onConflict: 'user_id, asset' })
                 
                 if (upsertError) {
                     console.error('Error updating balance:', upsertError)
@@ -228,7 +227,7 @@
                 depositHistory[index] = deposit
                 localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
                 
-                // STEP 4: Record transaction (optional - only if table exists)
+                // STEP 4: Record transaction (optional)
                 try {
                     await supabase.from('transactions').insert({
                         user_id: userId,
@@ -240,7 +239,7 @@
                         created_at: new Date().toISOString()
                     })
                 } catch (txError) {
-                    console.log('Transaction record skipped (table may not exist):', txError)
+                    console.log('Transaction record skipped:', txError)
                 }
                 
                 // STEP 5: Refresh displays
