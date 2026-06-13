@@ -70,6 +70,7 @@
                                 <div class="user-info">
                                     <div class="user-name">${user.full_name || 'User'}</div>
                                     <div class="user-email">${user.email || 'N/A'}</div>
+                                    <div class="user-id" style="font-size:0.6rem; color:#6b7280;">ID: ${user.id.substring(0, 8)}...</div>
                                 </div>
                             </div>
                         </td>
@@ -159,8 +160,10 @@
                             <div class="deposit-amount">$${deposit.amount.toFixed(2)}</div>
                             <div class="deposit-crypto">${deposit.crypto} • ${deposit.network}</div>
                             <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${deposit.date}</div>
-                            <div class="deposit-user"><i class="fas fa-user"></i> User ID: ${deposit.userId?.substring(0, 8)}...</div>
-                            <div class="deposit-address">${deposit.address?.substring(0, 30)}...</div>
+                            <div class="deposit-user"><i class="fas fa-user"></i> User: ${deposit.userEmail || deposit.userId?.substring(0, 8)}...</div>
+                            <div class="deposit-user-id" style="font-size:0.6rem; color:#6b7280;">User ID: ${deposit.userId}</div>
+                            <div class="deposit-address" style="font-size:0.6rem; word-break:break-all;">Address: ${deposit.address?.substring(0, 30)}...</div>
+                            ${deposit.txId ? `<div class="deposit-txid" style="font-size:0.6rem;">TX: ${deposit.txId}</div>` : ''}
                         </div>
                     </div>
                     <div class="deposit-actions">
@@ -171,7 +174,7 @@
             `).join('')
         }
 
-        // UPDATED: Approve deposit - ADDS MONEY TO USER BALANCE
+        // FIXED: Approve deposit - correctly adds money to user's balance
         window.approveDeposit = async function(index) {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const deposit = depositHistory[index]
@@ -181,65 +184,72 @@
                 return
             }
             
-            // Mark as completed
-            deposit.status = 'completed'
-            depositHistory[index] = deposit
-            localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
+            const userId = deposit.userId
+            const amount = deposit.amount
             
-            // ADD MONEY TO USER'S BALANCE IN SUPABASE
-            if (deposit.userId && deposit.amount > 0) {
-                try {
-                    // Get current balance
-                    const { data: currentBalance } = await supabase
-                        .from('user_balances')
-                        .select('balance')
-                        .eq('user_id', deposit.userId)
-                        .eq('asset', 'USD')
-                        .single()
-                    
-                    const oldBalance = currentBalance?.balance || 0
-                    const newBalance = oldBalance + deposit.amount
-                    
-                    // Update balance
-                    const { error } = await supabase
-                        .from('user_balances')
-                        .upsert({
-                            user_id: deposit.userId,
-                            asset: 'USD',
-                            balance: newBalance,
-                            updated_at: new Date().toISOString()
-                        })
-                    
-                    if (error) {
-                        console.error('Error updating balance:', error)
-                        showToast('Deposit approved but balance update failed!', 'error')
-                    } else {
-                        showToast(`✅ Approved $${deposit.amount.toFixed(2)} added to user balance!`, 'success')
-                        
-                        // Create transaction record
-                        await supabase.from('transactions').insert({
-                            user_id: deposit.userId,
-                            type: 'deposit',
-                            amount: deposit.amount,
-                            status: 'completed',
-                            reference: deposit.txId || deposit.address,
-                            created_at: new Date().toISOString()
-                        })
-                    }
-                    
-                    // Refresh displays
-                    loadPendingDeposits()
-                    await loadUsers()
-                    updateStats()
-                    
-                } catch (err) {
-                    console.error('Error:', err)
-                    showToast('Error updating balance', 'error')
+            if (!userId) {
+                showToast('ERROR: No user ID found in deposit record!', 'error')
+                return
+            }
+            
+            try {
+                // STEP 1: Get current user balance from Supabase
+                const { data: currentBalance, error: fetchError } = await supabase
+                    .from('user_balances')
+                    .select('balance')
+                    .eq('user_id', userId)
+                    .eq('asset', 'USD')
+                    .single()
+                
+                if (fetchError && fetchError.code !== 'PGRST116') {
+                    console.error('Error fetching balance:', fetchError)
                 }
-            } else {
-                showToast('Deposit approved (no user balance update)', 'info')
+                
+                const oldBalance = currentBalance?.balance || 0
+                const newBalance = oldBalance + amount
+                
+                // STEP 2: Update balance in user_balances table
+                const { error: upsertError } = await supabase
+                    .from('user_balances')
+                    .upsert({
+                        user_id: userId,
+                        asset: 'USD',
+                        balance: newBalance,
+                        updated_at: new Date().toISOString()
+                    })
+                
+                if (upsertError) {
+                    console.error('Error updating balance:', upsertError)
+                    showToast(`Balance update failed: ${upsertError.message}`, 'error')
+                    return
+                }
+                
+                // STEP 3: Update deposit status in localStorage
+                deposit.status = 'completed'
+                depositHistory[index] = deposit
+                localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
+                
+                // STEP 4: Record transaction in Supabase
+                await supabase.from('transactions').insert({
+                    user_id: userId,
+                    type: 'deposit',
+                    amount: amount,
+                    status: 'completed',
+                    reference: deposit.txId || `DEP-${Date.now()}`,
+                    description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network})`,
+                    created_at: new Date().toISOString()
+                }).catch(e => console.log('Transaction record error:', e))
+                
+                // STEP 5: Refresh displays
                 loadPendingDeposits()
+                await loadUsers()
                 updateStats()
+                
+                showToast(`✅ Approved $${amount.toFixed(2)} added to user's balance!`, 'success')
+                
+            } catch (err) {
+                console.error('Error:', err)
+                showToast(`Error: ${err.message}`, 'error')
             }
         }
 
@@ -402,20 +412,21 @@
         .page-btn { background: #374151; border: none; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; color: white; }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .deposits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1rem; }
+        .deposits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1rem; }
         .deposit-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
         .deposit-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
         .deposit-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.6rem; font-weight: 600; margin-bottom: 0.8rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
         .deposit-body { display: flex; gap: 1rem; margin-bottom: 1rem; }
         .deposit-icon { width: 50px; height: 50px; background: rgba(16, 185, 129, 0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #10b981; }
+        .deposit-info { flex: 1; }
         .deposit-amount { font-size: 1.2rem; font-weight: 700; }
         .deposit-crypto { font-size: 0.7rem; color: #9ca3af; margin: 0.2rem 0; }
         .deposit-date { font-size: 0.6rem; color: #6b7280; }
-        .deposit-user { font-size: 0.6rem; color: #6b7280; margin: 0.2rem 0; }
-        .deposit-address { font-size: 0.6rem; font-family: monospace; color: #6b7280; margin-top: 0.3rem; }
-        .deposit-actions { display: flex; gap: 0.5rem; }
-        .approve-btn { flex: 1; background: #10b981; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .reject-btn { flex: 1; background: #ef4444; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .deposit-user { font-size: 0.65rem; color: #3b82f6; margin: 0.2rem 0; }
+        .deposit-user-id { font-size: 0.55rem; color: #6b7280; font-family: monospace; }
+        .deposit-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .approve-btn { flex: 1; background: #10b981; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
+        .reject-btn { flex: 1; background: #ef4444; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
         
         .bots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1rem; }
         .bot-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
@@ -442,6 +453,7 @@
         .toast.success { background: #10b981; color: white; }
         .toast.error { background: #ef4444; color: white; }
         .toast.info { background: #3b82f6; color: white; }
+        .toast.warning { background: #f59e0b; color: white; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
         @media (max-width: 768px) { 
