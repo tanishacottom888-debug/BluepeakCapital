@@ -28,7 +28,6 @@
         async function loadDashboard() {
             await loadUsers()
             loadPendingDeposits()
-            await loadBots()
             updateStats()
         }
 
@@ -137,7 +136,6 @@
         function loadPendingDeposits() {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             
-            // Debug: Log all deposits to console
             console.log('All deposits in localStorage:', depositHistory)
             
             const pendingDeposits = depositHistory.filter(d => d.status === 'pending')
@@ -263,67 +261,18 @@
             }
         }
 
-        async function loadBots() {
-            const { data: bots } = await supabase.from('user_bots').select('*').order('created_at', { ascending: false })
-            const container = document.getElementById('botsList')
-            
-            if (!bots || bots.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-robot"></i><h3>No Bots Active</h3><p>Users haven't activated any trading bots yet</p></div>`
-                return
-            }
-            
-            container.innerHTML = bots.map(bot => `
-                <div class="bot-card">
-                    <div class="bot-header">
-                        <div class="bot-icon"><i class="fas fa-robot"></i></div>
-                        <div class="bot-info">
-                            <div class="bot-name">${bot.bot_name || 'Trading Bot'}</div>
-                            <div class="bot-version">${bot.bot_version || 'v1.0'}</div>
-                        </div>
-                        <div class="bot-status ${bot.status}">${bot.status === 'running' ? '🟢 RUNNING' : '🔴 STOPPED'}</div>
-                    </div>
-                    <div class="bot-body">
-                        <div class="bot-detail"><i class="fas fa-chart-line"></i> Strategy: ${bot.strategy || 'balanced'}</div>
-                        <div class="bot-detail"><i class="far fa-calendar-alt"></i> Created: ${new Date(bot.created_at).toLocaleDateString()}</div>
-                        <div class="bot-detail"><i class="fas fa-user"></i> User: ${bot.user_id?.substring(0, 8)}...</div>
-                    </div>
-                    <div class="bot-actions">
-                        <button class="bot-control start" onclick="controlBot('${bot.id}', 'start')"><i class="fas fa-play"></i> Start</button>
-                        <button class="bot-control stop" onclick="controlBot('${bot.id}', 'stop')"><i class="fas fa-stop"></i> Stop</button>
-                        <button class="bot-control delete" onclick="deleteBot('${bot.id}')"><i class="fas fa-trash"></i> Delete</button>
-                    </div>
-                </div>
-            `).join('')
-        }
-
-        window.controlBot = async function(botId, action) {
-            const newStatus = action === 'start' ? 'running' : 'stopped'
-            await supabase.from('user_bots').update({ status: newStatus }).eq('id', botId)
-            showToast(`Bot ${action}ed!`, 'success')
-            await loadBots()
-        }
-
-        window.deleteBot = async function(botId) {
-            if (confirm('Delete this bot permanently?')) {
-                await supabase.from('user_bots').delete().eq('id', botId)
-                showToast('Bot deleted', 'info')
-                await loadBots()
-            }
-        }
-
         async function updateStats() {
             const { data: profiles } = await supabase.from('profiles').select('*')
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const pendingCount = depositHistory.filter(d => d.status === 'pending').length
             const completedCount = depositHistory.filter(d => d.status === 'completed').length
             const totalVolume = depositHistory.filter(d => d.status === 'completed').reduce((s, d) => s + d.amount, 0)
-            const { data: bots } = await supabase.from('user_bots').select('*')
             
             document.getElementById('totalUsers').textContent = profiles?.length || 0
             document.getElementById('pendingDepositCount').textContent = pendingCount
             document.getElementById('completedDepositsCount').textContent = completedCount
             document.getElementById('totalVolume').textContent = `$${totalVolume.toLocaleString()}`
-            document.getElementById('activeBotsCount').textContent = bots?.filter(b => b.status === 'running').length || 0
+            document.getElementById('activeBotsCount').textContent = '0'
         }
 
         function updatePagination() {
@@ -344,11 +293,8 @@
         window.refreshAll = function() { 
             loadDashboard(); 
             showToast('Dashboard refreshed!', 'success');
-            // Also force reload localStorage display
-            console.log('Manual refresh triggered');
         }
         
-        // Force refresh deposits
         window.forceRefreshDeposits = function() {
             loadPendingDeposits();
             showToast('Deposits refreshed!', 'info');
@@ -438,24 +384,6 @@
         .approve-btn { flex: 1; background: #10b981; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
         .reject-btn { flex: 1; background: #ef4444; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
         
-        .bots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1rem; }
-        .bot-card { background: rgba(31, 41, 55, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 1rem; transition: all 0.3s; }
-        .bot-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
-        .bot-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; }
-        .bot-icon { width: 45px; height: 45px; background: rgba(59, 130, 246, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .bot-name { font-weight: 700; }
-        .bot-version { font-size: 0.6rem; color: #9ca3af; }
-        .bot-status { margin-left: auto; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.6rem; font-weight: 600; }
-        .bot-status.running { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .bot-status.stopped { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .bot-body { margin-bottom: 1rem; }
-        .bot-detail { font-size: 0.7rem; color: #9ca3af; margin: 0.3rem 0; display: flex; align-items: center; gap: 0.5rem; }
-        .bot-actions { display: flex; gap: 0.5rem; }
-        .bot-control { flex: 1; padding: 0.4rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.7rem; font-weight: 600; }
-        .bot-control.start { background: #10b981; color: white; }
-        .bot-control.stop { background: #ef4444; color: white; }
-        .bot-control.delete { background: #6b7280; color: white; }
-        
         .empty-state { text-align: center; padding: 2rem; color: #6b7280; }
         .empty-state i { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
         
@@ -469,7 +397,7 @@
         @media (max-width: 768px) { 
             .container { padding: 1rem; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-            .deposits-grid, .bots-grid { grid-template-columns: 1fr; }
+            .deposits-grid { grid-template-columns: 1fr; }
             .navbar { padding: 0.8rem 1rem; }
             .nav-buttons .nav-btn span { display: none; }
         }
@@ -518,9 +446,6 @@
 
         <div class="section-header"><div class="section-title"><i class="fas fa-hourglass-half"></i> Pending Deposits <span class="badge" id="pendingCount">0</span></div></div>
         <div id="pendingDepositsList" class="deposits-grid"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading...</p></div></div>
-
-        <div class="section-header"><div class="section-title"><i class="fas fa-robot"></i> Bot Management</div></div>
-        <div id="botsList" class="bots-grid"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading bots...</p></div></div>
     </div>
 </body>
 </html>
