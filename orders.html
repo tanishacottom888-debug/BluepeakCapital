@@ -42,9 +42,9 @@
             
             currentUserId = session.user.id
             
-            // Load user balance
+            // Load user balance - FIXED: 'balances' → 'user_balances'
             const { data } = await supabase
-                .from('balances')
+                .from('user_balances')
                 .select('balance')
                 .eq('user_id', currentUserId)
                 .eq('asset', 'USD')
@@ -248,12 +248,12 @@
         .right-menu {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .flag-icon {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             object-fit: cover;
             cursor: pointer;
@@ -261,10 +261,10 @@
 
         .balance-amount {
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-primary);
             background: var(--hover-bg);
-            padding: 0.3rem 0.8rem;
+            padding: 0.25rem 0.7rem;
             border-radius: 30px;
         }
 
@@ -629,8 +629,15 @@
                 font-size: 1.1rem;
             }
             .flag-icon {
-                width: 24px;
-                height: 24px;
+                width: 22px;
+                height: 22px;
+            }
+            .balance-amount {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.6rem;
+            }
+            .right-menu {
+                gap: 0.3rem;
             }
         }
     </style>
