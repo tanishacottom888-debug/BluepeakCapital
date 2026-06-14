@@ -84,10 +84,10 @@
         
         async function loadUserBalances(userId) {
             try {
-               const { data: balances, error } = await supabase
-    .from('user_balances')
-    .select('*')
-    .eq('user_id', userId)
+                const { data: balances, error } = await supabase
+                    .from('user_balances')
+                    .select('*')
+                    .eq('user_id', userId)
                 
                 if (error) {
                     console.error('Error loading balances:', error)
@@ -109,16 +109,17 @@
         
         async function createDefaultBalances(userId) {
             const defaultBalances = [
-                { user_id: userId, asset: "BTC", balance: 0, symbol: "BTC" },
-                { user_id: userId, asset: "ETH", balance: 0, symbol: "ETH" },
-                { user_id: userId, asset: "SOL", balance: 0, symbol: "SOL" },
-                { user_id: userId, asset: "AVAX", balance: 0, symbol: "AVAX" }
+                { user_id: userId, asset: "BTC", balance: 0 },
+                { user_id: userId, asset: "ETH", balance: 0 },
+                { user_id: userId, asset: "SOL", balance: 0 },
+                { user_id: userId, asset: "AVAX", balance: 0 },
+                { user_id: userId, asset: "USD", balance: 0 }
             ]
             
             try {
                 const { error } = await supabase
-    .from('user_balances')
-    .insert(defaultBalances)
+                    .from('user_balances')
+                    .insert(defaultBalances)
                 
                 if (error) {
                     console.error('Error creating default balances:', error)
@@ -141,6 +142,10 @@
         }
         
         function updatePortfolioWithBalances(balances) {
+            // Get USD balance separately
+            const usdBalance = balances.find(b => b.asset === 'USD')?.balance || 0
+            updateBalanceDisplay(usdBalance)
+            
             const portfolioData = [
                 { asset: "Bitcoin", symbol: "BTC", holdings: 0, avgPrice: 38500, currentPrice: 43250, value: 0, pnl: 0, pnlPercent: 0 },
                 { asset: "Ethereum", symbol: "ETH", holdings: 0, avgPrice: 1850, currentPrice: 2250, value: 0, pnl: 0, pnlPercent: 0 },
@@ -159,8 +164,8 @@
             })
             
             updatePortfolioTable(portfolioData)
-            const totalBalance = portfolioData.reduce((sum, a) => sum + a.value, 0)
-            updateBalanceDisplay(totalBalance)
+            const totalCryptoValue = portfolioData.reduce((sum, a) => sum + a.value, 0)
+            document.getElementById('totalBalance').innerHTML = `$${(usdBalance + totalCryptoValue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         }
         
         function updatePortfolioTable(portfolioData) {
@@ -177,19 +182,20 @@
                     <td class="${asset.pnl >= 0 ? 'positive' : 'negative'}">
                         ${asset.pnl >= 0 ? '▲' : '▼'} $${Math.abs(asset.pnl).toLocaleString()} (${Math.abs(asset.pnlPercent)}%)
                     </td>
-                    <td><button class="btn-small" onclick="showMessage('Trade page')">Trade</button></td>
+                    <td><button class="btn-small" onclick="window.location.href='trade.html'">Trade</button></td>
                 </tr>
             `).join('')
-            
-            const totalBalance = portfolioData.reduce((sum, a) => sum + a.value, 0)
-            document.getElementById('totalBalance').innerHTML = `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            document.getElementById('totalPnl').innerHTML = `$${portfolioData.reduce((sum, a) => sum + a.pnl, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         }
         
         function updateBalanceDisplay(amount) {
             const balanceDisplay = document.getElementById('balanceDisplay')
+            const totalBalanceElem = document.getElementById('totalBalance')
             if (balanceDisplay) {
                 balanceDisplay.innerHTML = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            }
+            // Also update total balance if it's just USD
+            if (totalBalanceElem && document.getElementById('portfolioBody').children.length <= 1) {
+                totalBalanceElem.innerHTML = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             }
         }
         
