@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- THEME CONTROLLER - MUST BE FIRST -->
     <script>
         function initTheme() {
             const savedTheme = localStorage.getItem('bluepeak_theme');
@@ -32,7 +31,9 @@
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
         let currentUser = null
-        let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, BNB: 0, DOGE: 0, XRP: 0, ADA: 0, DOT: 0, LINK: 0, LTC: 0, AVAX: 0, MATIC: 0, TRX: 0, TON: 0 }
+        let userBalances = {}
+        
+        window.userBalances = userBalances
 
         async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession()
@@ -41,6 +42,7 @@
                 return
             }
             currentUser = session.user
+            window.currentUserId = currentUser.id
             await loadUserBalances()
             loadWithdrawalHistory()
         }
@@ -70,7 +72,7 @@
             }
         }
         
-        function updateBalanceDisplay() {
+        window.updateBalanceDisplay = function() {
             const asset = window.currentAsset || 'BTC'
             const balance = userBalances[asset] || 0
             const balanceElement = document.getElementById('availableBalance')
@@ -1001,9 +1003,10 @@
         
         function renderCryptoDropdown() {
             const dropdown = document.getElementById('cryptoDropdown')
+            if (!dropdown) return
             dropdown.innerHTML = cryptoList.map(c => `
                 <div class="crypto-option" onclick="selectCrypto('${c.symbol}','${c.name}','${c.iconUrl}')">
-                    <img src="${c.iconUrl}" class="crypto-option-icon">
+                    <img src="${c.iconUrl}" class="crypto-option-icon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Crect width=\'24\' height=\'24\' fill=\'%233b82f6\'/%3E%3Ctext x=\'12\' y=\'16\' text-anchor=\'middle\' fill=\'white\' font-size=\'12\'%3E${c.symbol.charAt(0)}%3C/text%3E%3C/svg%3E'">
                     <div class="crypto-option-info">
                         <div class="crypto-option-name">${c.name}</div>
                         <div class="crypto-option-symbol">${c.symbol}</div>
@@ -1019,61 +1022,64 @@
             document.getElementById('selectedCryptoSymbol').innerHTML = symbol
             closeDropdown()
             updateNetworkOptions()
-            updateBalanceDisplay()
-            
+            if (typeof window.updateBalanceDisplay === 'function') {
+                window.updateBalanceDisplay()
+            }
             window.currentAsset = currentAsset
             window.selectedNetwork = selectedNetwork
         }
         
         function updateNetworkOptions() {
             const netSelect = document.getElementById('networkSelect')
+            if (!netSelect) return
             const opts = networkOptions[currentAsset] || [{ value: currentAsset, label: `${currentAsset} Network` }]
             netSelect.innerHTML = opts.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')
             selectedNetwork = opts[0].value
             window.selectedNetwork = selectedNetwork
         }
         
-        function updateBalanceDisplay() {
-            const balance = window.userBalances ? (window.userBalances[currentAsset] || 0) : 0
-            const balanceElement = document.getElementById('availableBalance')
-            if (balanceElement) {
-                balanceElement.innerHTML = `Available: ${balance.toFixed(4)} ${currentAsset}`
-            }
-        }
-        
         function toggleDropdown() {
             const dropdown = document.getElementById('cryptoDropdown')
-            dropdown.classList.toggle('show')
+            if (dropdown) {
+                dropdown.classList.toggle('show')
+            }
         }
         
         function closeDropdown() {
             const dropdown = document.getElementById('cryptoDropdown')
-            dropdown.classList.remove('show')
+            if (dropdown) {
+                dropdown.classList.remove('show')
+            }
         }
         
         // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
             const selector = document.getElementById('cryptoSelector')
             const dropdown = document.getElementById('cryptoDropdown')
-            if (selector && !selector.contains(e.target)) {
+            if (selector && dropdown && !selector.contains(e.target)) {
                 dropdown.classList.remove('show')
             }
         })
         
-        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
-        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
+        function openSidebar() { 
+            document.getElementById('sidebarOverlay').classList.add('active') 
+        }
+        
+        function closeSidebar() { 
+            document.getElementById('sidebarOverlay').classList.remove('active') 
+        }
+        
+        // Initialize
+        renderCryptoDropdown()
+        updateNetworkOptions()
         
         // Make functions global
         window.toggleDropdown = toggleDropdown
         window.selectCrypto = selectCrypto
-        window.submitWithdrawal = submitWithdrawal
         window.openSidebar = openSidebar
         window.closeSidebar = closeSidebar
         window.currentAsset = currentAsset
         window.selectedNetwork = selectedNetwork
-        
-        renderCryptoDropdown()
-        updateNetworkOptions()
     </script>
 </body>
 </html>
