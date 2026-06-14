@@ -39,14 +39,11 @@
                 return
             }
             currentUser = session.user
-            // Make currentUser available globally
             window.currentUser = currentUser
             await loadUserBalance()
             loadDepositHistory()
-            // Listen for storage changes (when admin approves from another tab)
             window.addEventListener('storage', function(e) {
                 if (e.key === 'depositHistory') {
-                    console.log('Deposit history updated, refreshing...')
                     loadDepositHistory()
                     loadUserBalance()
                 }
@@ -67,7 +64,6 @@
                 document.getElementById('balanceDisplay').innerHTML = `$${balance.toFixed(2)}`
                 return balance
             } catch (e) {
-                console.log('Balance load error:', e)
                 document.getElementById('currentBalance').innerHTML = `$0.00`
                 document.getElementById('balanceDisplay').innerHTML = `$0.00`
                 return 0
@@ -78,7 +74,6 @@
             const history = JSON.parse(localStorage.getItem('depositHistory')) || []
             const container = document.getElementById('depositHistoryList')
             
-            // Filter only current user's deposits
             const userDeposits = history.filter(d => d.userId === currentUser?.id)
             
             if (userDeposits.length === 0) {
@@ -92,10 +87,10 @@
                 return
             }
             
-            // Sort by date (newest first)
             userDeposits.sort((a, b) => new Date(b.date) - new Date(a.date))
             
-            container.innerHTML = userDeposits.map((deposit) => {
+            container.innerHTML = userDeposits.map((deposit, index) => {
+                const originalIndex = history.findIndex(h => h.id === deposit.id)
                 const isPending = deposit.status === 'pending'
                 const statusClass = isPending ? 'pending' : 'completed'
                 const statusText = isPending ? '⏳ Pending' : '✅ Completed'
@@ -110,16 +105,18 @@
                             ${deposit.txId ? `<div class="history-txid"><i class="fas fa-hashtag"></i> ${deposit.txId}</div>` : ''}
                             ${deposit.address ? `<div class="history-address"><i class="fas fa-qrcode"></i> ${deposit.address.substring(0, 20)}...</div>` : ''}
                         </div>
-                        <div class="history-status-container">
+                        <div class="history-actions">
                             <span class="history-status ${statusClass}">
                                 <i class="fas ${statusIcon}"></i> ${statusText}
                             </span>
+                            <button class="delete-history-btn" onclick="deleteDepositHistory(${originalIndex})" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                     </div>
                 `
             }).join('')
             
-            // Update pending count badge
             const pendingCount = userDeposits.filter(d => d.status === 'pending').length
             const pendingBadge = document.getElementById('pendingCountBadge')
             if (pendingBadge) {
@@ -129,6 +126,16 @@
                 } else {
                     pendingBadge.style.display = 'none'
                 }
+            }
+        }
+        
+        window.deleteDepositHistory = function(index) {
+            if (confirm('Delete this deposit record?')) {
+                const history = JSON.parse(localStorage.getItem('depositHistory')) || []
+                history.splice(index, 1)
+                localStorage.setItem('depositHistory', JSON.stringify(history))
+                loadDepositHistory()
+                showToast('Deposit record deleted', 'info')
             }
         }
         
@@ -153,13 +160,11 @@
                     tx_id: txId,
                     created_at: new Date().toISOString()
                 })
-                console.log('Deposit saved to Supabase')
             } catch (e) {
                 console.log('Supabase save failed:', e)
             }
         }
         
-        // Expose functions globally
         window.loadUserBalance = loadUserBalance
         window.loadDepositHistory = loadDepositHistory
         
@@ -175,9 +180,9 @@
         .logo-area { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
         .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; }
         .site-name { font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #60a5fa); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .right-menu { display: flex; align-items: center; gap: 0.75rem; }
-        .flag-icon { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; cursor: pointer; }
-        .balance-display { font-weight: 600; font-size: 0.85rem; color: var(--text-primary); background: var(--hover-bg); padding: 0.4rem 1rem; border-radius: 30px; }
+        .right-menu { display: flex; align-items: center; gap: 0.4rem; }
+        .flag-icon { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; cursor: pointer; }
+        .balance-display { font-weight: 600; font-size: 0.75rem; color: var(--text-primary); background: var(--hover-bg); padding: 0.25rem 0.7rem; border-radius: 30px; }
         .mobile-menu-btn { background: none; border: none; color: var(--text-primary); font-size: 1.3rem; cursor: pointer; display: none; }
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; visibility: hidden; opacity: 0; transition: all 0.3s; }
         .sidebar-overlay.active { visibility: visible; opacity: 1; }
@@ -272,10 +277,26 @@
         .history-date { font-size: 0.6rem; color: #6b7280; }
         .history-txid { font-size: 0.55rem; color: #6b7280; font-family: monospace; }
         .history-address { font-size: 0.55rem; color: #6b7280; font-family: monospace; }
+        .history-actions { display: flex; align-items: center; gap: 0.5rem; }
         .history-status { font-size: 0.65rem; padding: 0.25rem 0.7rem; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; }
         .history-status.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
         .history-status.completed { background: rgba(16,185,129,0.15); color: #10b981; }
-        .history-status-container { margin-left: 0.5rem; }
+        
+        .delete-history-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+            opacity: 0.6;
+        }
+        .delete-history-btn:hover {
+            opacity: 1;
+            background: rgba(239, 68, 68, 0.1);
+        }
         
         .empty-history { text-align: center; padding: 2rem; color: var(--text-secondary); }
         .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
@@ -303,7 +324,7 @@
             .address-box { flex-direction: column; } 
             .copy-btn { width: 100%; } 
             .history-item { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
-            .history-status-container { align-self: flex-start; }
+            .history-actions { align-self: flex-start; width: 100%; justify-content: space-between; }
             .toast-notification { white-space: normal; text-align: center; min-width: 200px; }
         }
     </style>
@@ -568,7 +589,6 @@
             } 
             depositAmount=amount; 
             document.getElementById('depositingAmount').innerHTML=`$${depositAmount.toFixed(2)}`; 
-            // Update balance displays
             const balance = document.getElementById('currentBalance').innerHTML;
             document.getElementById('currentBalance2').innerHTML = balance;
             document.getElementById('currentBalance3').innerHTML = balance;
@@ -628,7 +648,6 @@
             if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') msg += ` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML = msg; 
             
-            // Get current user from the module
             const userId = window.currentUser?.id
             const userEmail = window.currentUser?.email
             
@@ -637,7 +656,6 @@
                 return
             }
             
-            // Save to localStorage with USER ID
             const history = JSON.parse(localStorage.getItem('depositHistory')) || []
             
             const newDeposit = {
@@ -656,12 +674,10 @@
             history.unshift(newDeposit)
             localStorage.setItem('depositHistory', JSON.stringify(history))
             
-            // Save to Supabase
             if (typeof saveDepositToSupabase === 'function') {
                 saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
             }
             
-            // Reload deposit history
             if (typeof loadDepositHistory === 'function') {
                 loadDepositHistory()
             }
@@ -704,18 +720,15 @@
             document.getElementById('sidebarOverlay').classList.remove('active'); 
         }
         
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(e){ 
             const sel=document.getElementById('cryptoSelector'); 
             const drop=document.getElementById('cryptoDropdown'); 
             if(sel && !sel.contains(e.target)) drop.classList.remove('show'); 
         });
         
-        // Initialize
         renderCryptoDropdown(); 
         updateNetworkOptions();
         
-        // Expose functions globally
         window.setAmount = setAmount;
         window.goToStep2 = goToStep2;
         window.goToStep1 = goToStep1;
