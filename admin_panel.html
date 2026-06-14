@@ -72,13 +72,13 @@
                                     <div class="user-id" style="font-size:0.6rem; color:#6b7280;">ID: ${user.id.substring(0, 8)}...</div>
                                 </div>
                             </div>
-                        </td>
+                        </div>
                         <td class="balance-cell">
                             <div class="balance-item"><span class="balance-label">USD</span><span id="usd-${user.id}">$${(balances.USD || 0).toFixed(2)}</span></div>
                             <div class="balance-item"><span class="balance-label">BTC</span><span id="btc-${user.id}">${(balances.BTC || 0).toFixed(4)} BTC</span></div>
                             <div class="balance-item"><span class="balance-label">ETH</span><span id="eth-${user.id}">${(balances.ETH || 0).toFixed(4)} ETH</span></div>
-                        </td>
-                        <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</td>
+                        </div>
+                        <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</div>
                         <td>
                             <div class="balance-edit">
                                 <select id="asset-select-${user.id}" class="asset-select">
@@ -89,11 +89,11 @@
                                 <input type="number" id="edit-amount-${user.id}" placeholder="Amount" step="0.01" class="edit-input">
                                 <button class="edit-btn" onclick="updateUserBalance('${user.id}')"><i class="fas fa-save"></i></button>
                             </div>
-                        </td>
+                        </div>
                         <td>
                             <button class="action-btn view" onclick="viewUserDetails('${user.id}')"><i class="fas fa-eye"></i></button>
-                        </td>
-                    </tr>
+                        </div>
+                    </div>
                 `
             }).join('')
             
@@ -111,7 +111,6 @@
                 return
             }
             
-            // Use upsert to avoid duplicate key error
             const { error } = await supabase.from('user_balances').upsert({
                 user_id: userId,
                 asset: asset,
@@ -137,6 +136,10 @@
 
         function loadPendingDeposits() {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
+            
+            // Debug: Log all deposits to console
+            console.log('All deposits in localStorage:', depositHistory)
+            
             const pendingDeposits = depositHistory.filter(d => d.status === 'pending')
             
             const container = document.getElementById('pendingDepositsList')
@@ -172,7 +175,6 @@
             `).join('')
         }
 
-        // FIXED: Approve deposit - handles duplicate key with proper upsert
         window.approveDeposit = async function(index) {
             const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
             const deposit = depositHistory[index]
@@ -191,7 +193,6 @@
             }
             
             try {
-                // STEP 1: Get current user balance
                 const { data: currentBalance, error: fetchError } = await supabase
                     .from('user_balances')
                     .select('balance')
@@ -206,7 +207,6 @@
                 const oldBalance = currentBalance?.balance || 0
                 const newBalance = oldBalance + amount
                 
-                // STEP 2: Update or Insert using upsert with onConflict
                 const { error: upsertError } = await supabase
                     .from('user_balances')
                     .upsert({
@@ -222,12 +222,10 @@
                     return
                 }
                 
-                // STEP 3: Update deposit status in localStorage
                 deposit.status = 'completed'
                 depositHistory[index] = deposit
                 localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
                 
-                // STEP 4: Record transaction (optional)
                 try {
                     await supabase.from('transactions').insert({
                         user_id: userId,
@@ -242,7 +240,6 @@
                     console.log('Transaction record skipped:', txError)
                 }
                 
-                // STEP 5: Refresh displays
                 loadPendingDeposits()
                 await loadUsers()
                 updateStats()
@@ -344,7 +341,19 @@
             showToast('User ID copied to clipboard', 'info')
         }
 
-        window.refreshAll = function() { loadDashboard(); showToast('Dashboard refreshed!', 'success') }
+        window.refreshAll = function() { 
+            loadDashboard(); 
+            showToast('Dashboard refreshed!', 'success');
+            // Also force reload localStorage display
+            console.log('Manual refresh triggered');
+        }
+        
+        // Force refresh deposits
+        window.forceRefreshDeposits = function() {
+            loadPendingDeposits();
+            showToast('Deposits refreshed!', 'info');
+        }
+
         window.logout = function() { localStorage.removeItem('admin_authenticated'); window.location.href = 'admin_login.html' }
 
         function showToast(msg, type = 'success') {
@@ -477,6 +486,7 @@
             <div class="nav-buttons">
                 <button class="nav-btn" onclick="location.href='admin_bot.html'"><i class="fas fa-robot"></i> <span>Trading Bot</span></button>
                 <button class="nav-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
+                <button class="nav-btn" onclick="forceRefreshDeposits()"><i class="fas fa-dollar-sign"></i> <span>Refresh Deposits</span></button>
                 <button class="nav-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
             </div>
         </div>
@@ -500,7 +510,8 @@
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>User</th><th>Balances</th><th>Joined</th><th>Edit Balance</th><th>Actions</th></tr></thead>
-                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</td></tr></tbody>
+                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</div></div> </div>
+                </tbody>
             </table>
         </div>
         <div class="pagination"><button class="page-btn" id="prevPage" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Prev</button><span id="pageInfo">Page 1</span><button class="page-btn" id="nextPage" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button></div>
