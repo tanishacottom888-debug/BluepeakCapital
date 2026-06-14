@@ -38,8 +38,9 @@
                 return
             }
             
+            // FIXED: Using correct table name 'user_balances'
             const { data } = await supabase
-                .from('balances')
+                .from('user_balances')
                 .select('balance')
                 .eq('user_id', session.user.id)
                 .eq('asset', 'USD')
@@ -692,14 +693,14 @@
                                 <span class="coin-symbol">${coin.symbol}</span>
                             </div>
                         </div>
-                    </td>
-                    <td class="price-value" data-price="${coin.price}">$${coin.price.toLocaleString()}</td>
-                    <td class="${coin.change24h >= 0 ? 'positive' : 'negative'}">${coin.change24h >= 0 ? '▲' : '▼'} ${Math.abs(coin.change24h)}%</td>
-                    <td class="${coin.change7d >= 0 ? 'positive' : 'negative'}">${coin.change7d >= 0 ? '▲' : '▼'} ${Math.abs(coin.change7d)}%</td>
-                    <td>$${(parseFloat(coin.volume) / 1000000000).toFixed(1)}B</td>
-                    <td>$${(parseFloat(coin.marketCap) / 1000000000).toFixed(0)}B</td>
-                    <td><span class="favorite-star ${favorites.includes(coin.symbol) ? 'active' : ''}" onclick="toggleFavorite('${coin.symbol}')">★</span></td>
-                    <td><button class="trade-btn" onclick="window.location.href='trade.html?pair=${coin.symbol}USD'">Trade</button></td>
+                    </div>
+                    <td class="price-value" data-price="${coin.price}">$${coin.price.toLocaleString()}</div>
+                    <td class="${coin.change24h >= 0 ? 'positive' : 'negative'}">${coin.change24h >= 0 ? '▲' : '▼'} ${Math.abs(coin.change24h)}%</div>
+                    <td class="${coin.change7d >= 0 ? 'positive' : 'negative'}">${coin.change7d >= 0 ? '▲' : '▼'} ${Math.abs(coin.change7d)}%</div>
+                    <td>$${(parseFloat(coin.volume) / 1000000000).toFixed(1)}B</div>
+                    <td>$${(parseFloat(coin.marketCap) / 1000000000).toFixed(0)}B</div>
+                    <td><span class="favorite-star ${favorites.includes(coin.symbol) ? 'active' : ''}" onclick="toggleFavorite('${coin.symbol}')">★</span></div>
+                    <td><button class="trade-btn" onclick="window.location.href='trade.html?pair=${coin.symbol}USD'">Trade</button></div>
                 </tr>
             `).join('');
             
