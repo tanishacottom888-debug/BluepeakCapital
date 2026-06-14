@@ -53,8 +53,9 @@
         }
         
         async function loadUserBalances() {
+            // FIXED: Using correct table name 'user_balances'
             const { data, error } = await supabase
-                .from('balances')
+                .from('user_balances')
                 .select('*')
                 .eq('user_id', currentUserId)
             
@@ -69,6 +70,7 @@
                 })
             }
             
+            // Ensure USD exists
             if (!userBalances.USD) userBalances.USD = 0
         }
         
@@ -109,14 +111,22 @@
         function updateBalanceDisplay() {
             const availableSpan = document.getElementById('availableBalance')
             if (availableSpan) {
-                const pairAsset = currentPair.split('/')[0]
+                const pairAsset = window.currentPair ? window.currentPair.split('/')[0] : 'BTC'
                 const balance = userBalances[pairAsset] || 0
                 availableSpan.innerHTML = `${balance.toFixed(4)} ${pairAsset}`
             }
             
             const usdBalance = userBalances.USD || 0
-            document.getElementById('topBalanceDisplay').innerHTML = `$${usdBalance.toFixed(2)}`
-            updateCalculations()
+            const balanceDisplay = document.getElementById('topBalanceDisplay')
+            if (balanceDisplay) balanceDisplay.innerHTML = `$${usdBalance.toFixed(2)}`
+            
+            // Also update the total balance in stats if exists
+            const totalBalanceElem = document.getElementById('totalBalance')
+            if (totalBalanceElem) {
+                totalBalanceElem.innerHTML = `$${usdBalance.toFixed(2)}`
+            }
+            
+            if (window.updateCalculations) window.updateCalculations()
         }
         
         async function saveOrderToDatabase(pair, type, orderType, price, amount, status = 'pending') {
@@ -148,14 +158,15 @@
             const currentBalance = userBalances[asset] || 0
             const newBalance = isBuy ? currentBalance + amount : currentBalance - amount
             
+            // FIXED: Using correct table name 'user_balances' with onConflict
             const { error } = await supabase
-                .from('balances')
+                .from('user_balances')
                 .upsert({
                     user_id: currentUserId,
                     asset: asset,
                     balance: newBalance,
                     updated_at: new Date().toISOString()
-                })
+                }, { onConflict: 'user_id, asset' })
             
             if (error) {
                 console.error('Error updating balance:', error)
@@ -186,9 +197,9 @@
         }
         
         window.executeMarketOrder = async function(amount, price, total) {
-            const pairAsset = currentPair.split('/')[0]
+            const pairAsset = window.currentPair ? window.currentPair.split('/')[0] : 'BTC'
             
-            if (currentOrderType === 'buy') {
+            if (window.currentOrderType === 'buy') {
                 if (total > userBalances.USD) {
                     showToast(`Insufficient USD balance. Available: $${userBalances.USD.toFixed(2)}`)
                     return false
@@ -208,7 +219,7 @@
             }
             
             const fee = total * 0.001
-            await saveTradeToHistory(currentPair, currentOrderType, price, amount, total, fee)
+            await saveTradeToHistory(window.currentPair, window.currentOrderType, price, amount, total, fee)
             await loadUserTrades()
             updateBalanceDisplay()
             
@@ -217,8 +228,8 @@
         
         window.saveLimitOrder = async function(amount, price) {
             const order = await saveOrderToDatabase(
-                currentPair,
-                currentOrderType,
+                window.currentPair,
+                window.currentOrderType,
                 document.getElementById('orderType').value,
                 price,
                 amount,
@@ -228,7 +239,7 @@
             if (order) {
                 userOrders.unshift(order)
                 renderOpenOrders()
-                showToast(`${currentOrderType.toUpperCase()} limit order placed for ${amount} ${currentPair.split('/')[0]} at $${price}`)
+                showToast(`${window.currentOrderType.toUpperCase()} limit order placed for ${amount} ${window.currentPair.split('/')[0]} at $${price}`)
                 return true
             }
             return false
@@ -290,6 +301,11 @@
                 </tr>
             `).join('')
         }
+        
+        // Make functions available globally
+        window.loadUserBalances = loadUserBalances
+        window.updateBalanceDisplay = updateBalanceDisplay
+        window.userBalances = userBalances
         
         checkAuthAndLoadData()
     </script>
@@ -1035,7 +1051,8 @@
                 bids.push({ price: currentPrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((currentPrice - (i * 5)) * Math.random() * 1.5).toFixed(0) })
             }
             const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2)
-            document.getElementById('spreadDisplay').innerHTML = `Spread: ${spread}%`
+            const spreadElem = document.getElementById('spreadDisplay')
+            if (spreadElem) spreadElem.innerHTML = `Spread: ${spread}%`
             document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></tr>`).join('')
             document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></tr>`).join('')
         }
@@ -1051,13 +1068,14 @@
         
         window.setPercentage = function(perc) {
             const pairAsset = currentPair.split('/')[0]
+            // Get real balance from window.userBalances
             const maxAmount = window.userBalances ? (window.userBalances[pairAsset] || 0) : 0
             const amount = (maxAmount * perc / 100).toFixed(4)
             document.getElementById('amount').value = amount
             updateCalculations()
         }
         
-        function updateCalculations() {
+        window.updateCalculations = function() {
             const amount = parseFloat(document.getElementById('amount').value) || 0
             const price = parseFloat(document.getElementById('price').value) || currentPrice
             const total = amount * price
@@ -1066,13 +1084,15 @@
             document.getElementById('feeValue').innerHTML = `$${fee.toFixed(2)}`
         }
         
-        function updateBalanceDisplay() {
+        window.updateBalanceDisplay = function() {
             const pairAsset = currentPair.split('/')[0]
             const balance = window.userBalances ? (window.userBalances[pairAsset] || 0) : 0
-            document.getElementById('availableBalance').innerHTML = `${balance.toFixed(4)} ${pairAsset}`
+            const availableSpan = document.getElementById('availableBalance')
+            if (availableSpan) availableSpan.innerHTML = `${balance.toFixed(4)} ${pairAsset}`
             
             const usdBalance = window.userBalances ? (window.userBalances.USD || 0) : 0
-            document.getElementById('topBalanceDisplay').innerHTML = `$${usdBalance.toFixed(2)}`
+            const topBalance = document.getElementById('topBalanceDisplay')
+            if (topBalance) topBalance.innerHTML = `$${usdBalance.toFixed(2)}`
         }
         
         window.submitOrder = async function() {
@@ -1165,46 +1185,24 @@
         document.getElementById('amount').addEventListener('input', updateCalculations)
         document.getElementById('price').addEventListener('input', updateCalculations)
         document.getElementById('orderType').addEventListener('change', function() {
-            document.getElementById('priceGroup').style.display = this.value === 'market' ? 'none' : 'block'
+            const priceGroup = document.getElementById('priceGroup')
+            if (priceGroup) priceGroup.style.display = this.value === 'market' ? 'none' : 'block'
         })
         
         function init() {
             initTradingView()
             updateOrderBook()
             updateCalculations()
-            
-            const tradesList = document.getElementById('tradesList')
-            if (tradesList && tradesList.children.length === 0) {
-                tradesList.innerHTML = `
-                    <tr>
-                        <td>14:30:25</div>
-                        <td class="positive">$43,250</div>
-                        <td>0.050</div>
-                    </tr>
-                    <tr>
-                        <td>14:28:12</div>
-                        <td class="negative">$43,248</div>
-                        <td>0.030</div>
-                    </tr>
-                    <tr>
-                        <td>14:25:45</div>
-                        <td class="positive">$43,252</div>
-                        <td>0.080</div>
-                    </tr>
-                `
-            }
         }
         
         init()
         
-        window.updateBalanceDisplay = updateBalanceDisplay
-        window.showToast = showToast
-        
+        // Periodically update balance display
         setInterval(() => {
             if (window.userBalances) {
                 updateBalanceDisplay()
             }
-        }, 1000)
+        }, 2000)
     </script>
 </body>
 </html>
