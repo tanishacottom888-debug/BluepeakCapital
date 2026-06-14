@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes" />
-    <title>BluepeakCapital | Withdraw</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes, viewport-fit=cover" />
+    <meta name="description" content="BluepeakCapital - Withdraw cryptocurrency from your account" />
+    <title>BluepeakCapital | Withdraw Crypto</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,40 80,70 50,90 20,70 20,40' fill='%233b82f6'/%3E%3C/svg%3E" />
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- THEME CONTROLLER - MUST BE FIRST -->
     <script>
@@ -28,23 +31,197 @@
         const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+        let currentUser = null
+        let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, USDT: 0, USDC: 0, DOGE: 0 }
+
         async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) {
                 window.location.href = 'login.html'
+                return
             }
+            currentUser = session.user
+            await loadUserBalances()
+            loadWithdrawalHistory()
+        }
+        
+        async function loadUserBalances() {
+            try {
+                const { data, error } = await supabase
+                    .from('user_balances')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                
+                if (error) {
+                    console.error('Error loading balances:', error)
+                    return
+                }
+                
+                if (data && data.length > 0) {
+                    data.forEach(balance => {
+                        userBalances[balance.asset] = parseFloat(balance.balance) || 0
+                    })
+                }
+                
+                // Update display
+                updateBalanceDisplay()
+                
+            } catch (e) {
+                console.error('Balance error:', e)
+            }
+        }
+        
+        function updateBalanceDisplay() {
+            const asset = window.currentAsset || 'BTC'
+            const balance = userBalances[asset] || 0
+            const balanceElement = document.getElementById('availableBalance')
+            if (balanceElement) {
+                balanceElement.innerHTML = `${balance.toFixed(4)} ${asset}`
+            }
+            
+            const balanceDisplay = document.getElementById('balanceDisplay')
+            if (balanceDisplay) {
+                balanceDisplay.innerHTML = `$${(userBalances.USD || 0).toFixed(2)}`
+            }
+        }
+        
+        function loadWithdrawalHistory() {
+            const history = JSON.parse(localStorage.getItem('withdrawalHistory')) || []
+            const container = document.getElementById('withdrawalHistoryList')
+            
+            // Filter current user's withdrawals
+            const userWithdrawals = history.filter(w => w.userId === currentUser?.id)
+            
+            if (userWithdrawals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-history">
+                        <div class="empty-icon">📤</div>
+                        <div class="empty-title">No withdrawals yet</div>
+                        <div class="empty-subtitle">Your withdrawal history will appear here</div>
+                    </div>
+                `
+                return
+            }
+            
+            container.innerHTML = userWithdrawals.reverse().map((w, idx) => {
+                const isPending = w.status === 'pending'
+                const statusClass = isPending ? 'pending' : 'completed'
+                const statusText = isPending ? '⏳ Pending' : '✅ Completed'
+                
+                return `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div class="history-amount">${w.amount} ${w.crypto}</div>
+                            <div class="history-crypto">${w.network || w.crypto} Network</div>
+                            <div class="history-date"><i class="far fa-calendar-alt"></i> ${w.date}</div>
+                            ${w.address ? `<div class="history-address"><i class="fas fa-wallet"></i> ${w.address.substring(0, 20)}...</div>` : ''}
+                        </div>
+                        <div class="history-status-container">
+                            <span class="history-status ${statusClass}">
+                                <i class="fas ${isPending ? 'fa-clock' : 'fa-check-circle'}"></i> ${statusText}
+                            </span>
+                        </div>
+                    </div>
+                `
+            }).join('')
+        }
+        
+        async function saveWithdrawalRequest(amount, crypto, network, address) {
+            const history = JSON.parse(localStorage.getItem('withdrawalHistory')) || []
+            const txId = 'WDR-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8).toUpperCase()
+            
+            const newRequest = {
+                id: Date.now(),
+                userId: currentUser.id,
+                userEmail: currentUser.email,
+                amount: amount,
+                crypto: crypto,
+                network: network,
+                address: address,
+                status: 'pending',
+                date: new Date().toLocaleString(),
+                txId: txId
+            }
+            
+            history.unshift(newRequest)
+            localStorage.setItem('withdrawalHistory', JSON.stringify(history))
+            
+            // Also save to Supabase withdrawals table
+            try {
+                await supabase.from('withdrawals').insert({
+                    user_id: currentUser.id,
+                    amount: amount,
+                    crypto: crypto,
+                    network: network,
+                    address: address,
+                    status: 'pending',
+                    tx_id: txId,
+                    created_at: new Date().toISOString()
+                })
+            } catch (e) {
+                console.log('Supabase save failed:', e)
+            }
+            
+            loadWithdrawalHistory()
+            return newRequest
+        }
+        
+        window.submitWithdrawal = async function() {
+            const address = document.getElementById('withdrawAddress').value.trim()
+            const amount = parseFloat(document.getElementById('withdrawAmount').value)
+            const crypto = window.currentAsset || 'BTC'
+            const network = window.selectedNetwork || 'BTC'
+            
+            if (!address) {
+                showToast('Please enter a withdrawal address', 'error')
+                return
+            }
+            
+            if (!amount || amount <= 0) {
+                showToast('Please enter a valid amount', 'error')
+                return
+            }
+            
+            const currentBalance = userBalances[crypto] || 0
+            if (amount > currentBalance) {
+                showToast(`Insufficient balance! Available: ${currentBalance.toFixed(4)} ${crypto}`, 'error')
+                return
+            }
+            
+            // Check minimum withdrawal
+            const minWithdrawals = {
+                BTC: 0.001, ETH: 0.01, SOL: 0.1, USDT: 50, USDC: 50, DOGE: 50
+            }
+            const minAmount = minWithdrawals[crypto] || 0.01
+            if (amount < minAmount) {
+                showToast(`Minimum withdrawal: ${minAmount} ${crypto}`, 'error')
+                return
+            }
+            
+            // Save withdrawal request
+            const request = await saveWithdrawalRequest(amount, crypto, network, address)
+            
+            if (request) {
+                showToast(`✅ Withdrawal request submitted! ${amount} ${crypto}`, 'success')
+                document.getElementById('withdrawAddress').value = ''
+                document.getElementById('withdrawAmount').value = ''
+            }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toastMessage')
+            toast.textContent = message
+            toast.className = `toast-notification ${type}`
+            toast.classList.add('show')
+            setTimeout(() => toast.classList.remove('show'), 3000)
         }
         
         checkAuth()
     </script>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         /* Dark Mode as Default */
         :root {
             --bg-primary: #0a0e17;
@@ -60,8 +237,10 @@
             --btn-primary-hover: #2563eb;
             --positive: #10b981;
             --negative: #ef4444;
+            --status-pending: #f59e0b;
+            --status-completed: #10b981;
         }
-
+        
         /* Light Mode */
         [data-theme="light"] {
             --bg-primary: #f5f7fb;
@@ -74,95 +253,96 @@
             --nav-bg: #ffffff;
             --hover-bg: #f1f5f9;
         }
-
+        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             transition: background 0.3s ease, color 0.3s ease;
         }
-
+        
+        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.8rem 1rem;
+            padding: 0.8rem 1.5rem;
             background: var(--nav-bg);
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
+            position: fixed;
+            width: 100%;
             top: 0;
-            z-index: 100;
+            z-index: 1000;
         }
-
-        .logo {
+        
+        .logo-area {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.5rem;
             cursor: pointer;
         }
-
+        
         .logo-icon {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 7px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.8rem;
             color: white;
         }
-
-        .logo-text {
-            font-size: 1rem;
+        
+        .site-name {
+            font-size: 1.1rem;
             font-weight: 700;
             background: linear-gradient(135deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
-
+        
         .nav-links {
             display: flex;
             gap: 1rem;
             align-items: center;
         }
-
+        
         .nav-links a {
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.75rem;
             font-weight: 500;
         }
-
+        
         .nav-links a:hover, .nav-links a.active {
             color: #3b82f6;
         }
-
+        
         .right-menu {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
-
+        
         .flag-icon {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             object-fit: cover;
             cursor: pointer;
         }
-
+        
         .balance-amount {
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-primary);
             background: var(--hover-bg);
-            padding: 0.3rem 0.8rem;
+            padding: 0.25rem 0.7rem;
             border-radius: 30px;
         }
-
+        
         .hamburger-btn {
             background: none;
             border: none;
@@ -172,239 +352,500 @@
             padding: 0.3rem;
             display: none;
         }
-
+        
+        /* Sidebar */
         .sidebar-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.7);
             z-index: 2000;
             visibility: hidden;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
-
+        
         .sidebar-overlay.active {
             visibility: visible;
             opacity: 1;
         }
-
+        
         .sidebar-menu {
             position: fixed;
             top: 0;
             right: -280px;
-            width: 260px;
+            width: 280px;
             height: 100%;
             background: var(--bg-secondary);
-            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+            box-shadow: -2px 0 8px rgba(0,0,0,0.3);
             z-index: 2001;
-            transition: right 0.3s ease;
+            transition: right 0.3s;
             display: flex;
             flex-direction: column;
-            padding: 1rem 0;
         }
-
+        
         .sidebar-overlay.active .sidebar-menu {
             right: 0;
         }
-
+        
         .sidebar-header {
-            padding: 1rem;
+            padding: 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
-        .sidebar-menu a {
+        
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem 0;
+        }
+        
+        .sidebar-nav a {
             display: block;
-            padding: 0.8rem 1.2rem;
+            padding: 0.8rem 1.5rem;
             color: var(--text-primary);
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
         }
-
-        .sidebar-menu a:hover {
+        
+        .sidebar-nav a:hover {
             background: var(--hover-bg);
             color: #3b82f6;
         }
-
+        
+        .close-sidebar {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
         .trust-bar {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
-            padding: 0.4rem 1rem;
+            padding: 0.4rem 1.5rem;
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             flex-wrap: wrap;
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             color: var(--text-secondary);
-            overflow-x: auto;
+            margin-top: 65px;
         }
-
-        .trust-separator {
-            width: 1px;
-            height: 10px;
-            background: var(--border-color);
-        }
-
+        
+        /* Main Container */
         .withdraw-container {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 1.5rem;
         }
-
+        
         .page-header {
             margin-bottom: 1.5rem;
         }
-
+        
         .page-header h1 {
             font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 0.3rem;
             color: var(--text-primary);
         }
-
+        
         .page-header p {
             color: var(--text-secondary);
             font-size: 0.8rem;
         }
-
+        
+        /* Withdraw Card */
         .withdraw-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-
+        
         .card-title {
             font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 1.2rem;
+            margin-bottom: 1rem;
             padding-bottom: 0.5rem;
             border-bottom: 1px solid var(--border-color);
             color: var(--text-primary);
         }
-
+        
+        /* Asset Selector - Like Deposit Page */
         .asset-selector {
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
         }
-
+        
         .asset-label {
             font-size: 0.75rem;
             color: var(--text-secondary);
             margin-bottom: 0.3rem;
             display: block;
         }
-
-        .asset-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .asset-btn {
+        
+        .crypto-selector {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
-            padding: 0.4rem 1rem;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
+            position: relative;
+        }
+        
+        .crypto-selected {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem;
+        }
+        
+        .crypto-selected-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .crypto-selected-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: contain;
+        }
+        
+        .crypto-selected-name {
             font-weight: 500;
-            font-size: 0.75rem;
-            transition: all 0.2s;
+            font-size: 0.9rem;
             color: var(--text-primary);
         }
-
-        .asset-btn:hover {
+        
+        .crypto-selected-symbol {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        .dropdown-arrow {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        
+        .crypto-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 0.3rem;
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .crypto-dropdown.show {
+            display: block;
+        }
+        
+        .crypto-option {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.7rem 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .crypto-option:hover {
             background: var(--hover-bg);
         }
-
-        .asset-btn.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: white;
+        
+        .crypto-option-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: contain;
         }
-
+        
+        .crypto-option-info {
+            flex: 1;
+        }
+        
+        .crypto-option-name {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+        
+        .crypto-option-symbol {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Network Select */
+        .network-selector {
+            margin-bottom: 1.2rem;
+        }
+        
+        .network-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+        
+        .network-select {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        
+        .network-select option {
+            background: var(--bg-card);
+        }
+        
+        /* Form Groups */
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
         }
-
+        
         .form-group label {
             display: block;
             font-size: 0.75rem;
             color: var(--text-secondary);
             margin-bottom: 0.3rem;
         }
-
+        
         .form-group input {
             width: 100%;
-            padding: 0.7rem;
+            padding: 0.8rem;
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 0.85rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
             background: var(--bg-input);
             color: var(--text-primary);
         }
-
+        
         .form-group input:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
-
+        
         .form-group input::placeholder {
             color: var(--text-secondary);
         }
-
+        
         .balance-info {
             font-size: 0.65rem;
             color: var(--text-secondary);
             margin-top: 0.3rem;
         }
-
+        
+        .warning-note {
+            font-size: 0.65rem;
+            color: #f59e0b;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
         .submit-btn {
             width: 100%;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
             border: none;
-            padding: 0.7rem;
-            border-radius: 10px;
-            font-size: 0.85rem;
+            padding: 0.8rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             margin-top: 0.5rem;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
-
+        
         .submit-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(59,130,246,0.4);
         }
-
-        /* Toast notification */
+        
+        /* History Section */
+        .history-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .history-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .pending-badge {
+            background: #f59e0b;
+            color: #1a1f36;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+        
+        .history-item:hover {
+            background: var(--hover-bg);
+        }
+        
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            flex: 1;
+        }
+        
+        .history-amount {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        
+        .history-crypto {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        .history-date {
+            font-size: 0.6rem;
+            color: #6b7280;
+        }
+        
+        .history-address {
+            font-size: 0.55rem;
+            color: #6b7280;
+            font-family: monospace;
+        }
+        
+        .history-status {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .history-status.pending {
+            background: rgba(245,158,11,0.15);
+            color: #f59e0b;
+        }
+        
+        .history-status.completed {
+            background: rgba(16,185,129,0.15);
+            color: #10b981;
+        }
+        
+        .history-status-container {
+            margin-left: 0.5rem;
+        }
+        
+        .empty-history {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .empty-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+        
+        .empty-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Toast */
         .toast-notification {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: #10b981;
-            color: white;
-            padding: 10px 24px;
-            border-radius: 40px;
+            padding: 12px 24px;
+            border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 500;
-            z-index: 2000;
+            z-index: 3000;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
             pointer-events: none;
             white-space: nowrap;
         }
-
+        
+        .toast-notification.success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .toast-notification.error {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .toast-notification.info {
+            background: #3b82f6;
+            color: white;
+        }
+        
         .toast-notification.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
-
+        
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -413,31 +854,33 @@
                 display: block;
             }
             .withdraw-container {
-                padding: 0.8rem;
+                padding: 1rem;
+                margin-top: 60px;
             }
             .trust-bar {
                 display: none;
             }
-            .asset-buttons {
-                gap: 0.3rem;
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.8rem;
             }
-            .asset-btn {
-                padding: 0.3rem 0.7rem;
-                font-size: 0.7rem;
+            .history-status-container {
+                align-self: flex-start;
             }
             .toast-notification {
-                white-space: nowrap;
-                font-size: 0.75rem;
-                padding: 8px 18px;
+                white-space: normal;
+                text-align: center;
+                min-width: 200px;
             }
         }
     </style>
 </head>
 <body>
     <nav>
-        <div class="logo" onclick="location.href='index.html'">
+        <div class="logo-area" onclick="location.href='index.html'">
             <div class="logo-icon">⛰️</div>
-            <div class="logo-text">BluepeakCapital</div>
+            <div class="site-name">BluepeakCapital</div>
         </div>
         <div class="nav-links">
             <a href="dashboard.html">Dashboard</a>
@@ -451,140 +894,218 @@
             <a href="support.html">Support</a>
         </div>
         <div class="right-menu">
-            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon">
+            <img src="https://flagcdn.com/w320/us.png" alt="USD" class="flag-icon" onclick="alert('Currency: USD')">
             <div class="balance-amount" id="balanceDisplay">$0.00</div>
             <button class="hamburger-btn" onclick="openSidebar()">☰</button>
         </div>
     </nav>
 
+    <!-- Sidebar -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
         <div class="sidebar-menu" onclick="event.stopPropagation()">
             <div class="sidebar-header">
                 <div class="logo">
                     <div class="logo-icon">⛰️</div>
-                    <div class="logo-text">BluepeakCapital</div>
+                    <div class="site-name">BluepeakCapital</div>
                 </div>
+                <button class="close-sidebar" onclick="closeSidebar()">✕</button>
             </div>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="trade.html">Trade</a>
-            <a href="markets.html">Markets</a>
-            <a href="orders.html">Orders</a>
-            <a href="bots.html">Bots</a>
-            <a href="deposit.html">Deposit</a>
-            <a href="withdraw.html">Withdraw</a>
-            <a href="settings.html">Settings</a>
-            <a href="support.html">Support</a>
+            <div class="sidebar-nav">
+                <a href="dashboard.html" onclick="closeSidebar()">Dashboard</a>
+                <a href="trade.html" onclick="closeSidebar()">Trade</a>
+                <a href="markets.html" onclick="closeSidebar()">Markets</a>
+                <a href="orders.html" onclick="closeSidebar()">Orders</a>
+                <a href="bots.html" onclick="closeSidebar()">Bots</a>
+                <a href="deposit.html" onclick="closeSidebar()">Deposit</a>
+                <a href="withdraw.html" onclick="closeSidebar()">Withdraw</a>
+                <a href="settings.html" onclick="closeSidebar()">Settings</a>
+                <a href="support.html" onclick="closeSidebar()">Support</a>
+            </div>
         </div>
     </div>
 
+    <!-- Trust Bar -->
     <div class="trust-bar">
         <span>FINRA Member</span>
-        <span class="trust-separator"></span>
+        <span>|</span>
         <span>SIPC Insured</span>
-        <span class="trust-separator"></span>
+        <span>|</span>
         <span>Cold Storage</span>
-        <span class="trust-separator"></span>
+        <span>|</span>
         <span>$500M Insurance</span>
+        <span>|</span>
+        <span>24/7 Support</span>
     </div>
-
-    <!-- Toast Notification -->
-    <div id="toastMessage" class="toast-notification">✓ Withdrawal request submitted!</div>
 
     <div class="withdraw-container">
         <div class="page-header">
-            <h1>Withdraw Funds</h1>
-            <p>Enter amount and wallet address to withdraw</p>
+            <h1><i class="fas fa-arrow-up"></i> Withdraw Crypto</h1>
+            <p>Withdraw cryptocurrency from your account</p>
         </div>
 
         <div class="withdraw-card">
-            <div class="card-title">Withdrawal Request</div>
+            <div class="card-title">New Withdrawal</div>
             
+            <!-- Cryptocurrency Selector (Like Deposit Page) -->
             <div class="asset-selector">
-                <label class="asset-label">Select Asset</label>
-                <div class="asset-buttons" id="assetButtons">
-                    <button class="asset-btn active" data-asset="BTC">BTC</button>
-                    <button class="asset-btn" data-asset="ETH">ETH</button>
-                    <button class="asset-btn" data-asset="USDT">USDT</button>
-                    <button class="asset-btn" data-asset="SOL">SOL</button>
-                    <button class="asset-btn" data-asset="USDC">USDC</button>
-                    <button class="asset-btn" data-asset="DOGE">DOGE</button>
+                <label class="asset-label">Select Cryptocurrency</label>
+                <div class="crypto-selector" id="cryptoSelector">
+                    <div class="crypto-selected" onclick="toggleCryptoDropdown()">
+                        <div class="crypto-selected-info">
+                            <img id="selectedCryptoIcon" class="crypto-selected-icon" src="https://assets.coincap.io/assets/icons/btc@2x.png">
+                            <div>
+                                <div class="crypto-selected-name" id="selectedCryptoName">Bitcoin</div>
+                                <div class="crypto-selected-symbol" id="selectedCryptoSymbol">BTC</div>
+                            </div>
+                        </div>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="crypto-dropdown" id="cryptoDropdown"></div>
                 </div>
             </div>
 
+            <!-- Network Selector -->
+            <div class="network-selector">
+                <label class="network-label">Select Network</label>
+                <select class="network-select" id="networkSelect"></select>
+            </div>
+
+            <!-- Withdrawal Address -->
             <div class="form-group">
-                <label>Withdrawal Address</label>
+                <label><i class="fas fa-wallet"></i> Withdrawal Address</label>
                 <input type="text" id="withdrawAddress" placeholder="Enter wallet address">
-                <div class="balance-info">Double-check address before submitting</div>
+                <div class="balance-info">⚠️ Double-check address before submitting</div>
             </div>
 
+            <!-- Amount -->
             <div class="form-group">
-                <label>Amount</label>
-                <input type="number" id="withdrawAmount" placeholder="0.000" step="0.001">
-                <div class="balance-info" id="availableBalance">Available: 0.000</div>
+                <label><i class="fas fa-coins"></i> Amount</label>
+                <input type="number" id="withdrawAmount" placeholder="0.00" step="0.001">
+                <div class="balance-info" id="availableBalance">Available: 0.000 BTC</div>
             </div>
 
-            <button class="submit-btn" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
+            <div class="warning-note" id="warningNote">
+                ⚠️ Minimum withdrawal: 0.001 BTC. Withdrawals are reviewed by admin.
+            </div>
+
+            <button class="submit-btn" onclick="submitWithdrawal()">
+                <i class="fas fa-paper-plane"></i> Submit Withdrawal Request
+            </button>
+        </div>
+
+        <!-- Withdrawal History -->
+        <div class="history-card">
+            <div class="history-title">
+                <span><i class="fas fa-history"></i> Withdrawal History</span>
+                <span class="pending-badge" id="pendingCountBadge">0</span>
+            </div>
+            <div class="history-list" id="withdrawalHistoryList">
+                <div class="empty-history">
+                    <div class="empty-icon">📤</div>
+                    <div class="empty-title">No withdrawals yet</div>
+                    <div class="empty-subtitle">Your withdrawal history will appear here</div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <div id="toastMessage" class="toast-notification success">✓ Withdrawal request submitted!</div>
+
     <script>
-        const assetBalances = {
-            BTC: { balance: 0, minWithdraw: 0.001, symbol: "BTC" },
-            ETH: { balance: 0, minWithdraw: 0.01, symbol: "ETH" },
-            USDT: { balance: 0, minWithdraw: 50, symbol: "USDT" },
-            SOL: { balance: 0, minWithdraw: 0.1, symbol: "SOL" },
-            USDC: { balance: 0, minWithdraw: 50, symbol: "USDC" },
-            DOGE: { balance: 0, minWithdraw: 50, symbol: "DOGE" }
-        };
-
-        let currentAsset = "BTC";
-
-        function updateWithdrawInterface() {
-            const asset = assetBalances[currentAsset];
-            document.getElementById('availableBalance').innerHTML = `Available: ${asset.balance}`;
+        let currentAsset = "BTC"
+        let selectedNetwork = "BTC"
+        
+        const cryptoList = [
+            { symbol: 'BTC', name: 'Bitcoin', iconUrl: 'https://assets.coincap.io/assets/icons/btc@2x.png', minWithdraw: 0.001 },
+            { symbol: 'ETH', name: 'Ethereum', iconUrl: 'https://assets.coincap.io/assets/icons/eth@2x.png', minWithdraw: 0.01 },
+            { symbol: 'USDT', name: 'Tether', iconUrl: 'https://assets.coincap.io/assets/icons/usdt@2x.png', minWithdraw: 50 },
+            { symbol: 'USDC', name: 'USD Coin', iconUrl: 'https://assets.coincap.io/assets/icons/usdc@2x.png', minWithdraw: 50 },
+            { symbol: 'SOL', name: 'Solana', iconUrl: 'https://assets.coincap.io/assets/icons/sol@2x.png', minWithdraw: 0.1 },
+            { symbol: 'DOGE', name: 'Dogecoin', iconUrl: 'https://assets.coincap.io/assets/icons/doge@2x.png', minWithdraw: 50 }
+        ]
+        
+        const networkOptions = {
+            BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
+            ETH: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
+            USDT: [{ value: 'TRC20', label: 'Tron (TRC20) - Low Fee' }, { value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
+            USDC: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'TRC20', label: 'Tron (TRC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
+            SOL: [{ value: 'SOL', label: 'Solana Network' }],
+            DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }]
         }
-
-        function showToast() {
-            const toast = document.getElementById('toastMessage');
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+        
+        function renderCryptoDropdown() {
+            const dropdown = document.getElementById('cryptoDropdown')
+            dropdown.innerHTML = cryptoList.map(c => `
+                <div class="crypto-option" onclick="selectCrypto('${c.symbol}','${c.name}','${c.iconUrl}')">
+                    <img src="${c.iconUrl}" class="crypto-option-icon">
+                    <div class="crypto-option-info">
+                        <div class="crypto-option-name">${c.name}</div>
+                        <div class="crypto-option-symbol">${c.symbol}</div>
+                    </div>
+                </div>
+            `).join('')
         }
-
-        function submitWithdrawal() {
-            const address = document.getElementById('withdrawAddress').value;
-            const amount = parseFloat(document.getElementById('withdrawAmount').value);
-            const asset = assetBalances[currentAsset];
-            
-            if (!address) { alert('Enter withdrawal address'); return; }
-            if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
-            if (amount < asset.minWithdraw) { alert(`Minimum: ${asset.minWithdraw} ${asset.symbol}`); return; }
-            
-            // Clear form
-            document.getElementById('withdrawAddress').value = '';
-            document.getElementById('withdrawAmount').value = '';
-            
-            // Show success toast
-            showToast();
+        
+        function selectCrypto(symbol, name, iconUrl) {
+            currentAsset = symbol
+            document.getElementById('selectedCryptoIcon').src = iconUrl
+            document.getElementById('selectedCryptoName').innerHTML = name
+            document.getElementById('selectedCryptoSymbol').innerHTML = symbol
+            document.getElementById('cryptoDropdown').classList.remove('show')
+            updateNetworkOptions()
+            updateMinWithdrawWarning()
+            updateBalanceDisplay()
         }
-
-        // Asset Button Handlers
-        document.querySelectorAll('.asset-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentAsset = this.dataset.asset;
-                updateWithdrawInterface();
-                document.getElementById('withdrawAmount').value = '';
-            });
-        });
-
-        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active'); }
-        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active'); }
-
+        
+        function updateNetworkOptions() {
+            const netSelect = document.getElementById('networkSelect')
+            const opts = networkOptions[currentAsset] || [{ value: currentAsset, label: `${currentAsset} Network` }]
+            netSelect.innerHTML = opts.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')
+            selectedNetwork = opts[0].value
+        }
+        
+        function updateMinWithdrawWarning() {
+            const crypto = cryptoList.find(c => c.symbol === currentAsset)
+            const minAmount = crypto?.minWithdraw || 0.01
+            const warningNote = document.getElementById('warningNote')
+            if (warningNote) {
+                warningNote.innerHTML = `⚠️ Minimum withdrawal: ${minAmount} ${currentAsset}. Withdrawals are reviewed by admin.`
+            }
+        }
+        
+        function updateBalanceDisplay() {
+            const balance = window.userBalances ? (window.userBalances[currentAsset] || 0) : 0
+            const balanceElement = document.getElementById('availableBalance')
+            if (balanceElement) {
+                balanceElement.innerHTML = `Available: ${balance.toFixed(4)} ${currentAsset}`
+            }
+        }
+        
+        function toggleCryptoDropdown() {
+            document.getElementById('cryptoDropdown').classList.toggle('show')
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const sel = document.getElementById('cryptoSelector')
+            const drop = document.getElementById('cryptoDropdown')
+            if (sel && !sel.contains(e.target)) drop.classList.remove('show')
+        })
+        
+        function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
+        function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
+        
+        // Make functions global
+        window.toggleCryptoDropdown = toggleCryptoDropdown
+        window.selectCrypto = selectCrypto
+        window.submitWithdrawal = submitWithdrawal
+        window.openSidebar = openSidebar
+        window.closeSidebar = closeSidebar
+        
         // Initialize
-        updateWithdrawInterface();
+        renderCryptoDropdown()
+        updateNetworkOptions()
+        updateMinWithdrawWarning()
     </script>
 </body>
 </html>
