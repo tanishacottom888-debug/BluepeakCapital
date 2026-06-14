@@ -32,7 +32,7 @@
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
         let currentUser = null
-        let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, USDT: 0, USDC: 0, DOGE: 0 }
+        let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, BNB: 0, DOGE: 0, XRP: 0, ADA: 0, DOT: 0, LINK: 0, LTC: 0, AVAX: 0, MATIC: 0, TRX: 0, TON: 0 }
 
         async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession()
@@ -63,7 +63,6 @@
                     })
                 }
                 
-                // Update display
                 updateBalanceDisplay()
                 
             } catch (e) {
@@ -89,7 +88,6 @@
             const history = JSON.parse(localStorage.getItem('withdrawalHistory')) || []
             const container = document.getElementById('withdrawalHistoryList')
             
-            // Filter current user's withdrawals
             const userWithdrawals = history.filter(w => w.userId === currentUser?.id)
             
             if (userWithdrawals.length === 0) {
@@ -103,7 +101,7 @@
                 return
             }
             
-            container.innerHTML = userWithdrawals.reverse().map((w, idx) => {
+            container.innerHTML = userWithdrawals.reverse().map((w) => {
                 const isPending = w.status === 'pending'
                 const statusClass = isPending ? 'pending' : 'completed'
                 const statusText = isPending ? '⏳ Pending' : '✅ Completed'
@@ -114,7 +112,7 @@
                             <div class="history-amount">${w.amount} ${w.crypto}</div>
                             <div class="history-crypto">${w.network || w.crypto} Network</div>
                             <div class="history-date"><i class="far fa-calendar-alt"></i> ${w.date}</div>
-                            ${w.address ? `<div class="history-address"><i class="fas fa-wallet"></i> ${w.address.substring(0, 20)}...</div>` : ''}
+                            ${w.address ? `<div class="history-address"><i class="fas fa-wallet"></i> ${w.address.substring(0, 25)}...</div>` : ''}
                         </div>
                         <div class="history-status-container">
                             <span class="history-status ${statusClass}">
@@ -146,7 +144,6 @@
             history.unshift(newRequest)
             localStorage.setItem('withdrawalHistory', JSON.stringify(history))
             
-            // Also save to Supabase withdrawals table
             try {
                 await supabase.from('withdrawals').insert({
                     user_id: currentUser.id,
@@ -188,9 +185,9 @@
                 return
             }
             
-            // Check minimum withdrawal
             const minWithdrawals = {
-                BTC: 0.001, ETH: 0.01, SOL: 0.1, USDT: 50, USDC: 50, DOGE: 50
+                BTC: 0.001, ETH: 0.01, SOL: 0.1, BNB: 0.01, DOGE: 50, XRP: 10, 
+                ADA: 10, DOT: 1, LINK: 1, LTC: 0.01, AVAX: 0.5, MATIC: 10, TRX: 100, TON: 1
             }
             const minAmount = minWithdrawals[crypto] || 0.01
             if (amount < minAmount) {
@@ -198,7 +195,6 @@
                 return
             }
             
-            // Save withdrawal request
             const request = await saveWithdrawalRequest(amount, crypto, network, address)
             
             if (request) {
@@ -222,7 +218,6 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* Dark Mode as Default */
         :root {
             --bg-primary: #0a0e17;
             --bg-secondary: #111827;
@@ -241,7 +236,6 @@
             --status-completed: #10b981;
         }
         
-        /* Light Mode */
         [data-theme="light"] {
             --bg-primary: #f5f7fb;
             --bg-secondary: #ffffff;
@@ -261,7 +255,6 @@
             transition: background 0.3s ease, color 0.3s ease;
         }
         
-        /* Navigation */
         nav {
             display: flex;
             justify-content: space-between;
@@ -353,7 +346,6 @@
             display: none;
         }
         
-        /* Sidebar */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -445,7 +437,6 @@
             margin-top: 65px;
         }
         
-        /* Main Container */
         .withdraw-container {
             max-width: 700px;
             margin: 0 auto;
@@ -468,7 +459,6 @@
             font-size: 0.8rem;
         }
         
-        /* Withdraw Card */
         .withdraw-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -486,7 +476,6 @@
             color: var(--text-primary);
         }
         
-        /* Asset Selector - Like Deposit Page */
         .asset-selector {
             margin-bottom: 1.2rem;
         }
@@ -596,7 +585,6 @@
             color: var(--text-secondary);
         }
         
-        /* Network Select */
         .network-selector {
             margin-bottom: 1.2rem;
         }
@@ -623,7 +611,6 @@
             background: var(--bg-card);
         }
         
-        /* Form Groups */
         .form-group {
             margin-bottom: 1.2rem;
         }
@@ -660,13 +647,6 @@
             margin-top: 0.3rem;
         }
         
-        .warning-note {
-            font-size: 0.65rem;
-            color: #f59e0b;
-            margin-top: 0.5rem;
-            text-align: center;
-        }
-        
         .submit-btn {
             width: 100%;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -686,7 +666,6 @@
             box-shadow: 0 5px 20px rgba(59,130,246,0.4);
         }
         
-        /* History Section */
         .history-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -703,16 +682,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-        
-        .pending-badge {
-            background: #f59e0b;
-            color: #1a1f36;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            display: none;
         }
         
         .history-list {
@@ -809,7 +778,6 @@
             color: var(--text-secondary);
         }
         
-        /* Toast */
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -900,7 +868,6 @@
         </div>
     </nav>
 
-    <!-- Sidebar -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
         <div class="sidebar-menu" onclick="event.stopPropagation()">
             <div class="sidebar-header">
@@ -924,7 +891,6 @@
         </div>
     </div>
 
-    <!-- Trust Bar -->
     <div class="trust-bar">
         <span>FINRA Member</span>
         <span>|</span>
@@ -946,7 +912,6 @@
         <div class="withdraw-card">
             <div class="card-title">New Withdrawal</div>
             
-            <!-- Cryptocurrency Selector (Like Deposit Page) -->
             <div class="asset-selector">
                 <label class="asset-label">Select Cryptocurrency</label>
                 <div class="crypto-selector" id="cryptoSelector">
@@ -964,28 +929,21 @@
                 </div>
             </div>
 
-            <!-- Network Selector -->
             <div class="network-selector">
                 <label class="network-label">Select Network</label>
                 <select class="network-select" id="networkSelect"></select>
             </div>
 
-            <!-- Withdrawal Address -->
             <div class="form-group">
                 <label><i class="fas fa-wallet"></i> Withdrawal Address</label>
                 <input type="text" id="withdrawAddress" placeholder="Enter wallet address">
                 <div class="balance-info">⚠️ Double-check address before submitting</div>
             </div>
 
-            <!-- Amount -->
             <div class="form-group">
                 <label><i class="fas fa-coins"></i> Amount</label>
                 <input type="number" id="withdrawAmount" placeholder="0.00" step="0.001">
                 <div class="balance-info" id="availableBalance">Available: 0.000 BTC</div>
-            </div>
-
-            <div class="warning-note" id="warningNote">
-                ⚠️ Minimum withdrawal: 0.001 BTC. Withdrawals are reviewed by admin.
             </div>
 
             <button class="submit-btn" onclick="submitWithdrawal()">
@@ -993,11 +951,9 @@
             </button>
         </div>
 
-        <!-- Withdrawal History -->
         <div class="history-card">
             <div class="history-title">
                 <span><i class="fas fa-history"></i> Withdrawal History</span>
-                <span class="pending-badge" id="pendingCountBadge">0</span>
             </div>
             <div class="history-list" id="withdrawalHistoryList">
                 <div class="empty-history">
@@ -1021,7 +977,17 @@
             { symbol: 'USDT', name: 'Tether', iconUrl: 'https://assets.coincap.io/assets/icons/usdt@2x.png', minWithdraw: 50 },
             { symbol: 'USDC', name: 'USD Coin', iconUrl: 'https://assets.coincap.io/assets/icons/usdc@2x.png', minWithdraw: 50 },
             { symbol: 'SOL', name: 'Solana', iconUrl: 'https://assets.coincap.io/assets/icons/sol@2x.png', minWithdraw: 0.1 },
-            { symbol: 'DOGE', name: 'Dogecoin', iconUrl: 'https://assets.coincap.io/assets/icons/doge@2x.png', minWithdraw: 50 }
+            { symbol: 'BNB', name: 'Binance Coin', iconUrl: 'https://assets.coincap.io/assets/icons/bnb@2x.png', minWithdraw: 0.01 },
+            { symbol: 'XRP', name: 'Ripple', iconUrl: 'https://assets.coincap.io/assets/icons/xrp@2x.png', minWithdraw: 10 },
+            { symbol: 'ADA', name: 'Cardano', iconUrl: 'https://assets.coincap.io/assets/icons/ada@2x.png', minWithdraw: 10 },
+            { symbol: 'DOGE', name: 'Dogecoin', iconUrl: 'https://assets.coincap.io/assets/icons/doge@2x.png', minWithdraw: 50 },
+            { symbol: 'DOT', name: 'Polkadot', iconUrl: 'https://assets.coincap.io/assets/icons/dot@2x.png', minWithdraw: 1 },
+            { symbol: 'LINK', name: 'Chainlink', iconUrl: 'https://assets.coincap.io/assets/icons/link@2x.png', minWithdraw: 1 },
+            { symbol: 'LTC', name: 'Litecoin', iconUrl: 'https://assets.coincap.io/assets/icons/ltc@2x.png', minWithdraw: 0.01 },
+            { symbol: 'AVAX', name: 'Avalanche', iconUrl: 'https://assets.coincap.io/assets/icons/avax@2x.png', minWithdraw: 0.5 },
+            { symbol: 'MATIC', name: 'Polygon', iconUrl: 'https://assets.coincap.io/assets/icons/matic@2x.png', minWithdraw: 10 },
+            { symbol: 'TRX', name: 'TRON', iconUrl: 'https://assets.coincap.io/assets/icons/trx@2x.png', minWithdraw: 100 },
+            { symbol: 'TON', name: 'Toncoin', iconUrl: 'https://assets.coincap.io/assets/icons/ton@2x.png', minWithdraw: 1 }
         ]
         
         const networkOptions = {
@@ -1030,7 +996,17 @@
             USDT: [{ value: 'TRC20', label: 'Tron (TRC20) - Low Fee' }, { value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
             USDC: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'TRC20', label: 'Tron (TRC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
             SOL: [{ value: 'SOL', label: 'Solana Network' }],
-            DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }]
+            BNB: [{ value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
+            XRP: [{ value: 'XRP', label: 'Ripple Network' }],
+            ADA: [{ value: 'ADA', label: 'Cardano Network' }],
+            DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }],
+            DOT: [{ value: 'DOT', label: 'Polkadot Network' }],
+            LINK: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
+            LTC: [{ value: 'LTC', label: 'Litecoin Network' }],
+            AVAX: [{ value: 'AVAX', label: 'Avalanche C-Chain' }],
+            MATIC: [{ value: 'POLYGON', label: 'Polygon Network' }],
+            TRX: [{ value: 'TRC20', label: 'Tron (TRC20)' }],
+            TON: [{ value: 'TON', label: 'Toncoin Network' }]
         }
         
         function renderCryptoDropdown() {
@@ -1053,8 +1029,10 @@
             document.getElementById('selectedCryptoSymbol').innerHTML = symbol
             document.getElementById('cryptoDropdown').classList.remove('show')
             updateNetworkOptions()
-            updateMinWithdrawWarning()
             updateBalanceDisplay()
+            
+            window.currentAsset = currentAsset
+            window.selectedNetwork = selectedNetwork
         }
         
         function updateNetworkOptions() {
@@ -1062,15 +1040,7 @@
             const opts = networkOptions[currentAsset] || [{ value: currentAsset, label: `${currentAsset} Network` }]
             netSelect.innerHTML = opts.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')
             selectedNetwork = opts[0].value
-        }
-        
-        function updateMinWithdrawWarning() {
-            const crypto = cryptoList.find(c => c.symbol === currentAsset)
-            const minAmount = crypto?.minWithdraw || 0.01
-            const warningNote = document.getElementById('warningNote')
-            if (warningNote) {
-                warningNote.innerHTML = `⚠️ Minimum withdrawal: ${minAmount} ${currentAsset}. Withdrawals are reviewed by admin.`
-            }
+            window.selectedNetwork = selectedNetwork
         }
         
         function updateBalanceDisplay() {
@@ -1082,30 +1052,31 @@
         }
         
         function toggleCryptoDropdown() {
-            document.getElementById('cryptoDropdown').classList.toggle('show')
+            const dropdown = document.getElementById('cryptoDropdown')
+            dropdown.classList.toggle('show')
         }
         
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
             const sel = document.getElementById('cryptoSelector')
             const drop = document.getElementById('cryptoDropdown')
-            if (sel && !sel.contains(e.target)) drop.classList.remove('show')
+            if (sel && !sel.contains(e.target)) {
+                drop.classList.remove('show')
+            }
         })
         
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
         
-        // Make functions global
         window.toggleCryptoDropdown = toggleCryptoDropdown
         window.selectCrypto = selectCrypto
         window.submitWithdrawal = submitWithdrawal
         window.openSidebar = openSidebar
         window.closeSidebar = closeSidebar
+        window.currentAsset = currentAsset
+        window.selectedNetwork = selectedNetwork
         
-        // Initialize
         renderCryptoDropdown()
         updateNetworkOptions()
-        updateMinWithdrawWarning()
     </script>
 </body>
 </html>
