@@ -38,7 +38,7 @@
                 return
             }
             
-            // FIXED: Using correct table name 'user_balances'
+            // ONLY CHANGE: 'balances' → 'user_balances'
             const { data } = await supabase
                 .from('user_balances')
                 .select('balance')
