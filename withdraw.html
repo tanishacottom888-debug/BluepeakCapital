@@ -185,16 +185,6 @@
                 return
             }
             
-            const minWithdrawals = {
-                BTC: 0.001, ETH: 0.01, SOL: 0.1, BNB: 0.01, DOGE: 50, XRP: 10, 
-                ADA: 10, DOT: 1, LINK: 1, LTC: 0.01, AVAX: 0.5, MATIC: 10, TRX: 100, TON: 1
-            }
-            const minAmount = minWithdrawals[crypto] || 0.01
-            if (amount < minAmount) {
-                showToast(`Minimum withdrawal: ${minAmount} ${crypto}`, 'error')
-                return
-            }
-            
             const request = await saveWithdrawalRequest(amount, crypto, network, address)
             
             if (request) {
@@ -915,7 +905,7 @@
             <div class="asset-selector">
                 <label class="asset-label">Select Cryptocurrency</label>
                 <div class="crypto-selector" id="cryptoSelector">
-                    <div class="crypto-selected" onclick="toggleCryptoDropdown()">
+                    <div class="crypto-selected" onclick="toggleDropdown()">
                         <div class="crypto-selected-info">
                             <img id="selectedCryptoIcon" class="crypto-selected-icon" src="https://assets.coincap.io/assets/icons/btc@2x.png">
                             <div>
@@ -972,34 +962,34 @@
         let selectedNetwork = "BTC"
         
         const cryptoList = [
-            { symbol: 'BTC', name: 'Bitcoin', iconUrl: 'https://assets.coincap.io/assets/icons/btc@2x.png', minWithdraw: 0.001 },
-            { symbol: 'ETH', name: 'Ethereum', iconUrl: 'https://assets.coincap.io/assets/icons/eth@2x.png', minWithdraw: 0.01 },
-            { symbol: 'USDT', name: 'Tether', iconUrl: 'https://assets.coincap.io/assets/icons/usdt@2x.png', minWithdraw: 50 },
-            { symbol: 'USDC', name: 'USD Coin', iconUrl: 'https://assets.coincap.io/assets/icons/usdc@2x.png', minWithdraw: 50 },
-            { symbol: 'SOL', name: 'Solana', iconUrl: 'https://assets.coincap.io/assets/icons/sol@2x.png', minWithdraw: 0.1 },
-            { symbol: 'BNB', name: 'Binance Coin', iconUrl: 'https://assets.coincap.io/assets/icons/bnb@2x.png', minWithdraw: 0.01 },
-            { symbol: 'XRP', name: 'Ripple', iconUrl: 'https://assets.coincap.io/assets/icons/xrp@2x.png', minWithdraw: 10 },
-            { symbol: 'ADA', name: 'Cardano', iconUrl: 'https://assets.coincap.io/assets/icons/ada@2x.png', minWithdraw: 10 },
-            { symbol: 'DOGE', name: 'Dogecoin', iconUrl: 'https://assets.coincap.io/assets/icons/doge@2x.png', minWithdraw: 50 },
-            { symbol: 'DOT', name: 'Polkadot', iconUrl: 'https://assets.coincap.io/assets/icons/dot@2x.png', minWithdraw: 1 },
-            { symbol: 'LINK', name: 'Chainlink', iconUrl: 'https://assets.coincap.io/assets/icons/link@2x.png', minWithdraw: 1 },
-            { symbol: 'LTC', name: 'Litecoin', iconUrl: 'https://assets.coincap.io/assets/icons/ltc@2x.png', minWithdraw: 0.01 },
-            { symbol: 'AVAX', name: 'Avalanche', iconUrl: 'https://assets.coincap.io/assets/icons/avax@2x.png', minWithdraw: 0.5 },
-            { symbol: 'MATIC', name: 'Polygon', iconUrl: 'https://assets.coincap.io/assets/icons/matic@2x.png', minWithdraw: 10 },
-            { symbol: 'TRX', name: 'TRON', iconUrl: 'https://assets.coincap.io/assets/icons/trx@2x.png', minWithdraw: 100 },
-            { symbol: 'TON', name: 'Toncoin', iconUrl: 'https://assets.coincap.io/assets/icons/ton@2x.png', minWithdraw: 1 }
+            { symbol: 'BTC', name: 'Bitcoin', iconUrl: 'https://assets.coincap.io/assets/icons/btc@2x.png' },
+            { symbol: 'ETH', name: 'Ethereum', iconUrl: 'https://assets.coincap.io/assets/icons/eth@2x.png' },
+            { symbol: 'USDT', name: 'Tether', iconUrl: 'https://assets.coincap.io/assets/icons/usdt@2x.png' },
+            { symbol: 'USDC', name: 'USD Coin', iconUrl: 'https://assets.coincap.io/assets/icons/usdc@2x.png' },
+            { symbol: 'SOL', name: 'Solana', iconUrl: 'https://assets.coincap.io/assets/icons/sol@2x.png' },
+            { symbol: 'BNB', name: 'Binance', iconUrl: 'https://assets.coincap.io/assets/icons/bnb@2x.png' },
+            { symbol: 'DOGE', name: 'Dogecoin', iconUrl: 'https://assets.coincap.io/assets/icons/doge@2x.png' },
+            { symbol: 'XRP', name: 'Ripple', iconUrl: 'https://assets.coincap.io/assets/icons/xrp@2x.png' },
+            { symbol: 'ADA', name: 'Cardano', iconUrl: 'https://assets.coincap.io/assets/icons/ada@2x.png' },
+            { symbol: 'DOT', name: 'Polkadot', iconUrl: 'https://assets.coincap.io/assets/icons/dot@2x.png' },
+            { symbol: 'LINK', name: 'Chainlink', iconUrl: 'https://assets.coincap.io/assets/icons/link@2x.png' },
+            { symbol: 'LTC', name: 'Litecoin', iconUrl: 'https://assets.coincap.io/assets/icons/ltc@2x.png' },
+            { symbol: 'AVAX', name: 'Avalanche', iconUrl: 'https://assets.coincap.io/assets/icons/avax@2x.png' },
+            { symbol: 'MATIC', name: 'Polygon', iconUrl: 'https://assets.coincap.io/assets/icons/matic@2x.png' },
+            { symbol: 'TRX', name: 'TRON', iconUrl: 'https://assets.coincap.io/assets/icons/trx@2x.png' },
+            { symbol: 'TON', name: 'Toncoin', iconUrl: 'https://assets.coincap.io/assets/icons/ton@2x.png' }
         ]
         
         const networkOptions = {
             BTC: [{ value: 'BTC', label: 'Bitcoin Network' }],
             ETH: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
-            USDT: [{ value: 'TRC20', label: 'Tron (TRC20) - Low Fee' }, { value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
-            USDC: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'TRC20', label: 'Tron (TRC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
+            USDT: [{ value: 'TRC20', label: 'Tron (TRC20) - Low Fee' }, { value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }],
+            USDC: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }, { value: 'TRC20', label: 'Tron (TRC20) - Low Fee' }, { value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }],
             SOL: [{ value: 'SOL', label: 'Solana Network' }],
-            BNB: [{ value: 'BEP20', label: 'BNB Smart Chain (BEP20)' }],
+            BNB: [{ value: 'BEP20', label: 'BNB Smart Chain (BEP20) - Low Fee' }],
+            DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }],
             XRP: [{ value: 'XRP', label: 'Ripple Network' }],
             ADA: [{ value: 'ADA', label: 'Cardano Network' }],
-            DOGE: [{ value: 'DOGE', label: 'Dogecoin Network' }],
             DOT: [{ value: 'DOT', label: 'Polkadot Network' }],
             LINK: [{ value: 'ERC20', label: 'Ethereum (ERC20)' }],
             LTC: [{ value: 'LTC', label: 'Litecoin Network' }],
@@ -1027,7 +1017,7 @@
             document.getElementById('selectedCryptoIcon').src = iconUrl
             document.getElementById('selectedCryptoName').innerHTML = name
             document.getElementById('selectedCryptoSymbol').innerHTML = symbol
-            document.getElementById('cryptoDropdown').classList.remove('show')
+            closeDropdown()
             updateNetworkOptions()
             updateBalanceDisplay()
             
@@ -1051,23 +1041,30 @@
             }
         }
         
-        function toggleCryptoDropdown() {
+        function toggleDropdown() {
             const dropdown = document.getElementById('cryptoDropdown')
             dropdown.classList.toggle('show')
         }
         
+        function closeDropdown() {
+            const dropdown = document.getElementById('cryptoDropdown')
+            dropdown.classList.remove('show')
+        }
+        
+        // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            const sel = document.getElementById('cryptoSelector')
-            const drop = document.getElementById('cryptoDropdown')
-            if (sel && !sel.contains(e.target)) {
-                drop.classList.remove('show')
+            const selector = document.getElementById('cryptoSelector')
+            const dropdown = document.getElementById('cryptoDropdown')
+            if (selector && !selector.contains(e.target)) {
+                dropdown.classList.remove('show')
             }
         })
         
         function openSidebar() { document.getElementById('sidebarOverlay').classList.add('active') }
         function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('active') }
         
-        window.toggleCryptoDropdown = toggleCryptoDropdown
+        // Make functions global
+        window.toggleDropdown = toggleDropdown
         window.selectCrypto = selectCrypto
         window.submitWithdrawal = submitWithdrawal
         window.openSidebar = openSidebar
