@@ -40,6 +40,13 @@
             }
             currentUser = session.user
             window.currentUser = currentUser
+            
+            // Save user to localStorage for fallback
+            localStorage.setItem('bluepeak_user', JSON.stringify({
+                id: currentUser.id,
+                email: currentUser.email
+            }))
+            
             await loadUserBalance()
             loadDepositHistory()
             window.addEventListener('storage', function(e) {
@@ -638,6 +645,7 @@
             selectedNetwork=opts[0].value; 
         }
         
+        // FIXED: generateDepositAddress function with proper userId capture for all users
         function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -648,8 +656,26 @@
             if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') msg += ` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML = msg; 
             
-            const userId = window.currentUser?.id
-            const userEmail = window.currentUser?.email
+            // Get userId from multiple sources to ensure it works for all users
+            let userId = null;
+            let userEmail = null;
+            
+            // Try to get from window.currentUser (set in module)
+            if (window.currentUser && window.currentUser.id) {
+                userId = window.currentUser.id;
+                userEmail = window.currentUser.email;
+            }
+            // Try from localStorage fallback
+            else {
+                const savedUser = localStorage.getItem('bluepeak_user');
+                if (savedUser) {
+                    try {
+                        const parsed = JSON.parse(savedUser);
+                        userId = parsed.id;
+                        userEmail = parsed.email;
+                    } catch(e) {}
+                }
+            }
             
             if (!userId) {
                 showToast('Error: User not found. Please refresh the page.', 'error')
