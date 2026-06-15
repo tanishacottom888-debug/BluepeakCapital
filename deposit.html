@@ -41,7 +41,6 @@
             currentUser = session.user
             window.currentUser = currentUser
             
-            // Save user to localStorage for fallback
             localStorage.setItem('bluepeak_user', JSON.stringify({
                 id: currentUser.id,
                 email: currentUser.email
@@ -146,7 +145,8 @@
             }
         }
         
-        function showToast(message, type = 'success') {
+        // Make showToast globally available
+        window.showToast = function(message, type = 'success') {
             const toast = document.getElementById('toastMessage')
             toast.textContent = message
             toast.className = `toast-notification ${type}`
@@ -157,7 +157,7 @@
         async function saveDepositToSupabase(amount, crypto, network, address, txId) {
             if (!currentUser) return
             try {
-                await supabase.from('deposits').insert({
+                const { error } = await supabase.from('deposits').insert({
                     user_id: currentUser.id,
                     amount: amount,
                     crypto: crypto,
@@ -167,13 +167,21 @@
                     tx_id: txId,
                     created_at: new Date().toISOString()
                 })
+                if (error) {
+                    console.error('Supabase insert error:', error)
+                    window.showToast('Failed to save deposit: ' + error.message, 'error')
+                } else {
+                    console.log('Deposit saved to Supabase successfully')
+                }
             } catch (e) {
                 console.log('Supabase save failed:', e)
+                window.showToast('Failed to save deposit', 'error')
             }
         }
         
         window.loadUserBalance = loadUserBalance
         window.loadDepositHistory = loadDepositHistory
+        window.showToast = window.showToast
         
         checkAuth()
     </script>
@@ -645,7 +653,7 @@
             selectedNetwork=opts[0].value; 
         }
         
-        // FIXED: generateDepositAddress function with proper userId capture for all users
+        // FIXED: generateDepositAddress function - using window.showToast
         function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -678,7 +686,11 @@
             }
             
             if (!userId) {
-                showToast('Error: User not found. Please refresh the page.', 'error')
+                if (window.showToast) {
+                    window.showToast('Error: User not found. Please refresh the page.', 'error');
+                } else {
+                    alert('Error: User not found. Please refresh the page.');
+                }
                 return
             }
             
@@ -719,7 +731,9 @@
             document.getElementById('step2').style.display = 'none'; 
             document.getElementById('step3').style.display = 'block'; 
             
-            showToast('✅ Deposit request created! Admin will review and approve.', 'success')
+            if (window.showToast) {
+                window.showToast('✅ Deposit request created! Admin will review and approve.', 'success');
+            }
         }
         
         function confirmPayment() { 
@@ -729,13 +743,17 @@
             btn.classList.add('reported'); 
             btn.disabled=true; 
             if(timerInterval) clearInterval(timerInterval); 
-            showToast('📢 Deposit reported! Admin will verify and credit your account.', 'info')
+            if (window.showToast) {
+                window.showToast('📢 Deposit reported! Admin will verify and credit your account.', 'info');
+            }
         }
         
         function copyAddress() { 
             const addr=document.getElementById('depositAddress').innerHTML; 
             navigator.clipboard.writeText(addr); 
-            showToast('✓ Address copied to clipboard!', 'success')
+            if (window.showToast) {
+                window.showToast('✓ Address copied to clipboard!', 'success');
+            }
         }
         
         function openSidebar() { 
