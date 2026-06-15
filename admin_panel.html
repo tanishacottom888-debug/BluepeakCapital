@@ -24,10 +24,11 @@
         let currentPage = 1
         let usersPerPage = 10
         let allUsers = []
+        let currentDeposits = [] // Store deposits from Supabase
 
         async function loadDashboard() {
             await loadUsers()
-            loadPendingDeposits()
+            await loadPendingDeposits()
             updateStats()
         }
 
@@ -133,64 +134,88 @@
             showToast(`${asset} balance updated!`, 'success')
         }
 
-        function loadPendingDeposits() {
-            const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-            
-            console.log('All deposits in localStorage:', depositHistory)
-            
-            const pendingDeposits = depositHistory.filter(d => d.status === 'pending')
-            
-            const container = document.getElementById('pendingDepositsList')
-            const countSpan = document.getElementById('pendingCount')
-            
-            countSpan.textContent = pendingDeposits.length
-            document.getElementById('pendingDepositCount').textContent = pendingDeposits.length
-            
-            if (pendingDeposits.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i><h3>All Clear!</h3><p>No pending deposits to review</p></div>`
-                return
-            }
-            
-            container.innerHTML = pendingDeposits.map((deposit, idx) => `
-                <div class="deposit-card">
-                    <div class="deposit-status pending"><i class="fas fa-clock"></i> Pending</div>
-                    <div class="deposit-body">
-                        <div class="deposit-icon"><i class="fas fa-coins"></i></div>
-                        <div class="deposit-info">
-                            <div class="deposit-amount">$${deposit.amount.toFixed(2)}</div>
-                            <div class="deposit-crypto">${deposit.crypto} • ${deposit.network}</div>
-                            <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${deposit.date}</div>
-                            <div class="deposit-user"><i class="fas fa-user"></i> User: ${deposit.userEmail || deposit.userId?.substring(0, 8)}...</div>
-                            <div class="deposit-user-id" style="font-size:0.6rem; color:#6b7280;">User ID: ${deposit.userId}</div>
-                            ${deposit.txId ? `<div class="deposit-txid" style="font-size:0.6rem;">TX: ${deposit.txId}</div>` : ''}
+        // FIXED: Load deposits from Supabase instead of localStorage
+        async function loadPendingDeposits() {
+            try {
+                // Fetch pending deposits from Supabase
+                const { data: deposits, error } = await supabase
+                    .from('deposits')
+                    .select('*')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false })
+                
+                if (error) {
+                    console.error('Error loading deposits from Supabase:', error)
+                    showToast('Error loading deposits', 'error')
+                    return
+                }
+                
+                currentDeposits = deposits || []
+                
+                console.log('Deposits from Supabase:', currentDeposits)
+                
+                const container = document.getElementById('pendingDepositsList')
+                const countSpan = document.getElementById('pendingCount')
+                
+                countSpan.textContent = currentDeposits.length
+                document.getElementById('pendingDepositCount').textContent = currentDeposits.length
+                
+                if (currentDeposits.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i><h3>All Clear!</h3><p>No pending deposits to review</p></div>`
+                    return
+                }
+                
+                container.innerHTML = currentDeposits.map((deposit, idx) => {
+                    // Format date nicely
+                    const depositDate = new Date(deposit.created_at).toLocaleString()
+                    
+                    return `
+                    <div class="deposit-card">
+                        <div class="deposit-status pending"><i class="fas fa-clock"></i> Pending</div>
+                        <div class="deposit-body">
+                            <div class="deposit-icon"><i class="fas fa-coins"></i></div>
+                            <div class="deposit-info">
+                                <div class="deposit-amount">$${deposit.amount.toFixed(2)}</div>
+                                <div class="deposit-crypto">${deposit.crypto} • ${deposit.network || 'Standard'}</div>
+                                <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${depositDate}</div>
+                                <div class="deposit-user"><i class="fas fa-user"></i> User ID: ${deposit.user_id?.substring(0, 8)}...</div>
+                                <div class="deposit-address" style="font-size:0.6rem; word-break:break-all;"><i class="fas fa-qrcode"></i> ${deposit.address?.substring(0, 30)}...</div>
+                                ${deposit.tx_id ? `<div class="deposit-txid" style="font-size:0.6rem;">TX: ${deposit.tx_id}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="deposit-actions">
+                            <button class="approve-btn" onclick="approveDeposit('${deposit.id}')"><i class="fas fa-check"></i> Approve</button>
+                            <button class="reject-btn" onclick="rejectDeposit('${deposit.id}')"><i class="fas fa-times"></i> Reject</button>
                         </div>
                     </div>
-                    <div class="deposit-actions">
-                        <button class="approve-btn" onclick="approveDeposit(${idx})"><i class="fas fa-check"></i> Approve</button>
-                        <button class="reject-btn" onclick="rejectDeposit(${idx})"><i class="fas fa-times"></i> Reject</button>
-                    </div>
-                </div>
-            `).join('')
+                `}).join('')
+                
+            } catch (err) {
+                console.error('Error:', err)
+                showToast('Error loading deposits', 'error')
+            }
         }
 
-        window.approveDeposit = async function(index) {
-            const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-            const deposit = depositHistory[index]
-            
-            if (!deposit || deposit.status !== 'pending') {
-                showToast('Deposit not found or already processed', 'error')
-                return
-            }
-            
-            const userId = deposit.userId
-            const amount = deposit.amount
-            
-            if (!userId) {
-                showToast('ERROR: No user ID found in deposit record!', 'error')
-                return
-            }
-            
+        // FIXED: Approve deposit using Supabase ID
+        window.approveDeposit = async function(depositId) {
             try {
+                // Find the deposit in currentDeposits array
+                const deposit = currentDeposits.find(d => d.id == depositId)
+                
+                if (!deposit) {
+                    showToast('Deposit not found', 'error')
+                    return
+                }
+                
+                const userId = deposit.user_id
+                const amount = deposit.amount
+                
+                if (!userId) {
+                    showToast('ERROR: No user ID found in deposit record!', 'error')
+                    return
+                }
+                
+                // STEP 1: Get current user balance
                 const { data: currentBalance, error: fetchError } = await supabase
                     .from('user_balances')
                     .select('balance')
@@ -205,6 +230,7 @@
                 const oldBalance = currentBalance?.balance || 0
                 const newBalance = oldBalance + amount
                 
+                // STEP 2: Update balance in user_balances
                 const { error: upsertError } = await supabase
                     .from('user_balances')
                     .upsert({
@@ -220,25 +246,38 @@
                     return
                 }
                 
-                deposit.status = 'completed'
-                depositHistory[index] = deposit
-                localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
+                // STEP 3: Update deposit status in Supabase
+                const { error: updateError } = await supabase
+                    .from('deposits')
+                    .update({ 
+                        status: 'completed',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', depositId)
                 
+                if (updateError) {
+                    console.error('Error updating deposit status:', updateError)
+                    showToast(`Failed to update deposit status: ${updateError.message}`, 'error')
+                    return
+                }
+                
+                // STEP 4: Record transaction
                 try {
                     await supabase.from('transactions').insert({
                         user_id: userId,
                         type: 'deposit',
                         amount: amount,
                         status: 'completed',
-                        reference: deposit.txId || `DEP-${Date.now()}`,
-                        description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network})`,
+                        reference: deposit.tx_id || `DEP-${Date.now()}`,
+                        description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network || 'Standard'})`,
                         created_at: new Date().toISOString()
                     })
                 } catch (txError) {
                     console.log('Transaction record skipped:', txError)
                 }
                 
-                loadPendingDeposits()
+                // STEP 5: Refresh displays
+                await loadPendingDeposits()
                 await loadUsers()
                 updateStats()
                 
@@ -250,27 +289,58 @@
             }
         }
 
-        window.rejectDeposit = function(index) {
+        // FIXED: Reject deposit using Supabase ID
+        window.rejectDeposit = async function(depositId) {
             if (confirm('Reject this deposit?')) {
-                const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-                depositHistory.splice(index, 1)
-                localStorage.setItem('depositHistory', JSON.stringify(depositHistory))
-                loadPendingDeposits()
-                updateStats()
-                showToast('❌ Deposit rejected', 'info')
+                try {
+                    const { error } = await supabase
+                        .from('deposits')
+                        .update({ 
+                            status: 'rejected',
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', depositId)
+                    
+                    if (error) {
+                        console.error('Error rejecting deposit:', error)
+                        showToast('Failed to reject deposit', 'error')
+                        return
+                    }
+                    
+                    await loadPendingDeposits()
+                    updateStats()
+                    showToast('❌ Deposit rejected', 'info')
+                } catch (err) {
+                    console.error('Error:', err)
+                    showToast('Error rejecting deposit', 'error')
+                }
             }
         }
 
         async function updateStats() {
             const { data: profiles } = await supabase.from('profiles').select('*')
-            const depositHistory = JSON.parse(localStorage.getItem('depositHistory')) || []
-            const pendingCount = depositHistory.filter(d => d.status === 'pending').length
-            const completedCount = depositHistory.filter(d => d.status === 'completed').length
-            const totalVolume = depositHistory.filter(d => d.status === 'completed').reduce((s, d) => s + d.amount, 0)
+            
+            // Get counts from Supabase deposits
+            const { data: pendingDeposits } = await supabase
+                .from('deposits')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending')
+            
+            const { data: completedDeposits } = await supabase
+                .from('deposits')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'completed')
+            
+            const { data: allCompleted } = await supabase
+                .from('deposits')
+                .select('amount')
+                .eq('status', 'completed')
+            
+            const totalVolume = allCompleted?.reduce((sum, d) => sum + d.amount, 0) || 0
             
             document.getElementById('totalUsers').textContent = profiles?.length || 0
-            document.getElementById('pendingDepositCount').textContent = pendingCount
-            document.getElementById('completedDepositsCount').textContent = completedCount
+            document.getElementById('pendingDepositCount').textContent = pendingDeposits?.length || 0
+            document.getElementById('completedDepositsCount').textContent = completedDeposits?.length || 0
             document.getElementById('totalVolume').textContent = `$${totalVolume.toLocaleString()}`
             document.getElementById('activeBotsCount').textContent = '0'
         }
@@ -297,7 +367,7 @@
         
         window.forceRefreshDeposits = function() {
             loadPendingDeposits();
-            showToast('Deposits refreshed!', 'info');
+            showToast('Deposits refreshed from database!', 'info');
         }
 
         window.logout = function() { localStorage.removeItem('admin_authenticated'); window.location.href = 'admin_login.html' }
