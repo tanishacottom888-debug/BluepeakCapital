@@ -47,7 +47,8 @@
             }))
             
             await loadUserBalance()
-            await loadDepositHistoryFromSupabase() // FIXED: Load from Supabase
+            // CHANGE #1: Load deposit history from Supabase instead of localStorage
+            await loadDepositHistoryFromSupabase()
             window.addEventListener('storage', function(e) {
                 if (e.key === 'depositHistory') {
                     loadDepositHistoryFromSupabase()
@@ -76,7 +77,7 @@
             }
         }
         
-        // FIXED: Load deposit history from Supabase, not localStorage
+        // CHANGE #2: NEW FUNCTION - Load deposit history from Supabase
         async function loadDepositHistoryFromSupabase() {
             if (!currentUser) return
             
@@ -88,7 +89,7 @@
                     .order('created_at', { ascending: false })
                 
                 if (error) {
-                    console.error('Error loading deposits from Supabase:', error)
+                    console.error('Error loading deposits:', error)
                     return
                 }
                 
@@ -113,7 +114,7 @@
                     const depositDate = new Date(deposit.created_at).toLocaleString()
                     
                     return `
-                        <div class="history-item">
+                        <div class="history-item" data-id="${deposit.id}">
                             <div class="history-info">
                                 <div class="history-amount">$${deposit.amount.toFixed(2)}</div>
                                 <div class="history-crypto">${deposit.crypto} • ${deposit.network || 'Standard'}</div>
@@ -130,7 +131,6 @@
                     `
                 }).join('')
                 
-                // Update pending count badge
                 const pendingCount = deposits.filter(d => d.status === 'pending').length
                 const pendingBadge = document.getElementById('pendingCountBadge')
                 if (pendingBadge) {
@@ -147,73 +147,18 @@
             }
         }
         
-        // Keep localStorage version for backward compatibility (fallback)
-        function loadDepositHistoryFromLocalStorage() {
-            // This is now a fallback, but we primarily use Supabase
-            const history = JSON.parse(localStorage.getItem('depositHistory')) || []
-            const container = document.getElementById('depositHistoryList')
-            
-            const userDeposits = history.filter(d => d.userId === currentUser?.id)
-            
-            if (userDeposits.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-history">
-                        <div class="empty-icon">📭</div>
-                        <div class="empty-title">No deposits yet</div>
-                        <div class="empty-subtitle">Your deposit history will appear here</div>
-                    </div>
-                `
-                return
-            }
-            
-            userDeposits.sort((a, b) => new Date(b.date) - new Date(a.date))
-            
-            container.innerHTML = userDeposits.map((deposit) => {
-                const isPending = deposit.status === 'pending'
-                const statusClass = isPending ? 'pending' : 'completed'
-                const statusText = isPending ? '⏳ Pending' : '✅ Completed'
-                const statusIcon = isPending ? 'fa-clock' : 'fa-check-circle'
-                
-                return `
-                    <div class="history-item">
-                        <div class="history-info">
-                            <div class="history-amount">$${deposit.amount.toFixed(2)}</div>
-                            <div class="history-crypto">${deposit.crypto} • ${deposit.network}</div>
-                            <div class="history-date"><i class="far fa-calendar-alt"></i> ${deposit.date}</div>
-                            ${deposit.txId ? `<div class="history-txid"><i class="fas fa-hashtag"></i> ${deposit.txId}</div>` : ''}
-                            ${deposit.address ? `<div class="history-address"><i class="fas fa-qrcode"></i> ${deposit.address.substring(0, 20)}...</div>` : ''}
-                        </div>
-                        <div class="history-actions">
-                            <span class="history-status ${statusClass}">
-                                <i class="fas ${statusIcon}"></i> ${statusText}
-                            </span>
-                            <button class="delete-history-btn" onclick="deleteDepositHistory(${history.findIndex(h => h.id === deposit.id)})" title="Delete">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                `
-            }).join('')
-            
-            const pendingCount = userDeposits.filter(d => d.status === 'pending').length
-            const pendingBadge = document.getElementById('pendingCountBadge')
-            if (pendingBadge) {
-                if (pendingCount > 0) {
-                    pendingBadge.textContent = pendingCount
-                    pendingBadge.style.display = 'inline-block'
-                } else {
-                    pendingBadge.style.display = 'none'
-                }
-            }
+        // CHANGE #3: Keep old function as fallback, but main one is Supabase
+        function loadDepositHistory() {
+            // This is now a fallback - but we use Supabase as primary
+            loadDepositHistoryFromSupabase()
         }
         
-        // Keep delete function for localStorage (optional)
         window.deleteDepositHistory = function(index) {
             if (confirm('Delete this deposit record?')) {
                 const history = JSON.parse(localStorage.getItem('depositHistory')) || []
                 history.splice(index, 1)
                 localStorage.setItem('depositHistory', JSON.stringify(history))
-                loadDepositHistoryFromLocalStorage()
+                loadDepositHistoryFromSupabase()
                 showToast('Deposit record deleted', 'info')
             }
         }
@@ -227,19 +172,15 @@
             setTimeout(() => toast.classList.remove('show'), 4000)
         }
         
-        // FIXED: Save deposit to Supabase with better error handling
+        // CHANGE #4: Make saveDepositToSupabase globally available
         window.saveDepositToSupabase = async function(amount, crypto, network, address, txId) {
-            console.log('📝 SAVE DEPOSIT CALLED:', { amount, crypto, network, address, txId })
-            console.log('👤 currentUser:', currentUser)
-            
             if (!currentUser) {
-                console.error('❌ No currentUser!')
                 window.showToast('Error: User not logged in', 'error')
                 return false
             }
             
             try {
-                const { data, error } = await supabase.from('deposits').insert({
+                const { error } = await supabase.from('deposits').insert({
                     user_id: currentUser.id,
                     amount: amount,
                     crypto: crypto,
@@ -250,23 +191,19 @@
                     created_at: new Date().toISOString()
                 })
                 
-                console.log('📤 Supabase response:', { data, error })
-                
                 if (error) {
-                    console.error('❌ Supabase insert error:', error)
+                    console.error('Supabase insert error:', error)
                     window.showToast('Failed to save deposit: ' + error.message, 'error')
                     return false
                 } else {
-                    console.log('✅ Deposit saved to Supabase successfully!')
-                    window.showToast('✅ Deposit saved to database!', 'success')
-                    
-                    // Reload the deposit history from Supabase
+                    console.log('Deposit saved to Supabase successfully')
+                    // Reload deposit history from Supabase
                     await loadDepositHistoryFromSupabase()
                     return true
                 }
             } catch (e) {
-                console.error('❌ Supabase save failed:', e)
-                window.showToast('Failed to save deposit: ' + e.message, 'error')
+                console.error('Supabase save failed:', e)
+                window.showToast('Failed to save deposit', 'error')
                 return false
             }
         }
@@ -279,7 +216,6 @@
     </script>
     
     <style>
-        /* All your existing styles remain exactly the same */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root { --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #1f2937; --bg-input: #374151; --text-primary: #f3f4f6; --text-secondary: #9ca3af; --border-color: #374151; --nav-bg: #111827; --hover-bg: #374151; --step-active: #3b82f6; --step-inactive: #4b5563; --step-completed: #10b981; --btn-primary: #3b82f6; --btn-primary-hover: #2563eb; --btn-secondary: #374151; --btn-secondary-hover: #4b5563; --status-pending: #f59e0b; --status-completed: #10b981; }
         [data-theme="light"] { --bg-primary: #f5f7fb; --bg-secondary: #ffffff; --bg-card: #ffffff; --bg-input: #f8fafc; --text-primary: #1a1f36; --text-secondary: #64748b; --border-color: #e2e8f0; --nav-bg: #ffffff; --hover-bg: #f1f5f9; }
@@ -746,6 +682,7 @@
             selectedNetwork=opts[0].value; 
         }
         
+        // CHANGE #5: Make sure generateDepositAddress calls window.saveDepositToSupabase
         function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -801,8 +738,6 @@
             // Call saveDepositToSupabase from window object
             if (window.saveDepositToSupabase) {
                 window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
-            } else {
-                console.error('window.saveDepositToSupabase is not defined!')
             }
             
             // Reload deposit history from Supabase
