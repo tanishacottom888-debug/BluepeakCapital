@@ -154,10 +154,19 @@
             setTimeout(() => toast.classList.remove('show'), 4000)
         }
         
-        async function saveDepositToSupabase(amount, crypto, network, address, txId) {
-            if (!currentUser) return
+        // Make saveDepositToSupabase globally available
+        window.saveDepositToSupabase = async function(amount, crypto, network, address, txId) {
+            console.log('SAVE DEPOSIT CALLED:', { amount, crypto, network, address, txId })
+            console.log('currentUser:', currentUser)
+            
+            if (!currentUser) {
+                console.error('No currentUser!')
+                window.showToast('Error: User not logged in', 'error')
+                return
+            }
+            
             try {
-                const { error } = await supabase.from('deposits').insert({
+                const { data, error } = await supabase.from('deposits').insert({
                     user_id: currentUser.id,
                     amount: amount,
                     crypto: crypto,
@@ -167,14 +176,18 @@
                     tx_id: txId,
                     created_at: new Date().toISOString()
                 })
+                
+                console.log('Supabase response:', { data, error })
+                
                 if (error) {
                     console.error('Supabase insert error:', error)
                     window.showToast('Failed to save deposit: ' + error.message, 'error')
                 } else {
-                    console.log('Deposit saved to Supabase successfully')
+                    console.log('✅ Deposit saved to Supabase successfully!')
+                    window.showToast('✅ Deposit saved to database!', 'success')
                 }
             } catch (e) {
-                console.log('Supabase save failed:', e)
+                console.error('Supabase save failed:', e)
                 window.showToast('Failed to save deposit', 'error')
             }
         }
@@ -653,7 +666,6 @@
             selectedNetwork=opts[0].value; 
         }
         
-        // FIXED: generateDepositAddress function - using window.showToast
         function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -664,17 +676,13 @@
             if (selectedCrypto === 'USDT' || selectedCrypto === 'USDC') msg += ` Make sure to use the ${selectedNetwork} network.`; 
             document.getElementById('warningNote').innerHTML = msg; 
             
-            // Get userId from multiple sources to ensure it works for all users
             let userId = null;
             let userEmail = null;
             
-            // Try to get from window.currentUser (set in module)
             if (window.currentUser && window.currentUser.id) {
                 userId = window.currentUser.id;
                 userEmail = window.currentUser.email;
-            }
-            // Try from localStorage fallback
-            else {
+            } else {
                 const savedUser = localStorage.getItem('bluepeak_user');
                 if (savedUser) {
                     try {
@@ -688,8 +696,6 @@
             if (!userId) {
                 if (window.showToast) {
                     window.showToast('Error: User not found. Please refresh the page.', 'error');
-                } else {
-                    alert('Error: User not found. Please refresh the page.');
                 }
                 return
             }
@@ -712,8 +718,11 @@
             history.unshift(newDeposit)
             localStorage.setItem('depositHistory', JSON.stringify(history))
             
-            if (typeof saveDepositToSupabase === 'function') {
-                saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
+            // Call saveDepositToSupabase from window object
+            if (window.saveDepositToSupabase) {
+                window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
+            } else {
+                console.error('window.saveDepositToSupabase is not defined!')
             }
             
             if (typeof loadDepositHistory === 'function') {
