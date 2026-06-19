@@ -154,7 +154,7 @@
             setTimeout(() => toast.classList.remove('show'), 4000)
         }
         
-        // Save deposit to Supabase
+        // FIXED: Save deposit to Supabase
         window.saveDepositToSupabase = async function(amount, crypto, network, address, txId) {
             if (!currentUser) {
                 console.log('User not logged in')
@@ -162,7 +162,9 @@
             }
             
             try {
-                const { error } = await supabase.from('deposits').insert({
+                console.log('Saving to Supabase:', { user_id: currentUser.id, amount, crypto, network, address, txId })
+                
+                const { data, error } = await supabase.from('deposits').insert({
                     user_id: currentUser.id,
                     amount: amount,
                     crypto: crypto,
@@ -174,14 +176,14 @@
                 })
                 
                 if (error) {
-                    console.log('Supabase insert error:', error.message)
+                    console.error('Supabase insert error:', error)
                     return false
                 } else {
-                    console.log('Deposit saved to Supabase successfully')
+                    console.log('✅ Deposit saved to Supabase successfully!', data)
                     return true
                 }
             } catch (e) {
-                console.log('Supabase save failed:', e.message)
+                console.error('Supabase save failed:', e)
                 return false
             }
         }
@@ -194,6 +196,7 @@
     </script>
     
     <style>
+        /* Your existing styles here - keeping them exactly the same */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root { --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #1f2937; --bg-input: #374151; --text-primary: #f3f4f6; --text-secondary: #9ca3af; --border-color: #374151; --nav-bg: #111827; --hover-bg: #374151; --step-active: #3b82f6; --step-inactive: #4b5563; --step-completed: #10b981; --btn-primary: #3b82f6; --btn-primary-hover: #2563eb; --btn-secondary: #374151; --btn-secondary-hover: #4b5563; --status-pending: #f59e0b; --status-completed: #10b981; }
         [data-theme="light"] { --bg-primary: #f5f7fb; --bg-secondary: #ffffff; --bg-card: #ffffff; --bg-input: #f8fafc; --text-primary: #1a1f36; --text-secondary: #64748b; --border-color: #e2e8f0; --nav-bg: #ffffff; --hover-bg: #f1f5f9; }
@@ -352,6 +355,7 @@
     </style>
 </head>
 <body>
+    <!-- Your existing HTML body here -->
     <nav>
         <div class="logo-area" onclick="location.href='index.html'">
             <div class="logo-icon">⛰️</div>
@@ -660,7 +664,7 @@
             selectedNetwork=opts[0].value; 
         }
         
-        // FIXED: generateDepositAddress - Works immediately, Supabase in background
+        // FIXED: generateDepositAddress - SAVES TO SUPABASE PROPERLY
         function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -710,29 +714,36 @@
                 txId: 'DEP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8).toUpperCase()
             }
             
-            // Save to localStorage immediately (user sees it)
-            history.unshift(newDeposit);
-            localStorage.setItem('depositHistory', JSON.stringify(history));
-            
-            // Try Supabase in background - don't block the user
+            // SAVE TO SUPABASE FIRST
             if (window.saveDepositToSupabase) {
                 window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
                     .then(saved => {
                         if (saved) {
-                            console.log('✅ Deposit saved to Supabase successfully');
+                            // Only save to localStorage if Supabase succeeds
+                            history.unshift(newDeposit);
+                            localStorage.setItem('depositHistory', JSON.stringify(history));
+                            console.log('✅ Deposit saved to Supabase and localStorage');
+                            
+                            if (typeof loadDepositHistory === 'function') {
+                                loadDepositHistory()
+                            }
                         } else {
                             console.log('❌ Deposit NOT saved to Supabase');
+                            if (window.showToast) {
+                                window.showToast('❌ Failed to save deposit. Please try again.', 'error');
+                            }
+                            return;
                         }
                     })
                     .catch(err => {
                         console.log('Supabase save error:', err);
+                        if (window.showToast) {
+                            window.showToast('❌ Error saving deposit. Please try again.', 'error');
+                        }
                     });
             }
             
-            if (typeof loadDepositHistory === 'function') {
-                loadDepositHistory()
-            }
-            
+            // Always show the address and continue
             if (timerInterval) clearInterval(timerInterval); 
             timerSeconds = 600; 
             startTimer(); 
