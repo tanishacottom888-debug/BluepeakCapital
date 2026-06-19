@@ -154,7 +154,7 @@
             setTimeout(() => toast.classList.remove('show'), 4000)
         }
         
-        // FIXED: Save deposit to Supabase
+        // Save deposit to Supabase
         window.saveDepositToSupabase = async function(amount, crypto, network, address, txId) {
             if (!currentUser) {
                 console.log('User not logged in')
@@ -660,7 +660,7 @@
             selectedNetwork=opts[0].value; 
         }
         
-        // FIXED: generateDepositAddress - SAVE TO SUPABASE FIRST, then localStorage
+        // FIXED: generateDepositAddress - Works immediately, Supabase in background
         function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -710,39 +710,43 @@
                 txId: 'DEP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8).toUpperCase()
             }
             
-            // FIXED: Save to Supabase FIRST, then localStorage
-            (async () => {
-                const saved = await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId);
-                if (saved) {
-                    // Only save to localStorage if Supabase succeeded
-                    history.unshift(newDeposit);
-                    localStorage.setItem('depositHistory', JSON.stringify(history));
-                    console.log('✅ Deposit saved to Supabase and localStorage');
-                    if (window.showToast) {
-                        window.showToast('✅ Deposit request created! Admin will review and approve.', 'success');
-                    }
-                    
-                    if (typeof loadDepositHistory === 'function') {
-                        loadDepositHistory()
-                    }
-                    
-                    if (timerInterval) clearInterval(timerInterval); 
-                    timerSeconds = 600; 
-                    startTimer(); 
-                    const btn = document.getElementById('confirmPaymentBtn'); 
-                    btn.textContent = '✅ I have made deposit'; 
-                    btn.classList.remove('reported'); 
-                    btn.disabled = false; 
-                    document.getElementById('step1').style.display = 'none'; 
-                    document.getElementById('step2').style.display = 'none'; 
-                    document.getElementById('step3').style.display = 'block'; 
-                } else {
-                    console.log('❌ Deposit NOT saved to Supabase');
-                    if (window.showToast) {
-                        window.showToast('❌ Failed to save deposit. Please try again.', 'error');
-                    }
-                }
-            })();
+            // Save to localStorage immediately (user sees it)
+            history.unshift(newDeposit);
+            localStorage.setItem('depositHistory', JSON.stringify(history));
+            
+            // Try Supabase in background - don't block the user
+            if (window.saveDepositToSupabase) {
+                window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
+                    .then(saved => {
+                        if (saved) {
+                            console.log('✅ Deposit saved to Supabase successfully');
+                        } else {
+                            console.log('❌ Deposit NOT saved to Supabase');
+                        }
+                    })
+                    .catch(err => {
+                        console.log('Supabase save error:', err);
+                    });
+            }
+            
+            if (typeof loadDepositHistory === 'function') {
+                loadDepositHistory()
+            }
+            
+            if (timerInterval) clearInterval(timerInterval); 
+            timerSeconds = 600; 
+            startTimer(); 
+            const btn = document.getElementById('confirmPaymentBtn'); 
+            btn.textContent = '✅ I have made deposit'; 
+            btn.classList.remove('reported'); 
+            btn.disabled = false; 
+            document.getElementById('step1').style.display = 'none'; 
+            document.getElementById('step2').style.display = 'none'; 
+            document.getElementById('step3').style.display = 'block'; 
+            
+            if (window.showToast) {
+                window.showToast('✅ Deposit request created! Admin will review and approve.', 'success');
+            }
         }
         
         function confirmPayment() { 
