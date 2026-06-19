@@ -180,8 +180,8 @@
                             </div>
                         </div>
                         <div class="deposit-actions">
-                            <button class="approve-btn" onclick="approveDeposit('${deposit.id}')"><i class="fas fa-check"></i> Approve</button>
-                            <button class="reject-btn" onclick="rejectDeposit('${deposit.id}')"><i class="fas fa-times"></i> Reject</button>
+                            <button class="approve-btn" onclick="window.approveDeposit('${deposit.id}')"><i class="fas fa-check"></i> Approve</button>
+                            <button class="reject-btn" onclick="window.rejectDeposit('${deposit.id}')"><i class="fas fa-times"></i> Reject</button>
                         </div>
                     </div>
                 `}).join('')
@@ -371,9 +371,14 @@
         // =======================================================
         // 🔄 AUTO-REFRESH: New deposits appear immediately!
         // =======================================================
+        // Make loadPendingDeposits globally accessible
+        window.loadPendingDeposits = loadPendingDeposits
+        
         setInterval(() => {
-            loadPendingDeposits();
-            console.log('🔄 Auto-refreshing deposits...', new Date().toLocaleTimeString());
+            if (typeof loadPendingDeposits === 'function') {
+                loadPendingDeposits();
+                console.log('🔄 Auto-refreshing deposits...', new Date().toLocaleTimeString());
+            }
         }, 10000); // Check every 10 seconds
 
         console.log('✅ Admin panel loaded with auto-refresh enabled!');
