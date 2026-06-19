@@ -24,7 +24,7 @@
         let currentPage = 1
         let usersPerPage = 10
         let allUsers = []
-        let currentDeposits = [] // Store deposits from Supabase
+        let currentDeposits = []
 
         async function loadDashboard() {
             await loadUsers()
@@ -134,10 +134,8 @@
             showToast(`${asset} balance updated!`, 'success')
         }
 
-        // FIXED: Load deposits from Supabase instead of localStorage
         async function loadPendingDeposits() {
             try {
-                // Fetch pending deposits from Supabase
                 const { data: deposits, error } = await supabase
                     .from('deposits')
                     .select('*')
@@ -146,13 +144,12 @@
                 
                 if (error) {
                     console.error('Error loading deposits from Supabase:', error)
-                    showToast('Error loading deposits', 'error')
                     return
                 }
                 
                 currentDeposits = deposits || []
                 
-                console.log('Deposits from Supabase:', currentDeposits)
+                console.log('📥 Deposits from Supabase:', currentDeposits.length, 'pending')
                 
                 const container = document.getElementById('pendingDepositsList')
                 const countSpan = document.getElementById('pendingCount')
@@ -166,7 +163,6 @@
                 }
                 
                 container.innerHTML = currentDeposits.map((deposit, idx) => {
-                    // Format date nicely
                     const depositDate = new Date(deposit.created_at).toLocaleString()
                     
                     return `
@@ -192,14 +188,11 @@
                 
             } catch (err) {
                 console.error('Error:', err)
-                showToast('Error loading deposits', 'error')
             }
         }
 
-        // FIXED: Approve deposit using Supabase ID
         window.approveDeposit = async function(depositId) {
             try {
-                // Find the deposit in currentDeposits array
                 const deposit = currentDeposits.find(d => d.id == depositId)
                 
                 if (!deposit) {
@@ -215,7 +208,6 @@
                     return
                 }
                 
-                // STEP 1: Get current user balance
                 const { data: currentBalance, error: fetchError } = await supabase
                     .from('user_balances')
                     .select('balance')
@@ -230,7 +222,6 @@
                 const oldBalance = currentBalance?.balance || 0
                 const newBalance = oldBalance + amount
                 
-                // STEP 2: Update balance in user_balances
                 const { error: upsertError } = await supabase
                     .from('user_balances')
                     .upsert({
@@ -246,7 +237,6 @@
                     return
                 }
                 
-                // STEP 3: Update deposit status in Supabase
                 const { error: updateError } = await supabase
                     .from('deposits')
                     .update({ 
@@ -261,7 +251,6 @@
                     return
                 }
                 
-                // STEP 4: Record transaction
                 try {
                     await supabase.from('transactions').insert({
                         user_id: userId,
@@ -276,7 +265,6 @@
                     console.log('Transaction record skipped:', txError)
                 }
                 
-                // STEP 5: Refresh displays
                 await loadPendingDeposits()
                 await loadUsers()
                 updateStats()
@@ -289,7 +277,6 @@
             }
         }
 
-        // FIXED: Reject deposit using Supabase ID
         window.rejectDeposit = async function(depositId) {
             if (confirm('Reject this deposit?')) {
                 try {
@@ -320,7 +307,6 @@
         async function updateStats() {
             const { data: profiles } = await supabase.from('profiles').select('*')
             
-            // Get counts from Supabase deposits
             const { data: pendingDeposits } = await supabase
                 .from('deposits')
                 .select('*', { count: 'exact', head: true })
@@ -381,6 +367,16 @@
         }
 
         loadDashboard()
+
+        // =======================================================
+        // 🔄 AUTO-REFRESH: New deposits appear immediately!
+        // =======================================================
+        setInterval(() => {
+            loadPendingDeposits();
+            console.log('🔄 Auto-refreshing deposits...', new Date().toLocaleTimeString());
+        }, 10000); // Check every 10 seconds
+
+        console.log('✅ Admin panel loaded with auto-refresh enabled!');
     </script>
     
     <style>
