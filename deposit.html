@@ -175,7 +175,6 @@
                 
                 if (error) {
                     console.log('Supabase insert error:', error.message)
-                    // Don't show toast for this - just log it
                     return false
                 } else {
                     console.log('Deposit saved to Supabase successfully')
@@ -661,6 +660,7 @@
             selectedNetwork=opts[0].value; 
         }
         
+        // FIXED: generateDepositAddress - NOW AWAITS Supabase save
         function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -713,9 +713,20 @@
             history.unshift(newDeposit)
             localStorage.setItem('depositHistory', JSON.stringify(history))
             
-            // Call saveDepositToSupabase - NO TOAST on failure, just silent
+            // FIXED: Call saveDepositToSupabase and WAIT for result
             if (window.saveDepositToSupabase) {
-                window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId)
+                // Use a self-executing async function to await the result
+                (async () => {
+                    const saved = await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId);
+                    if (saved) {
+                        console.log('✅ Deposit saved to Supabase successfully');
+                    } else {
+                        console.log('❌ Deposit NOT saved to Supabase - check console for error');
+                        if (window.showToast) {
+                            window.showToast('⚠️ Deposit saved locally but not in database. Admin may not see it.', 'warning');
+                        }
+                    }
+                })();
             }
             
             if (typeof loadDepositHistory === 'function') {
