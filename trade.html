@@ -49,7 +49,6 @@
             
             updateBalanceDisplay()
             
-            // Debug: Log balances to console
             console.log('User Balances loaded:', userBalances)
         }
         
@@ -72,7 +71,6 @@
             
             if (!userBalances.USD) userBalances.USD = 0
             
-            // Make userBalances globally available
             window.userBalances = userBalances
             
             console.log('Final balances:', userBalances)
@@ -200,7 +198,6 @@
             console.log('Executing order:', { currentOrderType: window.currentOrderType, amount, price, total, pairAsset, userBalances })
             
             if (window.currentOrderType === 'buy') {
-                // CHECK USD BALANCE FOR BUY
                 if (total > userBalances.USD) {
                     showToast(`Insufficient USD balance. Available: $${userBalances.USD.toFixed(2)}`)
                     return false
@@ -210,7 +207,6 @@
                 await updateUserBalances(pairAsset, amount, true)
                 
             } else {
-                // CHECK CRYPTO BALANCE FOR SELL
                 if (amount > (userBalances[pairAsset] || 0)) {
                     showToast(`Insufficient ${pairAsset} balance. Available: ${(userBalances[pairAsset] || 0).toFixed(4)}`)
                     return false
@@ -271,7 +267,7 @@
             if (!container) return
             
             if (userOrders.length === 0) {
-                container.innerHTML = '</table><td colspan="6" style="text-align: center; padding: 1rem;">No open orders</div></div> </div>'
+                container.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1rem;">No open orders</div></div> </div>'
                 return
             }
             
@@ -548,7 +544,7 @@
         }
 
         .chart-header {
-            padding: 0.5rem;
+            padding: 0.5rem 0.8rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
@@ -564,7 +560,7 @@
         }
 
         .timeframe-btn {
-            padding: 0.2rem 0.4rem;
+            padding: 0.2rem 0.5rem;
             font-size: 0.6rem;
             border: none;
             background: var(--hover-bg);
@@ -578,9 +574,11 @@
             color: white;
         }
 
+        /* FIXED: Chart height increased */
         #tradingview_chart {
-            height: 400px;
+            height: 500px !important;
             width: 100%;
+            min-height: 400px;
         }
 
         .order-container {
@@ -619,7 +617,7 @@
         }
 
         .order-form {
-            padding: 0.8rem;
+            padding: 0.8rem 1rem;
         }
 
         .form-group {
@@ -662,7 +660,7 @@
 
         .order-total {
             background: var(--bg-input);
-            padding: 0.6rem;
+            padding: 0.6rem 0.8rem;
             border-radius: 8px;
             margin: 0.8rem 0;
             font-size: 0.75rem;
@@ -731,7 +729,7 @@
         }
 
         .panel-header {
-            padding: 0.6rem;
+            padding: 0.6rem 0.8rem;
             border-bottom: 1px solid var(--border-color);
             font-weight: 600;
             font-size: 0.8rem;
@@ -745,14 +743,14 @@
         }
 
         .orderbook-table th, .trades-table th, .orders-table th {
-            padding: 0.4rem;
+            padding: 0.4rem 0.6rem;
             text-align: left;
             color: var(--text-secondary);
             border-bottom: 1px solid var(--border-color);
         }
 
         .orderbook-table td, .trades-table td, .orders-table td {
-            padding: 0.3rem 0.4rem;
+            padding: 0.3rem 0.6rem;
             border-bottom: 1px solid var(--border-color);
             color: var(--text-primary);
         }
@@ -787,7 +785,7 @@
 
         @media (max-width: 768px) {
             #tradingview_chart {
-                height: 450px;
+                height: 350px !important;
             }
             .nav-links {
                 display: none;
@@ -805,6 +803,12 @@
             .flag-icon {
                 width: 22px;
                 height: 22px;
+            }
+            .chart-header {
+                padding: 0.4rem;
+            }
+            .order-form {
+                padding: 0.6rem 0.8rem;
             }
         }
 
@@ -1040,7 +1044,7 @@
             const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2)
             const spreadElem = document.getElementById('spreadDisplay')
             if (spreadElem) spreadElem.innerHTML = `Spread: ${spread}%`
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<td><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></tr>`).join('')
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></tr>`).join('')
             document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></tr>`).join('')
         }
         
