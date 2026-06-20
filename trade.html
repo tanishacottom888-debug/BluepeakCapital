@@ -95,6 +95,7 @@
                 }
                 
                 userOrders = data || []
+                console.log('Orders loaded:', userOrders)
                 renderOpenOrders()
             } catch (e) {
                 console.error('Error loading orders:', e)
@@ -116,6 +117,7 @@
                 }
                 
                 userTrades = data || []
+                console.log('Trades loaded:', userTrades)
                 renderRecentTrades()
             } catch (e) {
                 console.error('Error loading trades:', e)
@@ -291,12 +293,15 @@
             }
         }
         
-        function renderOpenOrders() {
+        window.renderOpenOrders = function() {
             const container = document.getElementById('openOrdersList')
-            if (!container) return
+            if (!container) {
+                console.error('openOrdersList container not found')
+                return
+            }
             
             if (!userOrders || userOrders.length === 0) {
-                container.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1rem;">No open orders</td></tr>'
+                container.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1rem; color: var(--text-secondary);">No open orders</td></tr>'
                 return
             }
             
@@ -307,17 +312,22 @@
                     <td>$${order.price}</td>
                     <td>${order.amount}</td>
                     <td>${order.filled || 0}/${order.amount}</td>
-                    <td><button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button></td>
+                    <td><button class="cancel-btn" onclick="window.cancelOrder('${order.id}')">Cancel</button></td>
                 </tr>
             `).join('')
+            
+            console.log('Open orders rendered:', userOrders.length)
         }
         
-        function renderRecentTrades() {
+        window.renderRecentTrades = function() {
             const container = document.getElementById('tradesList')
-            if (!container) return
+            if (!container) {
+                console.error('tradesList container not found')
+                return
+            }
             
             if (!userTrades || userTrades.length === 0) {
-                container.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No recent trades</td></tr>'
+                container.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem; color: var(--text-secondary);">No recent trades</td></tr>'
                 return
             }
             
@@ -328,13 +338,15 @@
                     <td>${trade.amount}</td>
                 </tr>
             `).join('')
+            
+            console.log('Recent trades rendered:', userTrades.length)
         }
         
         window.loadUserBalances = loadUserBalances
         window.updateBalanceDisplay = updateBalanceDisplay
         window.userBalances = userBalances
-        window.renderOpenOrders = renderOpenOrders
-        window.renderRecentTrades = renderRecentTrades
+        window.userTrades = userTrades
+        window.userOrders = userOrders
         
         checkAuthAndLoadData()
     </script>
