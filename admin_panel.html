@@ -168,33 +168,32 @@
                     return
                 }
                 
-                // FIXED: Properly render deposit cards with visible styles
                 container.innerHTML = currentDeposits.map((deposit) => {
                     const depositDate = new Date(deposit.created_at).toLocaleString()
                     
                     return `
-                    <div class="deposit-card" style="background: rgba(31, 41, 55, 0.95); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px; padding: 1.2rem; margin-bottom: 1rem; transition: all 0.3s; color: white;">
-                        <div class="deposit-status pending" style="display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; background: rgba(245, 158, 11, 0.2); color: #f59e0b; margin-bottom: 0.8rem;">
+                    <div class="deposit-card">
+                        <div class="deposit-status pending">
                             <i class="fas fa-clock"></i> Pending
                         </div>
-                        <div class="deposit-body" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                            <div class="deposit-icon" style="width: 50px; height: 50px; background: rgba(16, 185, 129, 0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #10b981; flex-shrink: 0;">
+                        <div class="deposit-body">
+                            <div class="deposit-icon">
                                 <i class="fas fa-coins"></i>
                             </div>
-                            <div class="deposit-info" style="flex: 1;">
-                                <div class="deposit-amount" style="font-size: 1.3rem; font-weight: 700; color: #10b981;">$${deposit.amount.toFixed(2)}</div>
-                                <div class="deposit-crypto" style="font-size: 0.8rem; color: #9ca3af; margin: 0.2rem 0;">${deposit.crypto} • ${deposit.network || 'Standard'}</div>
-                                <div class="deposit-date" style="font-size: 0.7rem; color: #6b7280;"><i class="far fa-calendar-alt"></i> ${depositDate}</div>
-                                <div class="deposit-user" style="font-size: 0.7rem; color: #3b82f6; margin-top: 0.2rem;"><i class="fas fa-user"></i> User: ${deposit.user_id?.substring(0, 8)}...</div>
-                                ${deposit.address ? `<div class="deposit-address" style="font-size: 0.6rem; color: #6b7280; font-family: monospace; word-break: break-all; margin-top: 0.2rem;"><i class="fas fa-qrcode"></i> ${deposit.address.substring(0, 30)}...</div>` : ''}
-                                ${deposit.tx_id ? `<div class="deposit-txid" style="font-size: 0.6rem; color: #6b7280; margin-top: 0.2rem;">TX: ${deposit.tx_id}</div>` : ''}
+                            <div class="deposit-info">
+                                <div class="deposit-amount">$${deposit.amount.toFixed(2)}</div>
+                                <div class="deposit-crypto">${deposit.crypto} • ${deposit.network || 'Standard'}</div>
+                                <div class="deposit-date"><i class="far fa-calendar-alt"></i> ${depositDate}</div>
+                                <div class="deposit-user"><i class="fas fa-user"></i> User: ${deposit.user_id?.substring(0, 8)}...</div>
+                                ${deposit.address ? `<div class="deposit-address"><i class="fas fa-qrcode"></i> ${deposit.address.substring(0, 30)}...</div>` : ''}
+                                ${deposit.tx_id ? `<div class="deposit-txid">TX: ${deposit.tx_id}</div>` : ''}
                             </div>
                         </div>
-                        <div class="deposit-actions" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                            <button class="approve-btn" onclick="window.approveDeposit('${deposit.id}')" style="flex: 1; background: #10b981; color: white; border: none; padding: 0.6rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                        <div class="deposit-actions">
+                            <button class="approve-btn" onclick="window.approveDeposit('${deposit.id}')">
                                 <i class="fas fa-check"></i> Approve
                             </button>
-                            <button class="reject-btn" onclick="window.rejectDeposit('${deposit.id}')" style="flex: 1; background: #ef4444; color: white; border: none; padding: 0.6rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                            <button class="reject-btn" onclick="window.rejectDeposit('${deposit.id}')">
                                 <i class="fas fa-times"></i> Reject
                             </button>
                         </div>
@@ -205,6 +204,11 @@
                 console.error('Error:', err)
             }
         }
+
+        // ============================================
+        // FIXED: Make loadPendingDeposits globally accessible
+        // ============================================
+        window.loadPendingDeposits = loadPendingDeposits;
 
         window.approveDeposit = async function(depositId) {
             try {
@@ -450,7 +454,6 @@
         .page-btn { background: #374151; border: none; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; color: white; }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* FIXED: Deposit cards styling - guaranteed visibility */
         .deposits-grid {
             display: grid;
             grid-template-columns: 1fr;
