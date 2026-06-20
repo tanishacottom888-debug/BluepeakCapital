@@ -141,19 +141,13 @@
                 history.splice(index, 1)
                 localStorage.setItem('depositHistory', JSON.stringify(history))
                 loadDepositHistory()
-                showToast('Deposit record deleted', 'info')
+                // REMOVED: showToast('Deposit record deleted', 'info')
             }
         }
         
-        window.showToast = function(message, type = 'success') {
-            const toast = document.getElementById('toastMessage')
-            toast.textContent = message
-            toast.className = `toast-notification ${type}`
-            toast.classList.add('show')
-            setTimeout(() => toast.classList.remove('show'), 4000)
-        }
+        // REMOVED: window.showToast function - no more popups!
         
-        // SAVE TO SUPABASE - FIXED VERSION
+        // SAVE TO SUPABASE
         window.saveDepositToSupabase = async function(amount, crypto, network, address, txId) {
             if (!currentUser) {
                 console.log('❌ User not logged in')
@@ -196,7 +190,6 @@
         
         window.loadUserBalance = loadUserBalance
         window.loadDepositHistory = loadDepositHistory
-        window.showToast = window.showToast
         
         checkAuth()
     </script>
@@ -668,7 +661,7 @@
             selectedNetwork=opts[0].value; 
         }
         
-        // FIXED: ASYNC function that SAVES TO SUPABASE FIRST
+        // FIXED: ASYNC function that SAVES TO SUPABASE FIRST - NO POPUPS
         async function generateDepositAddress() { 
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
@@ -697,9 +690,8 @@
             }
             
             if (!userId) {
-                if (window.showToast) {
-                    window.showToast('Error: User not found. Please refresh the page.', 'error');
-                }
+                // REMOVED: showToast popup - just log error
+                console.error('Error: User not found. Please refresh the page.');
                 return
             }
             
@@ -719,12 +711,11 @@
             }
             
             // ============================================
-            // SAVE TO SUPABASE FIRST - THIS IS THE FIX!
+            // SAVE TO SUPABASE FIRST
             // ============================================
             if (window.saveDepositToSupabase) {
                 const saved = await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId);
                 if (saved) {
-                    // Only save to localStorage if Supabase succeeded
                     history.unshift(newDeposit);
                     localStorage.setItem('depositHistory', JSON.stringify(history));
                     console.log('✅ Deposit saved to Supabase and localStorage');
@@ -734,13 +725,10 @@
                     }
                 } else {
                     console.log('❌ Deposit NOT saved to Supabase');
-                    if (window.showToast) {
-                        window.showToast('❌ Failed to save deposit. Please try again.', 'error');
-                    }
+                    // REMOVED: showToast popup
                     return;
                 }
             } else {
-                // Fallback: save to localStorage only
                 history.unshift(newDeposit);
                 localStorage.setItem('depositHistory', JSON.stringify(history));
                 console.log('⚠️ Supabase function not available, saved to localStorage only');
@@ -757,9 +745,8 @@
             document.getElementById('step2').style.display = 'none'; 
             document.getElementById('step3').style.display = 'block'; 
             
-            if (window.showToast) {
-                window.showToast('✅ Deposit request created! Admin will review and approve.', 'success');
-            }
+            // REMOVED: showToast popup
+            console.log('✅ Deposit address generated');
         }
         
         function confirmPayment() { 
@@ -769,17 +756,15 @@
             btn.classList.add('reported'); 
             btn.disabled=true; 
             if(timerInterval) clearInterval(timerInterval); 
-            if (window.showToast) {
-                window.showToast('📢 Deposit reported! Admin will verify and credit your account.', 'info');
-            }
+            // REMOVED: showToast popup
+            console.log('📢 Deposit reported');
         }
         
         function copyAddress() { 
             const addr=document.getElementById('depositAddress').innerHTML; 
             navigator.clipboard.writeText(addr); 
-            if (window.showToast) {
-                window.showToast('✓ Address copied to clipboard!', 'success');
-            }
+            // REMOVED: showToast popup
+            console.log('✓ Address copied to clipboard');
         }
         
         function openSidebar() { 
