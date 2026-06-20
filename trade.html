@@ -34,6 +34,9 @@
         let userOrders = []
         let userTrades = []
 
+        // Make these available globally
+        window.userBalances = userBalances
+
         async function checkAuthAndLoadData() {
             const { data: { session } } = await supabase.auth.getSession()
             
@@ -74,40 +77,49 @@
             window.userBalances = userBalances
             
             console.log('Final balances:', userBalances)
+            updateBalanceDisplay()
         }
         
         async function loadUserOrders() {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('user_id', currentUserId)
-                .eq('status', 'pending')
-                .order('created_at', { ascending: false })
-            
-            if (error) {
-                console.error('Error loading orders:', error)
-                return
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('user_id', currentUserId)
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false })
+                
+                if (error) {
+                    console.error('Error loading orders:', error)
+                    return
+                }
+                
+                userOrders = data || []
+                renderOpenOrders()
+            } catch (e) {
+                console.error('Error loading orders:', e)
             }
-            
-            userOrders = data || []
-            renderOpenOrders()
         }
         
         async function loadUserTrades() {
-            const { data, error } = await supabase
-                .from('trades')
-                .select('*')
-                .eq('user_id', currentUserId)
-                .order('created_at', { ascending: false })
-                .limit(20)
-            
-            if (error) {
-                console.error('Error loading trades:', error)
-                return
+            try {
+                const { data, error } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .eq('user_id', currentUserId)
+                    .order('created_at', { ascending: false })
+                    .limit(20)
+                
+                if (error) {
+                    console.error('Error loading trades:', error)
+                    return
+                }
+                
+                userTrades = data || []
+                renderRecentTrades()
+            } catch (e) {
+                console.error('Error loading trades:', e)
             }
-            
-            userTrades = data || []
-            renderRecentTrades()
         }
         
         function updateBalanceDisplay() {
@@ -126,28 +138,34 @@
         }
         
         async function saveOrderToDatabase(pair, type, orderType, price, amount, status = 'pending') {
-            const { data, error } = await supabase
-                .from('orders')
-                .insert({
-                    user_id: currentUserId,
-                    pair: pair,
-                    type: type,
-                    order_type: orderType,
-                    price: price,
-                    amount: amount,
-                    filled: 0,
-                    status: status,
-                    created_at: new Date().toISOString()
-                })
-                .select()
-            
-            if (error) {
-                console.error('Error saving order:', error)
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .insert({
+                        user_id: currentUserId,
+                        pair: pair,
+                        type: type,
+                        order_type: orderType,
+                        price: price,
+                        amount: amount,
+                        filled: 0,
+                        status: status,
+                        created_at: new Date().toISOString()
+                    })
+                    .select()
+                
+                if (error) {
+                    console.error('Error saving order:', error)
+                    showToast('Failed to place order: ' + error.message)
+                    return null
+                }
+                
+                return data?.[0]
+            } catch (e) {
+                console.error('Error:', e)
                 showToast('Failed to place order')
                 return null
             }
-            
-            return data?.[0]
         }
         
         async function updateUserBalances(asset, amount, isBuy) {
@@ -174,27 +192,31 @@
         }
         
         async function saveTradeToHistory(pair, type, price, amount, total, fee) {
-            const { error } = await supabase
-                .from('trades')
-                .insert({
-                    user_id: currentUserId,
-                    pair: pair,
-                    type: type,
-                    price: price,
-                    amount: amount,
-                    total: total,
-                    fee: fee,
-                    created_at: new Date().toISOString()
-                })
-            
-            if (error) {
-                console.error('Error saving trade:', error)
+            try {
+                const { error } = await supabase
+                    .from('trades')
+                    .insert({
+                        user_id: currentUserId,
+                        pair: pair,
+                        type: type,
+                        price: price,
+                        amount: amount,
+                        total: total,
+                        fee: fee,
+                        created_at: new Date().toISOString()
+                    })
+                
+                if (error) {
+                    console.error('Error saving trade:', error)
+                }
+            } catch (e) {
+                console.error('Error:', e)
             }
         }
         
         window.executeMarketOrder = async function(amount, price, total) {
             const pairAsset = window.currentPair ? window.currentPair.split('/')[0] : 'BTC'
-            const orderType = window.currentOrderType || 'buy' // FIXED: Fallback to 'buy'
+            const orderType = window.currentOrderType || 'buy'
             
             console.log('Executing order:', { currentOrderType: orderType, amount, price, total, pairAsset, userBalances })
             
@@ -222,15 +244,16 @@
             await loadUserTrades()
             updateBalanceDisplay()
             
-            showToast(`${orderType.toUpperCase()} order executed! ${amount} ${pairAsset} at $${price}`, 'success')
+            showToast(`${orderType.toUpperCase()} order executed! ${amount} ${pairAsset} at $${price}`)
             return true
         }
         
         window.saveLimitOrder = async function(amount, price) {
+            const orderType = document.getElementById('orderType').value
             const order = await saveOrderToDatabase(
                 window.currentPair,
                 window.currentOrderType,
-                document.getElementById('orderType').value,
+                orderType,
                 price,
                 amount,
                 'pending'
@@ -246,40 +269,45 @@
         }
         
         window.cancelOrder = async function(orderId) {
-            const { error } = await supabase
-                .from('orders')
-                .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-                .eq('id', orderId)
-                .eq('user_id', currentUserId)
-            
-            if (error) {
-                console.error('Error cancelling order:', error)
+            try {
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+                    .eq('id', orderId)
+                    .eq('user_id', currentUserId)
+                
+                if (error) {
+                    console.error('Error cancelling order:', error)
+                    showToast('Failed to cancel order')
+                    return
+                }
+                
+                userOrders = userOrders.filter(o => o.id !== orderId)
+                renderOpenOrders()
+                showToast('Order cancelled')
+            } catch (e) {
+                console.error('Error:', e)
                 showToast('Failed to cancel order')
-                return
             }
-            
-            userOrders = userOrders.filter(o => o.id !== orderId)
-            renderOpenOrders()
-            showToast('Order cancelled')
         }
         
         function renderOpenOrders() {
             const container = document.getElementById('openOrdersList')
             if (!container) return
             
-            if (userOrders.length === 0) {
-                container.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1rem;">No open orders</div></div> </div>'
+            if (!userOrders || userOrders.length === 0) {
+                container.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1rem;">No open orders</td></tr>'
                 return
             }
             
             container.innerHTML = userOrders.map(order => `
                 <tr>
-                    <td>${order.pair}</div>
-                    <td class="${order.type === 'buy' ? 'positive' : 'negative'}">${order.type.toUpperCase()}</div>
-                    <td>$${order.price}</div>
-                    <td>${order.amount}</div>
-                    <td>${order.filled || 0}/${order.amount}</div>
-                    <td><button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button></div>
+                    <td>${order.pair}</td>
+                    <td class="${order.type === 'buy' ? 'positive' : 'negative'}">${order.type.toUpperCase()}</td>
+                    <td>$${order.price}</td>
+                    <td>${order.amount}</td>
+                    <td>${order.filled || 0}/${order.amount}</td>
+                    <td><button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button></td>
                 </tr>
             `).join('')
         }
@@ -288,16 +316,16 @@
             const container = document.getElementById('tradesList')
             if (!container) return
             
-            if (userTrades.length === 0) {
-                container.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No recent trades</div></div> </div>'
+            if (!userTrades || userTrades.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No recent trades</td></tr>'
                 return
             }
             
             container.innerHTML = userTrades.slice(0, 10).map(trade => `
                 <tr>
-                    <td>${new Date(trade.created_at).toLocaleTimeString()}</div>
-                    <td class="${trade.type === 'buy' ? 'positive' : 'negative'}">$${trade.price}</div>
-                    <td>${trade.amount}</div>
+                    <td>${new Date(trade.created_at).toLocaleTimeString()}</td>
+                    <td class="${trade.type === 'buy' ? 'positive' : 'negative'}">$${trade.price}</td>
+                    <td>${trade.amount}</td>
                 </tr>
             `).join('')
         }
@@ -305,6 +333,8 @@
         window.loadUserBalances = loadUserBalances
         window.updateBalanceDisplay = updateBalanceDisplay
         window.userBalances = userBalances
+        window.renderOpenOrders = renderOpenOrders
+        window.renderRecentTrades = renderRecentTrades
         
         checkAuthAndLoadData()
     </script>
@@ -1044,13 +1074,13 @@
             const spread = ((asks[0].price - bids[0].price) / currentPrice * 100).toFixed(2)
             const spreadElem = document.getElementById('spreadDisplay')
             if (spreadElem) spreadElem.innerHTML = `Spread: ${spread}%`
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></tr>`).join('')
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></tr>`).join('')
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></tr>`).join('')
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('')
         }
         
         window.setOrderType = function(type) {
             currentOrderType = type
-            window.currentOrderType = type // FIXED: Make it globally available
+            window.currentOrderType = type
             document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'))
             document.querySelector(`.order-tab.${type}`).classList.add('active')
             const btn = document.getElementById('submitBtn')
@@ -1098,7 +1128,6 @@
             const total = amount * price
             const pairAsset = currentPair.split('/')[0]
             
-            // FIXED: Make sure currentOrderType is set correctly
             window.currentOrderType = currentOrderType
             
             console.log('Submitting order:', { currentOrderType: window.currentOrderType, amount, price, total, pairAsset, userBalances: window.userBalances })
