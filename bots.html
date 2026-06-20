@@ -121,6 +121,10 @@
             color: #3b82f6;
         }
 
+        .nav-links a.active {
+            color: #3b82f6;
+        }
+
         .right-menu {
             display: flex;
             align-items: center;
@@ -221,6 +225,187 @@
             border-radius: 8px;
             font-size: 0.75rem;
             z-index: 1000;
+        }
+
+        /* ===== PASSKEY AUTH OVERLAY ===== */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-overlay.hidden {
+            display: none;
+        }
+
+        .auth-box {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .auth-box .lock-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .auth-box h2 {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+        }
+
+        .auth-box p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-box .passkey-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .auth-box .passkey-input-group input {
+            flex: 1;
+            padding: 0.8rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            text-align: center;
+            letter-spacing: 6px;
+            font-weight: 600;
+        }
+
+        .auth-box .passkey-input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .auth-box .upload-btn {
+            padding: 0.8rem 1.2rem;
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .auth-box .upload-btn:hover {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .auth-box .auth-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .auth-box .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .auth-box .auth-error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .auth-box .auth-error.show {
+            display: block;
+        }
+
+        .auth-box .auth-options {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .auth-box .auth-options .or-divider {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            position: relative;
+        }
+
+        .auth-box .auth-options .or-divider::before,
+        .auth-box .auth-options .or-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .auth-box .auth-options .or-divider::before {
+            left: 0;
+        }
+
+        .auth-box .auth-options .or-divider::after {
+            right: 0;
+        }
+
+        .auth-box .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .auth-box .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .auth-box .file-input-wrapper .file-label {
+            display: block;
+            padding: 0.8rem;
+            background: var(--hover-bg);
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .auth-box .file-input-wrapper .file-label:hover {
+            border-color: #3b82f6;
+            color: var(--text-primary);
         }
 
         /* ===== BOTS PAGE STYLES ===== */
@@ -537,6 +722,12 @@
                 padding: 1.5rem;
                 margin: 0.5rem;
             }
+            .auth-box {
+                padding: 1.5rem;
+            }
+            .auth-box .passkey-input-group {
+                flex-direction: column;
+            }
         }
 
         @media (min-width: 769px) {
@@ -558,7 +749,7 @@
             <a href="markets.html">Markets</a>
             <a href="trade.html">Trade</a>
             <a href="orders.html">Orders</a>
-            <a href="bots.html" style="color: #3b82f6;">Bots</a>
+            <a href="bots.html" class="active">Bots</a>
             <a href="deposit.html">Deposit</a>
             <a href="withdraw.html">Withdraw</a>
             <a href="settings.html">Settings</a>
@@ -592,8 +783,38 @@
         </div>
     </div>
 
+    <!-- PASSKEY AUTH OVERLAY -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <div class="lock-icon">🔐</div>
+            <h2>Bot Access</h2>
+            <p>Enter your passkey or upload a passkey file to access your trading bots</p>
+            
+            <div class="passkey-input-group">
+                <input type="password" id="passkeyInput" placeholder="••••••••" maxlength="20" autofocus>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁</button>
+            </div>
+            
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".txt,.key,.passkey" onchange="handleFileUpload(event)">
+                <div class="file-label">📄 Or upload passkey file</div>
+            </div>
+            
+            <div id="authError" class="auth-error">Invalid passkey. Please try again.</div>
+            
+            <button class="auth-btn" onclick="authenticate()">🔓 Unlock Bots</button>
+            
+            <div class="auth-options">
+                <div class="or-divider">or</div>
+                <button class="auth-btn" onclick="generatePasskey()" style="background: var(--hover-bg); color: var(--text-primary);">
+                    🆕 Generate New Passkey
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MAIN CONTENT -->
-    <div class="bots-container">
+    <div class="bots-container" id="mainContent" style="display: none;">
         <div class="bots-header">
             <h1>🤖 Trading Bots</h1>
             <button class="create-bot-btn" onclick="openCreateBotModal()">+ Create Bot</button>
@@ -735,24 +956,150 @@
         let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, AVAX: 0 }
         let activeBots = {}
         let allBots = []
+        let currentPasskey = localStorage.getItem('bot_passkey') || ''
 
         // ============================================
-        // AUTH & BALANCE FUNCTIONS
+        // PASSKEY AUTH FUNCTIONS
         // ============================================
-        async function checkAuth() {
+        function checkStoredPasskey() {
+            const stored = localStorage.getItem('bot_passkey')
+            if (stored) {
+                currentPasskey = stored
+                document.getElementById('passkeyInput').value = stored
+                return true
+            }
+            return false
+        }
+
+        window.handleFileUpload = function(event) {
+            const file = event.target.files[0]
+            if (!file) return
+
+            const reader = new FileReader()
+            reader.onload = function(e) {
+                const content = e.target.result.trim()
+                document.getElementById('passkeyInput').value = content
+                showToast('📄 Passkey file loaded!')
+                // Auto-authenticate
+                setTimeout(() => authenticate(), 500)
+            }
+            reader.readAsText(file)
+        }
+
+        window.authenticate = async function() {
+            const passkey = document.getElementById('passkeyInput').value.trim()
+            
+            if (!passkey) {
+                document.getElementById('authError').textContent = 'Please enter a passkey'
+                document.getElementById('authError').classList.add('show')
+                return
+            }
+
+            try {
+                // Check if passkey exists in Supabase
+                const { data, error } = await supabase
+                    .from('bot_passkeys')
+                    .select('user_id')
+                    .eq('passkey', passkey)
+                    .single()
+
+                if (error || !data) {
+                    document.getElementById('authError').textContent = 'Invalid passkey. Please try again.'
+                    document.getElementById('authError').classList.add('show')
+                    return
+                }
+
+                // Valid passkey!
+                currentUserId = data.user_id
+                currentPasskey = passkey
+                localStorage.setItem('bot_passkey', passkey)
+                
+                // Hide auth overlay and show content
+                document.getElementById('authOverlay').classList.add('hidden')
+                document.getElementById('mainContent').style.display = 'block'
+                
+                // Load data
+                await loadUserBalances()
+                await loadBots()
+                
+                showToast('🔓 Access granted! Welcome to your bots.')
+                
+            } catch (err) {
+                console.error('Auth error:', err)
+                document.getElementById('authError').textContent = 'Authentication failed. Please try again.'
+                document.getElementById('authError').classList.add('show')
+            }
+        }
+
+        window.generatePasskey = async function() {
+            // Generate a random passkey
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+            let passkey = ''
+            for (let i = 0; i < 12; i++) {
+                passkey += chars.charAt(Math.floor(Math.random() * chars.length))
+            }
+            
+            // Check if we have a user ID from Supabase auth
             const { data: { session } } = await supabase.auth.getSession()
             
             if (!session) {
-                window.location.href = 'login.html'
-                return false
+                showToast('❌ Please login first to generate a passkey')
+                return
             }
             
-            currentUserId = session.user.id
-            await loadUserBalances()
-            return true
+            const userId = session.user.id
+            
+            // Save passkey to Supabase
+            const { error } = await supabase
+                .from('bot_passkeys')
+                .insert({
+                    user_id: userId,
+                    passkey: passkey,
+                    created_at: new Date().toISOString()
+                })
+            
+            if (error) {
+                showToast('❌ Failed to generate passkey: ' + error.message)
+                return
+            }
+            
+            // Display the passkey
+            document.getElementById('passkeyInput').value = passkey
+            showToast(`🔑 New passkey generated: ${passkey}`)
+            
+            // Create a downloadable file
+            const blob = new Blob([passkey], { type: 'text/plain' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'bluepeak_bot_passkey.txt'
+            a.click()
+            URL.revokeObjectURL(url)
+            
+            // Auto-authenticate
+            setTimeout(() => authenticate(), 500)
         }
 
+        // Enter key to authenticate
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('passkeyInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    authenticate()
+                }
+            })
+            
+            // Check for stored passkey
+            if (checkStoredPasskey()) {
+                setTimeout(() => authenticate(), 300)
+            }
+        })
+
+        // ============================================
+        // BALANCE FUNCTIONS
+        // ============================================
         async function loadUserBalances() {
+            if (!currentUserId) return
+            
             const { data, error } = await supabase
                 .from('user_balances')
                 .select('*')
@@ -786,6 +1133,8 @@
         // BOT MANAGEMENT FUNCTIONS
         // ============================================
         async function loadBots() {
+            if (!currentUserId) return
+            
             const { data: bots, error } = await supabase
                 .from('bot_configs')
                 .select('*')
@@ -819,7 +1168,6 @@
             }
 
             grid.innerHTML = bots.map(bot => {
-                const isRunning = activeBots[bot.id]?.isRunning || false
                 const status = bot.status || 'stopped'
                 
                 return `
@@ -868,8 +1216,11 @@
         }
 
         // ============================================
-        // BOT ENGINE (Simplified - Runs in browser)
+        // BOT ENGINE (Import from bot_engine.js)
         // ============================================
+        // We'll use the bot_engine.js we created earlier
+        // For now, we'll define a simplified version inline
+
         class TradingBot {
             constructor(config) {
                 this.id = config.id
@@ -880,6 +1231,8 @@
                 this.isRunning = false
                 this.intervalId = null
                 this.priceHistory = []
+                this.positions = []
+                this.lastMACD = null
             }
 
             async start() {
@@ -887,10 +1240,11 @@
                 this.isRunning = true
                 
                 await this.updateStatus('running')
-                await this.log('info', 'Bot started')
+                await this.log('info', '🤖 Bot started')
                 
                 this.runLoop()
                 console.log(`🤖 Bot ${this.id} started!`)
+                this.updateUI()
             }
 
             async stop() {
@@ -900,8 +1254,9 @@
                     this.intervalId = null
                 }
                 await this.updateStatus('stopped')
-                await this.log('info', 'Bot stopped')
+                await this.log('info', '⏹ Bot stopped')
                 console.log(`🤖 Bot ${this.id} stopped!`)
+                this.updateUI()
             }
 
             runLoop() {
@@ -917,7 +1272,6 @@
             }
 
             async executeStrategy() {
-                // Get current price (simplified - using Binance API)
                 const price = await this.getCurrentPrice()
                 const balances = await this.getUserBalances()
                 const pairAsset = this.pair.split('/')[0]
@@ -941,13 +1295,28 @@
             async gridStrategy(price, balances, pairAsset) {
                 const { gridLevels, gridSpacing, investmentPerLevel } = this.settings
                 
+                // Check buy levels
                 for (let i = 0; i < gridLevels; i++) {
                     const buyPrice = price * (1 - (i + 1) * gridSpacing / 100)
                     const amount = investmentPerLevel / price
                     
-                    // Check if price is at buy level
-                    if (price <= buyPrice) {
-                        await this.executeTrade('buy', price, amount, pairAsset, balances)
+                    if (price <= buyPrice && !this.hasPosition(buyPrice)) {
+                        const total = amount * price
+                        if (total <= balances.USD) {
+                            await this.executeTrade('buy', price, amount, pairAsset)
+                            this.addPosition(buyPrice, amount, price * (1 + gridSpacing / 100))
+                            await this.log('success', `📈 Grid BUY: ${amount} ${pairAsset} at $${price}`)
+                            break
+                        }
+                    }
+                }
+
+                // Check sell positions
+                for (const pos of this.positions) {
+                    if (price >= pos.takeProfit) {
+                        await this.executeTrade('sell', price, pos.amount, pairAsset)
+                        await this.log('success', `📉 Grid SELL: ${pos.amount} ${pairAsset} at $${price}`)
+                        this.positions = this.positions.filter(p => p !== pos)
                         break
                     }
                 }
@@ -963,7 +1332,11 @@
                     const tradeCount = await this.getTradeCount()
                     if (tradeCount < maxTrades) {
                         const amount = amountPerTrade / price
-                        await this.executeTrade('buy', price, amount, pairAsset, balances)
+                        const total = amount * price
+                        if (total <= balances.USD) {
+                            await this.executeTrade('buy', price, amount, pairAsset)
+                            await this.log('success', `💰 DCA BUY: ${amount} ${pairAsset} at $${price}`)
+                        }
                     }
                 }
             }
@@ -974,13 +1347,20 @@
                 await this.updatePriceHistory(price)
                 const rsi = this.calculateRSI(this.priceHistory, rsiPeriod)
                 
-                if (rsi && rsi < oversoldLevel) {
-                    const amount = amountPerTrade / price
-                    await this.executeTrade('buy', price, amount, pairAsset, balances)
-                } else if (rsi && rsi > overboughtLevel) {
-                    const balance = balances[pairAsset] || 0
-                    if (balance > 0) {
-                        await this.executeTrade('sell', price, balance * 0.5, pairAsset, balances)
+                if (rsi) {
+                    if (rsi < oversoldLevel) {
+                        const amount = amountPerTrade / price
+                        const total = amount * price
+                        if (total <= balances.USD) {
+                            await this.executeTrade('buy', price, amount, pairAsset)
+                            await this.log('success', `📈 RSI BUY: RSI=${rsi.toFixed(2)}, $${price}`)
+                        }
+                    } else if (rsi > overboughtLevel) {
+                        const balance = balances[pairAsset] || 0
+                        if (balance > 0) {
+                            await this.executeTrade('sell', price, balance * 0.5, pairAsset)
+                            await this.log('success', `📉 RSI SELL: RSI=${rsi.toFixed(2)}, $${price}`)
+                        }
                     }
                 }
             }
@@ -995,39 +1375,58 @@
                     if (macd.macdLine > macd.signalLine && 
                         this.lastMACD && this.lastMACD.macdLine <= this.lastMACD.signalLine) {
                         const amount = amountPerTrade / price
-                        await this.executeTrade('buy', price, amount, pairAsset, balances)
+                        const total = amount * price
+                        if (total <= balances.USD) {
+                            await this.executeTrade('buy', price, amount, pairAsset)
+                            await this.log('success', `📈 MACD BUY crossover!`)
+                        }
+                    } else if (macd.macdLine < macd.signalLine && 
+                               this.lastMACD && this.lastMACD.macdLine >= this.lastMACD.signalLine) {
+                        const balance = balances[pairAsset] || 0
+                        if (balance > 0) {
+                            await this.executeTrade('sell', price, balance * 0.5, pairAsset)
+                            await this.log('success', `📉 MACD SELL crossover!`)
+                        }
                     }
                     this.lastMACD = macd
                 }
             }
 
-            async executeTrade(type, price, amount, pairAsset, balances) {
+            async executeTrade(type, price, amount, pairAsset) {
                 const total = amount * price
                 const fee = total * 0.001
                 
+                const balances = await this.getUserBalances()
+                
                 if (type === 'buy' && total > balances.USD) {
-                    await this.log('warning', `Insufficient USD: $${balances.USD.toFixed(2)}`)
+                    await this.log('warning', `❌ Insufficient USD: $${balances.USD.toFixed(2)}`)
                     return
                 }
                 if (type === 'sell' && amount > (balances[pairAsset] || 0)) {
-                    await this.log('warning', `Insufficient ${pairAsset}`)
+                    await this.log('warning', `❌ Insufficient ${pairAsset}`)
                     return
                 }
                 
-                // Update balances
                 await this.updateBalance('USD', total, type === 'buy' ? 'subtract' : 'add')
                 await this.updateBalance(pairAsset, amount, type === 'buy' ? 'add' : 'subtract')
                 
-                // Save trade
                 await this.saveBotTrade(type, price, amount, total, fee)
                 await this.updateBotStats(type, total)
-                await this.log('success', `${type.toUpperCase()} ${amount} ${pairAsset} at $${price}`)
                 
-                // Refresh balances display
+                // Refresh UI
                 await loadUserBalances()
+                if (window.updateBalanceDisplay) window.updateBalanceDisplay()
             }
 
             // ===== HELPER FUNCTIONS =====
+            hasPosition(price) {
+                return this.positions.some(p => Math.abs(p.entryPrice - price) < 1)
+            }
+
+            addPosition(entryPrice, amount, takeProfit) {
+                this.positions.push({ entryPrice, amount, takeProfit })
+            }
+
             async getCurrentPrice() {
                 const symbol = this.pair.replace('/', '')
                 try {
@@ -1035,7 +1434,7 @@
                     const data = await response.json()
                     return parseFloat(data.price)
                 } catch {
-                    return 43250 // Fallback price
+                    return 43250
                 }
             }
 
@@ -1094,15 +1493,29 @@
             }
 
             async updateBotStats(type, total) {
-                const update = {
-                    total_trades: supabase.raw('total_trades + 1')
-                }
+                const { data: current } = await supabase
+                    .from('bot_configs')
+                    .select('total_trades, total_invested, total_profit')
+                    .eq('id', this.id)
+                    .single()
+                
+                if (!current) return
+                
+                const newTrades = (current.total_trades || 0) + 1
+                let newInvested = current.total_invested || 0
+                let newProfit = current.total_profit || 0
+                
                 if (type === 'buy') {
-                    update.total_invested = supabase.raw(`total_invested + ${total}`)
+                    newInvested += total
                 }
+                
                 await supabase
                     .from('bot_configs')
-                    .update(update)
+                    .update({
+                        total_trades: newTrades,
+                        total_invested: newInvested,
+                        updated_at: new Date().toISOString()
+                    })
                     .eq('id', this.id)
             }
 
@@ -1126,6 +1539,32 @@
                         message: message,
                         created_at: new Date().toISOString()
                     })
+            }
+
+            async getLastTrade() {
+                const { data } = await supabase
+                    .from('bot_trades')
+                    .select('*')
+                    .eq('bot_id', this.id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single()
+                return data
+            }
+
+            async getTradeCount() {
+                const { count } = await supabase
+                    .from('bot_trades')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('bot_id', this.id)
+                return count || 0
+            }
+
+            async updatePriceHistory(price) {
+                this.priceHistory.push(price)
+                if (this.priceHistory.length > 100) {
+                    this.priceHistory.shift()
+                }
             }
 
             calculateRSI(prices, period = 14) {
@@ -1169,42 +1608,21 @@
                 return ema
             }
 
-            async getLastTrade() {
-                const { data } = await supabase
-                    .from('bot_trades')
-                    .select('*')
-                    .eq('bot_id', this.id)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .single()
-                return data
-            }
-
-            async getTradeCount() {
-                const { count } = await supabase
-                    .from('bot_trades')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('bot_id', this.id)
-                return count || 0
-            }
-
-            async updatePriceHistory(price) {
-                this.priceHistory.push(price)
-                if (this.priceHistory.length > 100) {
-                    this.priceHistory.shift()
+            updateUI() {
+                if (window.updateBotUI) {
+                    window.updateBotUI(this.id, this.isRunning ? 'running' : 'stopped')
                 }
             }
         }
 
         // ============================================
-        // GLOBAL FUNCTIONS (Exposed to window)
+        // GLOBAL FUNCTIONS
         // ============================================
         window.startBot = async function(botId) {
             const bot = allBots.find(b => b.id === botId)
             if (!bot) return
 
             // Check if user has enough balance
-            const pairAsset = bot.pair.split('/')[0]
             if (userBalances.USD < 10) {
                 showToast('❌ Insufficient balance. Please deposit first.')
                 return
@@ -1303,6 +1721,28 @@
 
         window.closeDetailsModal = function() {
             document.getElementById('detailsModal').classList.remove('active')
+        }
+
+        window.updateBotUI = function(botId, status) {
+            const botCard = document.querySelector(`[data-bot-id="${botId}"]`)
+            if (!botCard) return
+            
+            const statusBadge = botCard.querySelector('.bot-status')
+            if (statusBadge) {
+                statusBadge.textContent = status.toUpperCase()
+                statusBadge.className = `bot-status ${status}`
+            }
+            
+            const actions = botCard.querySelector('.bot-actions')
+            if (actions) {
+                actions.innerHTML = status === 'running' ?
+                    `<button onclick="stopBot('${botId}')" class="stop-btn">⏹ Stop</button>
+                     <button onclick="viewBotDetails('${botId}')" class="details-btn">📊 Details</button>
+                     <button onclick="deleteBot('${botId}')" class="delete-btn">🗑</button>` :
+                    `<button onclick="startBot('${botId}')" class="start-btn">▶ Start</button>
+                     <button onclick="viewBotDetails('${botId}')" class="details-btn">📊 Details</button>
+                     <button onclick="deleteBot('${botId}')" class="delete-btn">🗑</button>`
+            }
         }
 
         // ============================================
@@ -1413,14 +1853,12 @@
         // ============================================
         // INITIALIZATION
         // ============================================
-        async function init() {
-            const authenticated = await checkAuth()
-            if (authenticated) {
-                await loadBots()
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active')
             }
         }
-
-        init()
 
         // Auto-refresh balance every 10 seconds
         setInterval(async () => {
@@ -1429,12 +1867,7 @@
             }
         }, 10000)
 
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.classList.remove('active')
-            }
-        }
+        console.log('🤖 Bot page loaded with passkey authentication')
     </script>
 </body>
 </html>
