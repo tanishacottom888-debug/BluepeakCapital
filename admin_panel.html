@@ -27,8 +27,8 @@
         let currentDeposits = []
 
         async function loadDashboard() {
+            await loadPendingDeposits()  // Load deposits FIRST
             await loadUsers()
-            await loadPendingDeposits()
             updateStats()
         }
 
@@ -196,6 +196,9 @@
                             <button class="reject-btn" onclick="window.rejectDeposit('${deposit.id}')">
                                 <i class="fas fa-times"></i> Reject
                             </button>
+                            <button class="delete-btn" onclick="window.deleteDeposit('${deposit.id}')" title="Delete Deposit">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                     </div>
                 `}).join('')
@@ -205,9 +208,6 @@
             }
         }
 
-        // ============================================
-        // FIXED: Make loadPendingDeposits globally accessible
-        // ============================================
         window.loadPendingDeposits = loadPendingDeposits;
 
         window.approveDeposit = async function(depositId) {
@@ -323,6 +323,34 @@
             }
         }
 
+        // NEW: Delete deposit function
+        window.deleteDeposit = async function(depositId) {
+            if (confirm('Delete this deposit permanently? This action cannot be undone.')) {
+                try {
+                    const { error } = await supabase
+                        .from('deposits')
+                        .delete()
+                        .eq('id', depositId)
+                    
+                    if (error) {
+                        console.error('Error deleting deposit:', error)
+                        showToast('Failed to delete deposit: ' + error.message, 'error')
+                        return
+                    }
+                    
+                    // Remove from currentDeposits array
+                    currentDeposits = currentDeposits.filter(d => d.id != depositId)
+                    
+                    await loadPendingDeposits()
+                    updateStats()
+                    showToast('🗑️ Deposit deleted successfully!', 'info')
+                } catch (err) {
+                    console.error('Error:', err)
+                    showToast('Error deleting deposit', 'error')
+                }
+            }
+        }
+
         async function updateStats() {
             const { data: profiles } = await supabase.from('profiles').select('*')
             
@@ -387,9 +415,6 @@
 
         loadDashboard()
 
-        // =======================================================
-        // 🔄 AUTO-REFRESH: New deposits appear immediately!
-        // =======================================================
         setInterval(() => {
             loadPendingDeposits();
             console.log('🔄 Auto-refreshing deposits...', new Date().toLocaleTimeString());
@@ -454,11 +479,13 @@
         .page-btn { background: #374151; border: none; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; color: white; }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
+        /* Pending Deposits - Moved to TOP */
         .deposits-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 1rem;
             margin-top: 0.5rem;
+            margin-bottom: 2rem;
         }
         
         .deposit-card {
@@ -592,6 +619,24 @@
             transform: scale(1.02);
         }
         
+        /* NEW: Delete button style */
+        .delete-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .delete-btn:hover {
+            background: #ef4444;
+            transform: scale(1.02);
+        }
+        
         .empty-state {
             text-align: center;
             padding: 2rem;
@@ -633,6 +678,8 @@
             .nav-buttons .nav-btn span { display: none; }
             .deposit-body { flex-direction: column; }
             .deposit-icon { width: 40px; height: 40px; }
+            .deposit-actions { flex-wrap: wrap; }
+            .approve-btn, .reject-btn, .delete-btn { flex: 1; min-width: 60px; font-size: 0.7rem; padding: 0.4rem; }
         }
     </style>
 </head>
@@ -667,7 +714,25 @@
             <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-robot"></i></div></div><div class="stat-value" id="activeBotsCount">0</div><div class="stat-label">Active Bots</div></div>
         </div>
 
-        <div class="section-header"><div class="section-title"><i class="fas fa-users"></i> User Management</div></div>
+        <!-- ============================================ -->
+        <!-- PENDING DEPOSITS - MOVED TO THE TOP -->
+        <!-- ============================================ -->
+        <div class="section-header">
+            <div class="section-title"><i class="fas fa-hourglass-half"></i> Pending Deposits <span class="badge" id="pendingCount">0</span></div>
+        </div>
+        <div id="pendingDepositsList" class="deposits-grid">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-pulse"></i>
+                <p>Loading deposits...</p>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- USER MANAGEMENT - MOVED BELOW -->
+        <!-- ============================================ -->
+        <div class="section-header">
+            <div class="section-title"><i class="fas fa-users"></i> User Management</div>
+        </div>
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>User</th><th>Balances</th><th>Joined</th><th>Edit Balance</th><th>Actions</th></tr></thead>
@@ -675,14 +740,10 @@
                 </tbody>
             </table>
         </div>
-        <div class="pagination"><button class="page-btn" id="prevPage" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Prev</button><span id="pageInfo">Page 1</span><button class="page-btn" id="nextPage" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button></div>
-
-        <div class="section-header"><div class="section-title"><i class="fas fa-hourglass-half"></i> Pending Deposits <span class="badge" id="pendingCount">0</span></div></div>
-        <div id="pendingDepositsList" class="deposits-grid">
-            <div class="empty-state">
-                <i class="fas fa-spinner fa-pulse"></i>
-                <p>Loading deposits...</p>
-            </div>
+        <div class="pagination">
+            <button class="page-btn" id="prevPage" onclick="prevPage()"><i class="fas fa-chevron-left"></i> Prev</button>
+            <span id="pageInfo">Page 1</span>
+            <button class="page-btn" id="nextPage" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button>
         </div>
     </div>
 </body>
