@@ -194,10 +194,11 @@
         
         window.executeMarketOrder = async function(amount, price, total) {
             const pairAsset = window.currentPair ? window.currentPair.split('/')[0] : 'BTC'
+            const orderType = window.currentOrderType || 'buy' // FIXED: Fallback to 'buy'
             
-            console.log('Executing order:', { currentOrderType: window.currentOrderType, amount, price, total, pairAsset, userBalances })
+            console.log('Executing order:', { currentOrderType: orderType, amount, price, total, pairAsset, userBalances })
             
-            if (window.currentOrderType === 'buy') {
+            if (orderType === 'buy') {
                 if (total > userBalances.USD) {
                     showToast(`Insufficient USD balance. Available: $${userBalances.USD.toFixed(2)}`)
                     return false
@@ -217,11 +218,11 @@
             }
             
             const fee = total * 0.001
-            await saveTradeToHistory(window.currentPair, window.currentOrderType, price, amount, total, fee)
+            await saveTradeToHistory(window.currentPair, orderType, price, amount, total, fee)
             await loadUserTrades()
             updateBalanceDisplay()
             
-            showToast(`${window.currentOrderType.toUpperCase()} order executed! ${amount} ${pairAsset} at $${price}`, 'success')
+            showToast(`${orderType.toUpperCase()} order executed! ${amount} ${pairAsset} at $${price}`, 'success')
             return true
         }
         
@@ -574,7 +575,6 @@
             color: white;
         }
 
-        /* FIXED: Chart height increased */
         #tradingview_chart {
             height: 500px !important;
             width: 100%;
@@ -1050,6 +1050,7 @@
         
         window.setOrderType = function(type) {
             currentOrderType = type
+            window.currentOrderType = type // FIXED: Make it globally available
             document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'))
             document.querySelector(`.order-tab.${type}`).classList.add('active')
             const btn = document.getElementById('submitBtn')
@@ -1097,10 +1098,13 @@
             const total = amount * price
             const pairAsset = currentPair.split('/')[0]
             
-            console.log('Submitting order:', { currentOrderType, amount, price, total, pairAsset, userBalances: window.userBalances })
+            // FIXED: Make sure currentOrderType is set correctly
+            window.currentOrderType = currentOrderType
+            
+            console.log('Submitting order:', { currentOrderType: window.currentOrderType, amount, price, total, pairAsset, userBalances: window.userBalances })
             
             if (orderType === 'market') {
-                if (currentOrderType === 'buy') {
+                if (window.currentOrderType === 'buy') {
                     if (total > (window.userBalances?.USD || 0)) {
                         showToast(`Insufficient USD balance. Available: $${(window.userBalances?.USD || 0).toFixed(2)}`)
                         return
@@ -1117,19 +1121,19 @@
                 if (window.executeMarketOrder) {
                     const success = await window.executeMarketOrder(amount, price, total)
                     if (success) {
-                        showToast(`${currentOrderType.toUpperCase()} order executed! ${amount} ${pairAsset} at $${price}`)
+                        showToast(`${window.currentOrderType.toUpperCase()} order executed! ${amount} ${pairAsset} at $${price}`)
                         updateBalanceDisplay()
                         updateCalculations()
                         document.getElementById('amount').value = '0.01'
                     }
                 } else {
-                    showToast(`${currentOrderType.toUpperCase()} order executed (Demo)! ${amount} ${pairAsset} at $${price}`)
+                    showToast(`${window.currentOrderType.toUpperCase()} order executed (Demo)! ${amount} ${pairAsset} at $${price}`)
                 }
             } else {
                 if (window.saveLimitOrder) {
                     await window.saveLimitOrder(amount, price)
                 } else {
-                    showToast(`${currentOrderType.toUpperCase()} limit order placed (Demo)`)
+                    showToast(`${window.currentOrderType.toUpperCase()} limit order placed (Demo)`)
                 }
                 document.getElementById('amount').value = '0.01'
                 updateCalculations()
