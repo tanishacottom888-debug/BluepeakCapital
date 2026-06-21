@@ -27,7 +27,7 @@
         let currentDeposits = []
 
         async function loadDashboard() {
-            await loadPendingDeposits()  // Load deposits FIRST
+            await loadPendingDeposits()
             await loadUsers()
             updateStats()
         }
@@ -55,7 +55,7 @@
             const paginated = allUsers.slice(start, start + usersPerPage)
             
             if (paginated.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">No users found</div></div> </div>'
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#6b7280;">No users found</td></tr>'
                 return
             }
             
@@ -72,13 +72,13 @@
                                     <div class="user-id" style="font-size:0.6rem; color:#6b7280;">ID: ${user.id.substring(0, 8)}...</div>
                                 </div>
                             </div>
-                        </div>
+                        </td>
                         <td class="balance-cell">
                             <div class="balance-item"><span class="balance-label">USD</span><span id="usd-${user.id}">$${(balances.USD || 0).toFixed(2)}</span></div>
                             <div class="balance-item"><span class="balance-label">BTC</span><span id="btc-${user.id}">${(balances.BTC || 0).toFixed(4)} BTC</span></div>
                             <div class="balance-item"><span class="balance-label">ETH</span><span id="eth-${user.id}">${(balances.ETH || 0).toFixed(4)} ETH</span></div>
-                        </div>
-                        <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</div>
+                        </td>
+                        <td class="join-date">${new Date(user.created_at).toLocaleDateString()}</td>
                         <td>
                             <div class="balance-edit">
                                 <select id="asset-select-${user.id}" class="asset-select">
@@ -89,11 +89,11 @@
                                 <input type="number" id="edit-amount-${user.id}" placeholder="Amount" step="0.01" class="edit-input">
                                 <button class="edit-btn" onclick="updateUserBalance('${user.id}')"><i class="fas fa-save"></i></button>
                             </div>
-                        </div>
+                        </td>
                         <td>
                             <button class="action-btn view" onclick="viewUserDetails('${user.id}')"><i class="fas fa-eye"></i></button>
-                        </div>
-                    </div>
+                        </td>
+                    </tr>
                 `
             }).join('')
             
@@ -111,12 +111,33 @@
                 return
             }
             
-            const { error } = await supabase.from('user_balances').upsert({
-                user_id: userId,
-                asset: asset,
-                balance: newBalance,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id, asset' })
+            // First check if profile exists
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', userId)
+                .maybeSingle()
+            
+            if (!profile) {
+                // Create profile if it doesn't exist
+                await supabase
+                    .from('profiles')
+                    .insert({
+                        id: userId,
+                        username: `user_${userId.substring(0, 8)}`,
+                        full_name: `User ${userId.substring(0, 8)}`,
+                        created_at: new Date().toISOString()
+                    })
+            }
+            
+            const { error } = await supabase
+                .from('user_balances')
+                .upsert({
+                    user_id: userId,
+                    asset: asset,
+                    balance: newBalance,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id, asset' })
             
             if (error) {
                 alert('Error updating balance: ' + error.message)
@@ -132,6 +153,161 @@
             
             amountInput.value = ''
             showToast(`${asset} balance updated!`, 'success')
+        }
+
+        // ============================================
+        // FIXED: approveDeposit function
+        // ============================================
+        window.approveDeposit = async function(depositId) {
+            try {
+                const deposit = currentDeposits.find(d => d.id == depositId)
+                
+                if (!deposit) {
+                    showToast('Deposit not found', 'error')
+                    return
+                }
+                
+                const userId = deposit.user_id
+                const amount = deposit.amount
+                
+                if (!userId) {
+                    showToast('ERROR: No user ID found in deposit record!', 'error')
+                    return
+                }
+                
+                // ===== FIX 1: Ensure user has a profile =====
+                const { data: profile, error: profileCheckError } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', userId)
+                    .maybeSingle()
+                
+                if (!profile) {
+                    console.log('Creating profile for user:', userId)
+                    const { error: createProfileError } = await supabase
+                        .from('profiles')
+                        .insert({
+                            id: userId,
+                            username: `user_${userId.substring(0, 8)}`,
+                            full_name: `User ${userId.substring(0, 8)}`,
+                            created_at: new Date().toISOString()
+                        })
+                    
+                    if (createProfileError) {
+                        console.error('Error creating profile:', createProfileError)
+                        showToast(`Failed to create user profile: ${createProfileError.message}`, 'error')
+                        return
+                    }
+                    console.log('✅ Profile created for user')
+                }
+                
+                // ===== FIX 2: Get current balance =====
+                const { data: currentBalance, error: fetchError } = await supabase
+                    .from('user_balances')
+                    .select('balance')
+                    .eq('user_id', userId)
+                    .eq('asset', 'USD')
+                    .maybeSingle()
+                
+                if (fetchError) {
+                    console.error('Error fetching balance:', fetchError)
+                    showToast(`Error fetching balance: ${fetchError.message}`, 'error')
+                    return
+                }
+                
+                const oldBalance = currentBalance?.balance || 0
+                const newBalance = oldBalance + amount
+                
+                // ===== FIX 3: Update balance with proper error handling =====
+                const { error: upsertError } = await supabase
+                    .from('user_balances')
+                    .upsert({
+                        user_id: userId,
+                        asset: 'USD',
+                        balance: newBalance,
+                        updated_at: new Date().toISOString()
+                    }, { 
+                        onConflict: 'user_id, asset',
+                        ignoreDuplicates: false 
+                    })
+                
+                if (upsertError) {
+                    console.error('Error updating balance:', upsertError)
+                    
+                    // If foreign key error, try direct insert
+                    if (upsertError.code === '23503') {
+                        const { error: insertError } = await supabase
+                            .from('user_balances')
+                            .insert({
+                                user_id: userId,
+                                asset: 'USD',
+                                balance: newBalance,
+                                updated_at: new Date().toISOString()
+                            })
+                        
+                        if (insertError && insertError.code !== '23505') {
+                            showToast(`Failed: ${insertError.message}`, 'error')
+                            return
+                        } else if (insertError && insertError.code === '23505') {
+                            // Duplicate - try update
+                            const { error: updateError } = await supabase
+                                .from('user_balances')
+                                .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                                .eq('user_id', userId)
+                                .eq('asset', 'USD')
+                            
+                            if (updateError) {
+                                showToast(`Update failed: ${updateError.message}`, 'error')
+                                return
+                            }
+                        }
+                    } else {
+                        showToast(`Balance update failed: ${upsertError.message}`, 'error')
+                        return
+                    }
+                }
+                
+                // ===== Update deposit status =====
+                const { error: updateError } = await supabase
+                    .from('deposits')
+                    .update({ 
+                        status: 'completed',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', depositId)
+                
+                if (updateError) {
+                    console.error('Error updating deposit status:', updateError)
+                    showToast(`Failed to update deposit status: ${updateError.message}`, 'error')
+                    return
+                }
+                
+                // ===== Record transaction =====
+                try {
+                    await supabase.from('transactions').insert({
+                        user_id: userId,
+                        type: 'deposit',
+                        amount: amount,
+                        status: 'completed',
+                        reference: deposit.tx_id || `DEP-${Date.now()}`,
+                        description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network || 'Standard'})`,
+                        created_at: new Date().toISOString()
+                    })
+                } catch (txError) {
+                    console.log('Transaction record skipped:', txError)
+                }
+                
+                // ===== Refresh everything =====
+                await loadPendingDeposits()
+                await loadUsers()
+                updateStats()
+                
+                showToast(`✅ Approved $${amount.toFixed(2)} added to user's balance!`, 'success')
+                
+            } catch (err) {
+                console.error('Error:', err)
+                showToast(`Error: ${err.message}`, 'error')
+            }
         }
 
         async function loadPendingDeposits() {
@@ -210,92 +386,6 @@
 
         window.loadPendingDeposits = loadPendingDeposits;
 
-        window.approveDeposit = async function(depositId) {
-            try {
-                const deposit = currentDeposits.find(d => d.id == depositId)
-                
-                if (!deposit) {
-                    showToast('Deposit not found', 'error')
-                    return
-                }
-                
-                const userId = deposit.user_id
-                const amount = deposit.amount
-                
-                if (!userId) {
-                    showToast('ERROR: No user ID found in deposit record!', 'error')
-                    return
-                }
-                
-                const { data: currentBalance, error: fetchError } = await supabase
-                    .from('user_balances')
-                    .select('balance')
-                    .eq('user_id', userId)
-                    .eq('asset', 'USD')
-                    .maybeSingle()
-                
-                if (fetchError) {
-                    console.error('Error fetching balance:', fetchError)
-                }
-                
-                const oldBalance = currentBalance?.balance || 0
-                const newBalance = oldBalance + amount
-                
-                const { error: upsertError } = await supabase
-                    .from('user_balances')
-                    .upsert({
-                        user_id: userId,
-                        asset: 'USD',
-                        balance: newBalance,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'user_id, asset' })
-                
-                if (upsertError) {
-                    console.error('Error updating balance:', upsertError)
-                    showToast(`Balance update failed: ${upsertError.message}`, 'error')
-                    return
-                }
-                
-                const { error: updateError } = await supabase
-                    .from('deposits')
-                    .update({ 
-                        status: 'completed',
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', depositId)
-                
-                if (updateError) {
-                    console.error('Error updating deposit status:', updateError)
-                    showToast(`Failed to update deposit status: ${updateError.message}`, 'error')
-                    return
-                }
-                
-                try {
-                    await supabase.from('transactions').insert({
-                        user_id: userId,
-                        type: 'deposit',
-                        amount: amount,
-                        status: 'completed',
-                        reference: deposit.tx_id || `DEP-${Date.now()}`,
-                        description: `Deposit of $${amount.toFixed(2)} via ${deposit.crypto} (${deposit.network || 'Standard'})`,
-                        created_at: new Date().toISOString()
-                    })
-                } catch (txError) {
-                    console.log('Transaction record skipped:', txError)
-                }
-                
-                await loadPendingDeposits()
-                await loadUsers()
-                updateStats()
-                
-                showToast(`✅ Approved $${amount.toFixed(2)} added to user's balance!`, 'success')
-                
-            } catch (err) {
-                console.error('Error:', err)
-                showToast(`Error: ${err.message}`, 'error')
-            }
-        }
-
         window.rejectDeposit = async function(depositId) {
             if (confirm('Reject this deposit?')) {
                 try {
@@ -323,7 +413,6 @@
             }
         }
 
-        // NEW: Delete deposit function
         window.deleteDeposit = async function(depositId) {
             if (confirm('Delete this deposit permanently? This action cannot be undone.')) {
                 try {
@@ -338,7 +427,6 @@
                         return
                     }
                     
-                    // Remove from currentDeposits array
                     currentDeposits = currentDeposits.filter(d => d.id != depositId)
                     
                     await loadPendingDeposits()
@@ -479,7 +567,6 @@
         .page-btn { background: #374151; border: none; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; color: white; }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* Pending Deposits - Moved to TOP */
         .deposits-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -619,7 +706,6 @@
             transform: scale(1.02);
         }
         
-        /* NEW: Delete button style */
         .delete-btn {
             background: #6b7280;
             color: white;
@@ -714,9 +800,7 @@
             <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-robot"></i></div></div><div class="stat-value" id="activeBotsCount">0</div><div class="stat-label">Active Bots</div></div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- PENDING DEPOSITS - MOVED TO THE TOP -->
-        <!-- ============================================ -->
+        <!-- PENDING DEPOSITS -->
         <div class="section-header">
             <div class="section-title"><i class="fas fa-hourglass-half"></i> Pending Deposits <span class="badge" id="pendingCount">0</span></div>
         </div>
@@ -727,17 +811,14 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- USER MANAGEMENT - MOVED BELOW -->
-        <!-- ============================================ -->
+        <!-- USER MANAGEMENT -->
         <div class="section-header">
             <div class="section-title"><i class="fas fa-users"></i> User Management</div>
         </div>
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>User</th><th>Balances</th><th>Joined</th><th>Edit Balance</th><th>Actions</th></tr></thead>
-                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Loading users...</div></div> </div>
-                </tbody>
+                <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;color:#6b7280;">Loading users...</td></tr></tbody>
             </table>
         </div>
         <div class="pagination">
