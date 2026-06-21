@@ -141,11 +141,8 @@
                 history.splice(index, 1)
                 localStorage.setItem('depositHistory', JSON.stringify(history))
                 loadDepositHistory()
-                // REMOVED: showToast('Deposit record deleted', 'info')
             }
         }
-        
-        // REMOVED: window.showToast function - no more popups!
         
         // SAVE TO SUPABASE
         window.saveDepositToSupabase = async function(amount, crypto, network, address, txId) {
@@ -417,9 +414,10 @@
                         <span class="currency-symbol">$</span>
                         <input type="number" class="amount-input" id="depositAmount" placeholder="0.00" value="">
                     </div>
-                    <div class="min-deposit-note">⚠️ Minimum deposit: $50 USD</div>
+                    <div class="min-deposit-note">⚠️ Minimum deposit: $30 USD</div>
                 </div>
                 <div class="quick-amounts">
+                    <button class="quick-amount-btn" onclick="setAmount(30)">$30</button>
                     <button class="quick-amount-btn" onclick="setAmount(50)">$50</button>
                     <button class="quick-amount-btn" onclick="setAmount(100)">$100</button>
                     <button class="quick-amount-btn" onclick="setAmount(250)">$250</button>
@@ -606,8 +604,8 @@
                 alert('Please enter a valid amount'); 
                 return; 
             } 
-            if(amount<50){ 
-                alert('Minimum deposit is $50 USD'); 
+            if(amount<30){ 
+                alert('Minimum deposit is $30 USD'); 
                 return; 
             } 
             depositAmount=amount; 
@@ -690,7 +688,6 @@
             }
             
             if (!userId) {
-                // REMOVED: showToast popup - just log error
                 console.error('Error: User not found. Please refresh the page.');
                 return
             }
@@ -725,7 +722,6 @@
                     }
                 } else {
                     console.log('❌ Deposit NOT saved to Supabase');
-                    // REMOVED: showToast popup
                     return;
                 }
             } else {
@@ -745,7 +741,6 @@
             document.getElementById('step2').style.display = 'none'; 
             document.getElementById('step3').style.display = 'block'; 
             
-            // REMOVED: showToast popup
             console.log('✅ Deposit address generated');
         }
         
@@ -756,14 +751,12 @@
             btn.classList.add('reported'); 
             btn.disabled=true; 
             if(timerInterval) clearInterval(timerInterval); 
-            // REMOVED: showToast popup
             console.log('📢 Deposit reported');
         }
         
         function copyAddress() { 
             const addr=document.getElementById('depositAddress').innerHTML; 
             navigator.clipboard.writeText(addr); 
-            // REMOVED: showToast popup
             console.log('✓ Address copied to clipboard');
         }
         
