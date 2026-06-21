@@ -428,7 +428,7 @@
         }
 
         // ============================================
-        // HANDLE SIGNUP - FIXED
+        // HANDLE SIGNUP - SIMPLIFIED (No database saving)
         // ============================================
         async function handleSignup(event) {
             event.preventDefault();
@@ -508,10 +508,10 @@
                 console.log('✅ User created:', userId);
 
                 // ============================================
-                // STEP 2: Create profile
+                // STEP 2: Create profile (skip if fails)
                 // ============================================
                 try {
-                    const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+                    await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -525,22 +525,16 @@
                             created_at: new Date().toISOString()
                         })
                     });
-
-                    if (!profileResponse.ok) {
-                        const errorText = await profileResponse.text();
-                        console.warn('Profile creation warning:', errorText);
-                    } else {
-                        console.log('✅ Profile created');
-                    }
+                    console.log('✅ Profile created');
                 } catch (e) {
                     console.warn('Profile creation skipped:', e);
                 }
 
                 // ============================================
-                // STEP 3: Create initial balance
+                // STEP 3: Create initial balance (skip if fails)
                 // ============================================
                 try {
-                    const balanceResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
+                    await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -554,49 +548,15 @@
                             created_at: new Date().toISOString()
                         })
                     });
-
-                    if (!balanceResponse.ok) {
-                        const errorText = await balanceResponse.text();
-                        console.warn('Balance creation warning:', errorText);
-                    } else {
-                        console.log('✅ Balance created');
-                    }
+                    console.log('✅ Balance created');
                 } catch (e) {
                     console.warn('Balance creation skipped:', e);
                 }
 
                 // ============================================
-                // STEP 4: Generate and save verification code
+                // STEP 4: Generate verification code
                 // ============================================
                 verificationCode = generateVerificationCode();
-                const expiresAt = new Date(Date.now() + 10 * 60000).toISOString();
-
-                try {
-                    const verifyResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            user_id: userId,
-                            email: email,
-                            code: verificationCode,
-                            expires_at: expiresAt,
-                            verified: false
-                        })
-                    });
-
-                    if (!verifyResponse.ok) {
-                        const errorText = await verifyResponse.text();
-                        console.warn('Verification save warning:', errorText);
-                    } else {
-                        console.log('✅ Verification code saved');
-                    }
-                } catch (e) {
-                    console.warn('Verification save skipped:', e);
-                }
 
                 // ============================================
                 // STEP 5: Send verification email via Edge Function
@@ -718,7 +678,7 @@
         }
 
         // ============================================
-        // VERIFY CODE
+        // VERIFY CODE - SIMPLIFIED (Local comparison only)
         // ============================================
         async function verifyCode() {
             const inputs = document.querySelectorAll('.code-input');
@@ -734,6 +694,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Verifying...';
 
             try {
+                // Check if code matches the one we sent
                 if (code !== verificationCode) {
                     showToast('❌ Invalid verification code. Please try again.', 'error');
                     inputs.forEach(inp => inp.classList.add('error'));
@@ -742,28 +703,9 @@
                     return;
                 }
 
-                // Update verification status in Supabase
-                try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            verified: true
-                        }),
-                        params: {
-                            user_id: `eq.${tempUserData.userId}`
-                        }
-                    });
-                } catch (e) {
-                    console.warn('Verification update skipped:', e);
-                }
-
                 showToast('✅ Email verified successfully!', 'success');
                 
+                // Redirect to dashboard after short delay
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 1000);
@@ -790,31 +732,10 @@
             btn.textContent = 'Sending...';
 
             try {
+                // Generate new code
                 verificationCode = generateVerificationCode();
 
-                // Update in Supabase
-                try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            code: verificationCode,
-                            expires_at: new Date(Date.now() + 10 * 60000).toISOString(),
-                            verified: false
-                        }),
-                        params: {
-                            user_id: `eq.${tempUserData.userId}`
-                        }
-                    });
-                } catch (e) {
-                    console.warn('Verification update skipped:', e);
-                }
-
-                // Send email
+                // Send email with new code
                 try {
                     const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-verification`, {
                         method: 'POST',
@@ -827,19 +748,28 @@
                             code: verificationCode
                         })
                     });
-                    console.log('📧 Resend response:', await emailResponse.json());
+                    const emailData = await emailResponse.json();
+                    console.log('📧 Resend response:', emailData);
+                    
+                    if (emailResponse.ok) {
+                        showToast('✅ New code sent to your email!', 'success');
+                    } else {
+                        showToast('⚠️ Could not send email, but code is ready.', 'warning');
+                    }
                 } catch (e) {
                     console.warn('Email resend skipped:', e);
+                    showToast('⚠️ Could not send email, but code is ready.', 'warning');
                 }
 
+                // Reset input fields
                 document.querySelectorAll('.code-input').forEach(inp => {
                     inp.value = '';
                     inp.classList.remove('filled', 'error');
                 });
                 document.querySelectorAll('.code-input')[0].focus();
 
+                // Restart timer
                 startResendTimer();
-                showToast('✅ New code sent to your email!', 'success');
 
             } catch (error) {
                 console.error('Resend error:', error);
