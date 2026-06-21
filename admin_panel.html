@@ -61,13 +61,14 @@
             
             tbody.innerHTML = paginated.map(user => {
                 const balances = userBalances[user.id] || {}
+                const displayName = user.full_name || user.name || user.email || 'User'
                 return `
                     <tr>
                         <td>
                             <div class="user-cell">
-                                <div class="user-avatar">${(user.full_name || 'U').charAt(0).toUpperCase()}</div>
+                                <div class="user-avatar">${displayName.charAt(0).toUpperCase()}</div>
                                 <div class="user-info">
-                                    <div class="user-name">${user.full_name || 'User'}</div>
+                                    <div class="user-name">${displayName}</div>
                                     <div class="user-email">${user.email || 'N/A'}</div>
                                     <div class="user-id" style="font-size:0.6rem; color:#6b7280;">ID: ${user.id.substring(0, 8)}...</div>
                                 </div>
@@ -119,13 +120,17 @@
                 .maybeSingle()
             
             if (!profile) {
-                // Create profile if it doesn't exist
+                // Get user email from auth
+                const { data: { user } } = await supabase.auth.admin.getUserById(userId)
+                const email = user?.email || `user_${userId.substring(0, 8)}`
+                
+                // Create profile with correct columns (no username column)
                 await supabase
                     .from('profiles')
                     .insert({
                         id: userId,
-                        username: `user_${userId.substring(0, 8)}`,
-                        full_name: `User ${userId.substring(0, 8)}`,
+                        full_name: email.split('@')[0] || `User_${userId.substring(0, 8)}`,
+                        email: email,
                         created_at: new Date().toISOString()
                     })
             }
@@ -156,7 +161,7 @@
         }
 
         // ============================================
-        // FIXED: approveDeposit function
+        // FIXED: approveDeposit function - NO username column
         // ============================================
         window.approveDeposit = async function(depositId) {
             try {
@@ -175,7 +180,7 @@
                     return
                 }
                 
-                // ===== FIX 1: Ensure user has a profile =====
+                // ===== FIX 1: Ensure user has a profile (NO username column) =====
                 const { data: profile, error: profileCheckError } = await supabase
                     .from('profiles')
                     .select('id')
@@ -184,12 +189,23 @@
                 
                 if (!profile) {
                     console.log('Creating profile for user:', userId)
+                    
+                    // Get user email from auth
+                    let email = `user_${userId.substring(0, 8)}`
+                    try {
+                        const { data: { user } } = await supabase.auth.admin.getUserById(userId)
+                        if (user?.email) email = user.email
+                    } catch (e) {
+                        console.log('Could not fetch user email, using fallback')
+                    }
+                    
+                    // Insert profile with correct columns (no username)
                     const { error: createProfileError } = await supabase
                         .from('profiles')
                         .insert({
                             id: userId,
-                            username: `user_${userId.substring(0, 8)}`,
-                            full_name: `User ${userId.substring(0, 8)}`,
+                            full_name: email.split('@')[0] || `User_${userId.substring(0, 8)}`,
+                            email: email,
                             created_at: new Date().toISOString()
                         })
                     
