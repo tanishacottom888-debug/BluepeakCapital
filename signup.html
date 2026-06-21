@@ -209,6 +209,7 @@
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
+            // Validation
             if (!fullName || !email || !password || !confirmPassword) {
                 showToast('Please fill in all fields', 'error');
                 return;
@@ -232,6 +233,9 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating account...';
 
             try {
+                // ============================================
+                // CREATE USER IN SUPABASE AUTH (ONLY THIS)
+                // ============================================
                 const signupResponse = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                     method: 'POST',
                     headers: {
@@ -251,8 +255,12 @@
 
                 if (!signupResponse.ok) {
                     console.error('Signup error:', signupData);
+                    
+                    // Handle specific errors
                     if (signupData.msg?.includes('already registered')) {
                         showToast('This email is already registered. Please login.', 'error');
+                    } else if (signupData.msg?.includes('password')) {
+                        showToast('Password is too weak. Please use a stronger password.', 'error');
                     } else {
                         showToast(signupData.msg || signupData.error_description || 'Signup failed. Please try again.', 'error');
                     }
@@ -270,48 +278,7 @@
                 }
 
                 console.log('✅ User created:', userId);
-
-                // Create profile
-                try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            id: userId,
-                            full_name: fullName,
-                            email: email,
-                            created_at: new Date().toISOString()
-                        })
-                    });
-                    console.log('✅ Profile created');
-                } catch (e) {
-                    console.warn('Profile creation skipped:', e);
-                }
-
-                // Create initial balance
-                try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            user_id: userId,
-                            asset: 'USD',
-                            balance: 0,
-                            created_at: new Date().toISOString()
-                        })
-                    });
-                    console.log('✅ Balance created');
-                } catch (e) {
-                    console.warn('Balance creation skipped:', e);
-                }
+                console.log('✅ User email:', signupData.user?.email);
 
                 showToast('✅ Account created successfully!', 'success');
 
@@ -320,15 +287,13 @@
                     window.location.href = 'dashboard.html';
                 }, 1500);
 
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
-
             } catch (error) {
                 console.error('Signup error:', error);
                 showToast('An error occurred. Please try again.', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
             }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
         }
 
         async function checkAuth() {
