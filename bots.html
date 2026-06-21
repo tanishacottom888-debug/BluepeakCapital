@@ -908,13 +908,11 @@
             </div>
 
             <form id="engineForm" onsubmit="startBotEngine(event)">
-                <!-- Bot Name Display -->
                 <div class="engine-form-group">
                     <label><i class="fas fa-tag"></i> Bot Name</label>
                     <input type="text" id="engineBotName" value="Pro Trading Bot" readonly style="opacity: 0.7;">
                 </div>
 
-                <!-- Strategy Selector -->
                 <div class="engine-form-group">
                     <label><i class="fas fa-chart-pie"></i> Trading Strategy</label>
                     <div class="engine-strategy-selector" id="strategySelector">
@@ -938,7 +936,6 @@
                     <div class="hint">Choose the trading strategy for your bot</div>
                 </div>
 
-                <!-- Trading Asset -->
                 <div class="engine-form-group">
                     <label><i class="fas fa-coins"></i> Trading Asset</label>
                     <select id="engineAsset">
@@ -955,7 +952,6 @@
                     </select>
                 </div>
 
-                <!-- Trade Amount -->
                 <div class="engine-form-group">
                     <label><i class="fas fa-dollar-sign"></i> Trade Amount ($)</label>
                     <input type="number" id="engineTradeAmount" value="10" min="1" step="1">
@@ -963,7 +959,6 @@
                     <div class="balance-display-small">💰 Available Balance: <span id="engineBalanceDisplay">$0.00</span></div>
                 </div>
 
-                <!-- Trade Interval -->
                 <div class="engine-form-group">
                     <label><i class="fas fa-clock"></i> Trade Interval</label>
                     <select id="engineInterval">
@@ -978,7 +973,6 @@
                     <div class="hint">How often the bot should check for trading opportunities</div>
                 </div>
 
-                <!-- Strategy-specific settings -->
                 <div id="strategySettings">
                     <div class="engine-form-group" id="gridSettings">
                         <label><i class="fas fa-sliders-h"></i> Grid Levels</label>
@@ -1012,7 +1006,7 @@
         let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, AVAX: 0 }
 
         // ============================================
-        // BOT ENGINE CLASS
+        // BOT ENGINE CLASS - FIXED BALANCE DEDUCTION
         // ============================================
         class TradingBotEngine {
             constructor(config) {
@@ -1188,34 +1182,132 @@
                 this.lastMACD = macd
             }
 
-            // ===== TRADE EXECUTION =====
+            // ===== FIXED: TRADE EXECUTION WITH BALANCE DEDUCTION =====
             async executeTrade(type, price, amount, pairAsset) {
                 const total = amount * price
+                console.log(`📊 Executing ${type} trade: ${amount} ${pairAsset} at $${price} = $${total}`)
 
+                // Get current balances
                 const balances = await this.getUserBalances()
+                console.log('💰 Current balances:', balances)
 
-                if (type === 'buy' && total > (balances.USD || 0)) {
-                    showToast(`❌ Insufficient USD: $${(balances.USD || 0).toFixed(2)}`, 'error')
-                    return false
-                }
-                if (type === 'sell' && amount > (balances[pairAsset] || 0)) {
-                    showToast(`❌ Insufficient ${pairAsset}`, 'error')
-                    return false
-                }
-
+                // Check if user has enough balance
                 if (type === 'buy') {
-                    await this.updateBalance('USD', total, 'subtract')
-                    await this.updateBalance(pairAsset, amount, 'add')
+                    if (total > (balances.USD || 0)) {
+                        showToast(`❌ Insufficient USD: $${(balances.USD || 0).toFixed(2)} needed $${total.toFixed(2)}`, 'error')
+                        return false
+                    }
                 } else {
-                    await this.updateBalance(pairAsset, amount, 'subtract')
-                    await this.updateBalance('USD', total, 'add')
+                    if (amount > (balances[pairAsset] || 0)) {
+                        showToast(`❌ Insufficient ${pairAsset}: ${(balances[pairAsset] || 0).toFixed(4)}`, 'error')
+                        return false
+                    }
                 }
 
-                await loadUserBalances()
-                updateBalanceDisplay()
-                updateEngineBalanceDisplay()
+                try {
+                    // Update balances in Supabase
+                    if (type === 'buy') {
+                        // Deduct USD
+                        const newUsdBalance = (balances.USD || 0) - total
+                        console.log(`💳 USD: ${balances.USD} → ${newUsdBalance}`)
+                        
+                        const { error: usdError } = await supabase
+                            .from('user_balances')
+                            .upsert({
+                                user_id: this.userId,
+                                asset: 'USD',
+                                balance: newUsdBalance,
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id, asset' })
+                        
+                        if (usdError) {
+                            console.error('USD update error:', usdError)
+                            showToast(`❌ Failed to update USD balance: ${usdError.message}`, 'error')
+                            return false
+                        }
 
-                return true
+                        // Add crypto
+                        const newCryptoBalance = (balances[pairAsset] || 0) + amount
+                        console.log(`🪙 ${pairAsset}: ${balances[pairAsset] || 0} → ${newCryptoBalance}`)
+                        
+                        const { error: cryptoError } = await supabase
+                            .from('user_balances')
+                            .upsert({
+                                user_id: this.userId,
+                                asset: pairAsset,
+                                balance: newCryptoBalance,
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id, asset' })
+                        
+                        if (cryptoError) {
+                            console.error('Crypto update error:', cryptoError)
+                            showToast(`❌ Failed to update ${pairAsset} balance: ${cryptoError.message}`, 'error')
+                            return false
+                        }
+
+                        // Update local balances
+                        userBalances.USD = newUsdBalance
+                        userBalances[pairAsset] = newCryptoBalance
+
+                    } else {
+                        // Deduct crypto
+                        const newCryptoBalance = (balances[pairAsset] || 0) - amount
+                        console.log(`🪙 ${pairAsset}: ${balances[pairAsset] || 0} → ${newCryptoBalance}`)
+                        
+                        const { error: cryptoError } = await supabase
+                            .from('user_balances')
+                            .upsert({
+                                user_id: this.userId,
+                                asset: pairAsset,
+                                balance: newCryptoBalance,
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id, asset' })
+                        
+                        if (cryptoError) {
+                            console.error('Crypto update error:', cryptoError)
+                            showToast(`❌ Failed to update ${pairAsset} balance: ${cryptoError.message}`, 'error')
+                            return false
+                        }
+
+                        // Add USD
+                        const newUsdBalance = (balances.USD || 0) + total
+                        console.log(`💳 USD: ${balances.USD} → ${newUsdBalance}`)
+                        
+                        const { error: usdError } = await supabase
+                            .from('user_balances')
+                            .upsert({
+                                user_id: this.userId,
+                                asset: 'USD',
+                                balance: newUsdBalance,
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id, asset' })
+                        
+                        if (usdError) {
+                            console.error('USD update error:', usdError)
+                            showToast(`❌ Failed to update USD balance: ${usdError.message}`, 'error')
+                            return false
+                        }
+
+                        // Update local balances
+                        userBalances[pairAsset] = newCryptoBalance
+                        userBalances.USD = newUsdBalance
+                    }
+
+                    // Update global balances
+                    window.userBalances = userBalances
+                    
+                    // Refresh balance displays
+                    updateBalanceDisplay()
+                    updateEngineBalanceDisplay()
+
+                    console.log('✅ Trade executed successfully! New balances:', userBalances)
+                    return true
+
+                } catch (error) {
+                    console.error('Trade execution error:', error)
+                    showToast(`❌ Trade failed: ${error.message}`, 'error')
+                    return false
+                }
             }
 
             // ===== HELPER FUNCTIONS =====
@@ -1251,33 +1343,6 @@
                     })
                     return balances
                 } catch { return { USD: 0 } }
-            }
-
-            async updateBalance(asset, amount, operation) {
-                try {
-                    const { data } = await supabase
-                        .from('user_balances')
-                        .select('balance')
-                        .eq('user_id', this.userId)
-                        .eq('asset', asset)
-                        .single()
-
-                    const currentBalance = data?.balance || 0
-                    const newBalance = operation === 'add' ? 
-                        currentBalance + amount : 
-                        currentBalance - amount
-
-                    await supabase
-                        .from('user_balances')
-                        .upsert({
-                            user_id: this.userId,
-                            asset: asset,
-                            balance: newBalance,
-                            updated_at: new Date().toISOString()
-                        })
-                } catch (e) {
-                    console.error('Update balance error:', e)
-                }
             }
 
             calculateRSI(prices, period = 14) {
@@ -1355,6 +1420,7 @@
                 window.userBalances = userBalances
                 updateBalanceDisplay()
                 updateEngineBalanceDisplay()
+                console.log('💰 Balances loaded:', userBalances)
             } catch (e) {
                 console.error('Balance error:', e)
                 window.userBalances = { USD: 0 }
@@ -1493,22 +1559,14 @@
                 return
             }
 
-            // Check if user has balance
             if (userBalances.USD < 10) {
                 showToast('❌ Insufficient balance! Need at least $10', 'error')
                 return
             }
 
-            // Set bot name in modal
             document.getElementById('engineBotName').value = window.userBot.bot_name
-            
-            // Update balance display
             updateEngineBalanceDisplay()
-            
-            // Reset strategy selection
             selectStrategy('grid')
-            
-            // Show modal
             document.getElementById('engineModal').classList.add('active')
             document.body.style.overflow = 'hidden'
         }
@@ -1519,13 +1577,10 @@
         }
 
         window.selectStrategy = function(strategy) {
-            // Update UI
             document.querySelectorAll('.engine-strategy-option').forEach(el => {
                 el.classList.remove('active')
             })
             document.querySelector(`[data-strategy="${strategy}"]`).classList.add('active')
-            
-            // Show/hide strategy-specific settings
             document.getElementById('gridSettings').style.display = strategy === 'grid' ? 'block' : 'none'
         }
 
@@ -1545,14 +1600,12 @@
             const asset = document.getElementById('engineAsset').value
             const strategy = document.querySelector('.engine-strategy-option.active')?.dataset.strategy || 'grid'
 
-            // Get strategy-specific settings
             let extraSettings = {}
             if (strategy === 'grid') {
                 extraSettings.gridLevels = parseInt(document.getElementById('gridLevels').value) || 5
                 extraSettings.gridSpacing = parseFloat(document.getElementById('gridSpacing').value) || 1
             }
 
-            // Check if user has enough balance
             if (userBalances.USD < tradeAmount) {
                 showToast(`❌ Insufficient balance! Need $${tradeAmount}. Available: $${userBalances.USD.toFixed(2)}`, 'error')
                 return
@@ -1776,7 +1829,7 @@
         // INIT
         // ============================================
         checkAuth()
-        console.log('🤖 Bot page loaded with Bot Engine Settings!')
+        console.log('🤖 Bot page loaded with fixed balance deduction!')
     </script>
 </body>
 </html>
