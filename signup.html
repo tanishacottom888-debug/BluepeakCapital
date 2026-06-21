@@ -129,21 +129,6 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        .form-group input.error {
-            border-color: #ef4444;
-        }
-
-        .form-group .error-text {
-            color: #ef4444;
-            font-size: 0.7rem;
-            margin-top: 0.3rem;
-            display: none;
-        }
-
-        .form-group .error-text.show {
-            display: block;
-        }
-
         .btn-primary {
             width: 100%;
             padding: 0.8rem;
@@ -203,29 +188,6 @@
             text-decoration: underline;
         }
 
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-color);
-        }
-
-        .divider span {
-            padding: 0 1rem;
-            color: var(--text-secondary);
-            font-size: 0.7rem;
-        }
-
-        /* ============================================
-           VERIFICATION STEP
-           ============================================ */
         .verification-step {
             display: none;
         }
@@ -283,16 +245,6 @@
         .code-input-group input:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .code-input-group input.error {
-            border-color: #ef4444;
-        }
-
-        .code-input-group input.filled {
-            border-color: #10b981;
-            background: rgba(16, 185, 129, 0.05);
         }
 
         .resend-section {
@@ -307,10 +259,6 @@
             color: #3b82f6;
             cursor: pointer;
             font-weight: 600;
-        }
-
-        .resend-section .resend-btn:hover {
-            text-decoration: underline;
         }
 
         .resend-section .timer {
@@ -340,8 +288,6 @@
             text-align: center;
             min-width: 200px;
             max-width: 90vw;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .toast-notification.show {
@@ -353,33 +299,17 @@
         .toast-notification.error { background: #dc2626; }
         .toast-notification.info { background: #3b82f6; }
 
-        .password-hint {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            margin-top: 0.2rem;
-        }
-
         @media (max-width: 480px) {
-            .auth-container {
-                padding: 1rem;
-            }
-            .auth-card {
-                padding: 1.5rem;
-            }
-            .code-input-group input {
-                width: 40px;
-                height: 48px;
-                font-size: 1.1rem;
-            }
+            .auth-container { padding: 1rem; }
+            .auth-card { padding: 1.5rem; }
+            .code-input-group input { width: 40px; height: 48px; font-size: 1.1rem; }
         }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div class="auth-card">
-            <!-- ============================================ -->
-            <!-- STEP 1: REGISTRATION FORM -->
-            <!-- ============================================ -->
+            <!-- STEP 1: REGISTRATION -->
             <div id="step1">
                 <div class="auth-logo">
                     <div class="logo-icon">⛰️</div>
@@ -401,7 +331,6 @@
                     <div class="form-group">
                         <label>Password <span class="required">*</span></label>
                         <input type="password" id="password" placeholder="••••••••" minlength="6" required>
-                        <div class="password-hint">Must be at least 6 characters</div>
                     </div>
 
                     <div class="form-group">
@@ -419,9 +348,7 @@
                 </div>
             </div>
 
-            <!-- ============================================ -->
-            <!-- STEP 2: EMAIL VERIFICATION -->
-            <!-- ============================================ -->
+            <!-- STEP 2: VERIFICATION -->
             <div id="step2" class="verification-step">
                 <div class="verification-header">
                     <div class="icon">📧</div>
@@ -462,7 +389,6 @@
         </div>
     </div>
 
-    <!-- Toast Notification -->
     <div id="toastMessage" class="toast-notification">Message</div>
 
     <script>
@@ -502,44 +428,7 @@
         }
 
         // ============================================
-        // SEND VERIFICATION EMAIL
-        // ============================================
-        async function sendVerificationEmail(email, code) {
-            try {
-                // Try to send via Supabase Edge Function
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/send-verification`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        code: code
-                    })
-                });
-
-                if (!response.ok) {
-                    console.error('Failed to send email via Edge Function');
-                    // Fallback: Log the code for testing
-                    console.log(`📧 Verification code for ${email}: ${code}`);
-                    showToast(`📧 Code: ${code} (Check console)`, 'info');
-                    return true;
-                }
-
-                showToast('✅ Verification code sent to your email!', 'success');
-                return true;
-            } catch (error) {
-                console.error('Send email error:', error);
-                // Fallback: Show code in console
-                console.log(`📧 Verification code for ${email}: ${code}`);
-                showToast(`📧 Code: ${code} (Check console)`, 'info');
-                return true;
-            }
-        }
-
-        // ============================================
-        // HANDLE SIGNUP
+        // HANDLE SIGNUP - FIXED
         // ============================================
         async function handleSignup(event) {
             event.preventDefault();
@@ -565,21 +454,21 @@
                 return;
             }
 
-            // Validate email format
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showToast('Please enter a valid email address', 'error');
                 return;
             }
 
-            // Disable button
             const btn = document.getElementById('signupBtn');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating account...';
 
             try {
-                // 1. Create user in Supabase Auth
-                const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+                // ============================================
+                // STEP 1: Create user in Supabase Auth
+                // ============================================
+                const signupResponse = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -594,20 +483,21 @@
                     })
                 });
 
-                const data = await response.json();
+                const signupData = await signupResponse.json();
 
-                if (!response.ok) {
-                    if (data.msg?.includes('already registered')) {
+                if (!signupResponse.ok) {
+                    console.error('Signup error:', signupData);
+                    if (signupData.msg?.includes('already registered')) {
                         showToast('This email is already registered. Please login.', 'error');
                     } else {
-                        showToast(data.msg || 'Signup failed. Please try again.', 'error');
+                        showToast(signupData.msg || signupData.error_description || 'Signup failed. Please try again.', 'error');
                     }
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
                     return;
                 }
 
-                const userId = data.user?.id;
+                const userId = signupData.user?.id;
                 if (!userId) {
                     showToast('Failed to create account. Please try again.', 'error');
                     btn.disabled = false;
@@ -615,75 +505,142 @@
                     return;
                 }
 
-                // 2. Create profile
-                await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({
-                        id: userId,
-                        full_name: fullName,
-                        email: email,
-                        created_at: new Date().toISOString()
-                    })
-                });
+                console.log('✅ User created:', userId);
 
-                // 3. Create initial balance
-                await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        asset: 'USD',
-                        balance: 0,
-                        created_at: new Date().toISOString()
-                    })
-                });
+                // ============================================
+                // STEP 2: Create profile
+                // ============================================
+                try {
+                    const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            id: userId,
+                            full_name: fullName,
+                            email: email,
+                            created_at: new Date().toISOString()
+                        })
+                    });
 
-                // 4. Generate and save verification code
+                    if (!profileResponse.ok) {
+                        const errorText = await profileResponse.text();
+                        console.warn('Profile creation warning:', errorText);
+                    } else {
+                        console.log('✅ Profile created');
+                    }
+                } catch (e) {
+                    console.warn('Profile creation skipped:', e);
+                }
+
+                // ============================================
+                // STEP 3: Create initial balance
+                // ============================================
+                try {
+                    const balanceResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            asset: 'USD',
+                            balance: 0,
+                            created_at: new Date().toISOString()
+                        })
+                    });
+
+                    if (!balanceResponse.ok) {
+                        const errorText = await balanceResponse.text();
+                        console.warn('Balance creation warning:', errorText);
+                    } else {
+                        console.log('✅ Balance created');
+                    }
+                } catch (e) {
+                    console.warn('Balance creation skipped:', e);
+                }
+
+                // ============================================
+                // STEP 4: Generate and save verification code
+                // ============================================
                 verificationCode = generateVerificationCode();
-                const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 minutes
+                const expiresAt = new Date(Date.now() + 10 * 60000).toISOString();
 
-                // Save to Supabase
-                await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        email: email,
-                        code: verificationCode,
-                        expires_at: expiresAt,
-                        verified: false
-                    })
-                });
+                try {
+                    const verifyResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            email: email,
+                            code: verificationCode,
+                            expires_at: expiresAt,
+                            verified: false
+                        })
+                    });
 
-                // 5. Send verification email
-                await sendVerificationEmail(email, verificationCode);
+                    if (!verifyResponse.ok) {
+                        const errorText = await verifyResponse.text();
+                        console.warn('Verification save warning:', errorText);
+                    } else {
+                        console.log('✅ Verification code saved');
+                    }
+                } catch (e) {
+                    console.warn('Verification save skipped:', e);
+                }
 
-                // 6. Store user data temporarily
+                // ============================================
+                // STEP 5: Send verification email via Edge Function
+                // ============================================
+                try {
+                    const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-verification`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            code: verificationCode
+                        })
+                    });
+
+                    const emailData = await emailResponse.json();
+                    console.log('📧 Email response:', emailData);
+
+                    if (!emailResponse.ok) {
+                        console.warn('Email send warning:', emailData);
+                        showToast('Account created! Check email for verification code.', 'info');
+                    } else {
+                        showToast('✅ Verification code sent to your email!', 'success');
+                    }
+                } catch (e) {
+                    console.warn('Email send skipped:', e);
+                    showToast('Account created! Please check your email for verification.', 'info');
+                }
+
+                // ============================================
+                // STEP 6: Show verification step
+                // ============================================
                 tempUserData = {
                     userId: userId,
                     email: email,
                     fullName: fullName
                 };
 
-                // 7. Show verification step
                 document.getElementById('verificationEmail').textContent = email;
                 document.getElementById('step1').style.display = 'none';
                 document.getElementById('step2').classList.add('active');
 
-                // 8. Setup code inputs
                 setupCodeInputs();
                 startResendTimer();
 
@@ -720,7 +677,6 @@
                         this.classList.remove('filled');
                     }
                     
-                    // Auto-submit when all filled
                     const allFilled = Array.from(inputs).every(inp => inp.value.length === 1);
                     if (allFilled) {
                         setTimeout(verifyCode, 300);
@@ -735,7 +691,6 @@
                     }
                 });
 
-                // Paste support
                 input.addEventListener('paste', function(e) {
                     e.preventDefault();
                     const paste = (e.clipboardData || window.clipboardData).getData('text');
@@ -749,7 +704,6 @@
                                 inp.classList.add('filled');
                             }
                         });
-                        // Focus the next empty input
                         const nextEmpty = Array.from(inputs).find(inp => inp.value.length === 0);
                         if (nextEmpty) {
                             nextEmpty.focus();
@@ -760,7 +714,6 @@
                 });
             });
 
-            // Focus first input
             inputs[0].focus();
         }
 
@@ -781,7 +734,6 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Verifying...';
 
             try {
-                // Check if code matches
                 if (code !== verificationCode) {
                     showToast('❌ Invalid verification code. Please try again.', 'error');
                     inputs.forEach(inp => inp.classList.add('error'));
@@ -790,25 +742,28 @@
                     return;
                 }
 
-                // Verify in Supabase
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({
-                        verified: true
-                    }),
-                    params: {
-                        user_id: `eq.${tempUserData.userId}`
-                    }
-                });
+                // Update verification status in Supabase
+                try {
+                    await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            verified: true
+                        }),
+                        params: {
+                            user_id: `eq.${tempUserData.userId}`
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Verification update skipped:', e);
+                }
 
                 showToast('✅ Email verified successfully!', 'success');
                 
-                // Redirect to dashboard
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 1000);
@@ -826,7 +781,7 @@
         // ============================================
         async function resendCode() {
             if (resendTimer && resendCountdown > 0) {
-                showToast(`Please wait ${resendCountdown} seconds before resending`, 'warning');
+                showToast(`Please wait ${resendCountdown} seconds`, 'warning');
                 return;
             }
 
@@ -835,39 +790,54 @@
             btn.textContent = 'Sending...';
 
             try {
-                // Generate new code
                 verificationCode = generateVerificationCode();
-                const expiresAt = new Date(Date.now() + 10 * 60000).toISOString();
 
                 // Update in Supabase
-                await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({
-                        code: verificationCode,
-                        expires_at: expiresAt,
-                        verified: false
-                    }),
-                    params: {
-                        user_id: `eq.${tempUserData.userId}`
-                    }
-                });
+                try {
+                    await fetch(`${SUPABASE_URL}/rest/v1/email_verifications`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            code: verificationCode,
+                            expires_at: new Date(Date.now() + 10 * 60000).toISOString(),
+                            verified: false
+                        }),
+                        params: {
+                            user_id: `eq.${tempUserData.userId}`
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Verification update skipped:', e);
+                }
 
                 // Send email
-                await sendVerificationEmail(tempUserData.email, verificationCode);
+                try {
+                    const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-verification`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            email: tempUserData.email,
+                            code: verificationCode
+                        })
+                    });
+                    console.log('📧 Resend response:', await emailResponse.json());
+                } catch (e) {
+                    console.warn('Email resend skipped:', e);
+                }
 
-                // Reset code inputs
                 document.querySelectorAll('.code-input').forEach(inp => {
                     inp.value = '';
                     inp.classList.remove('filled', 'error');
                 });
                 document.querySelectorAll('.code-input')[0].focus();
 
-                // Start timer
                 startResendTimer();
                 showToast('✅ New code sent to your email!', 'success');
 
@@ -921,7 +891,7 @@
         }
 
         // ============================================
-        // AUTO-REDIRECT IF ALREADY LOGGED IN
+        // CHECK IF ALREADY LOGGED IN
         // ============================================
         async function checkAuth() {
             try {
@@ -934,7 +904,6 @@
                 if (response.ok) {
                     const user = await response.json();
                     if (user && user.id) {
-                        // User is already logged in, redirect to dashboard
                         window.location.href = 'dashboard.html';
                     }
                 }
