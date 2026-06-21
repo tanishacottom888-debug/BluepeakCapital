@@ -271,7 +271,7 @@
             z-index: 1;
         }
 
-        .upload-card, .passkey-card, .settings-card, .bots-list-card, .logs-card {
+        .upload-card, .passkey-card, .bots-list-card, .logs-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -296,6 +296,14 @@
             padding: 0.1rem 0.6rem;
             border-radius: 30px;
             font-size: 0.6rem;
+        }
+
+        .card-title .badge.profit {
+            background: #10b981;
+        }
+
+        .card-title .badge.loss {
+            background: #ef4444;
         }
 
         .drop-zone {
@@ -509,7 +517,7 @@
            BOT LOGS STYLES
            ============================================ */
         .logs-container {
-            max-height: 400px;
+            max-height: 450px;
             overflow-y: auto;
             margin-top: 0.5rem;
         }
@@ -532,7 +540,7 @@
             display: flex;
             align-items: center;
             gap: 0.8rem;
-            padding: 0.4rem 0.6rem;
+            padding: 0.5rem 0.6rem;
             border-bottom: 1px solid var(--border-color);
             font-size: 0.75rem;
             transition: background 0.2s;
@@ -550,9 +558,9 @@
         }
 
         .log-icon {
-            width: 24px;
+            width: 28px;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
         }
 
         .log-icon.trade-buy { color: #10b981; }
@@ -561,14 +569,32 @@
         .log-icon.warning { color: #f59e0b; }
         .log-icon.error { color: #ef4444; }
         .log-icon.success { color: #10b981; }
+        .log-icon.profit { color: #10b981; }
+        .log-icon.balance { color: #8b5cf6; }
 
         .log-message {
             flex: 1;
             color: var(--text-secondary);
+            line-height: 1.4;
         }
 
         .log-message strong {
             color: var(--text-primary);
+        }
+
+        .log-message .highlight-green {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .log-message .highlight-red {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .log-message .highlight-blue {
+            color: #3b82f6;
+            font-weight: 600;
         }
 
         .log-amount {
@@ -576,10 +602,14 @@
             color: var(--text-primary);
             font-family: monospace;
             font-size: 0.7rem;
+            min-width: 100px;
+            text-align: right;
         }
 
         .log-amount.buy { color: #10b981; }
         .log-amount.sell { color: #ef4444; }
+        .log-amount.profit { color: #10b981; }
+        .log-amount.loss { color: #ef4444; }
 
         .log-empty {
             text-align: center;
@@ -764,6 +794,35 @@
         .toast-notification.error { background: #dc2626; }
         .toast-notification.info { background: #3b82f6; }
 
+        /* Profit/Loss summary */
+        .profit-summary {
+            display: flex;
+            gap: 1rem;
+            padding: 0.5rem 0.8rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .profit-summary .stat {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .profit-summary .stat span {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profit-summary .stat .positive {
+            color: #10b981;
+        }
+
+        .profit-summary .stat .negative {
+            color: #ef4444;
+        }
+
         @media (max-width: 768px) {
             .nav-links { display: none; }
             .hamburger-btn { display: block; }
@@ -785,6 +844,7 @@
             .engine-modal-content { padding: 1.5rem; margin: 0.5rem; }
             .log-item { flex-wrap: wrap; gap: 0.3rem; }
             .log-time { min-width: 50px; }
+            .log-amount { min-width: 60px; font-size: 0.6rem; }
         }
     </style>
 </head>
@@ -894,6 +954,11 @@
                 📊 Bot Activity Logs
                 <span class="badge" id="logsCount">0</span>
             </div>
+            <div id="profitSummary" class="profit-summary">
+                <div class="stat">📈 Total Trades: <span id="totalTrades">0</span></div>
+                <div class="stat">💰 P/L: <span id="profitLoss" class="positive">$0.00</span></div>
+                <div class="stat">📊 Win Rate: <span id="winRate">0%</span></div>
+            </div>
             <div id="logsContainer" class="logs-container">
                 <div class="log-empty">
                     <i class="fas fa-history"></i>
@@ -976,9 +1041,12 @@
         let botInterval = null
         let userBalances = { USD: 0, BTC: 0, ETH: 0, SOL: 0, AVAX: 0 }
         let botLogs = []
+        let totalProfit = 0
+        let totalTrades = 0
+        let winningTrades = 0
 
         // ============================================
-        // BOT ENGINE CLASS WITH LOGGING
+        // BOT ENGINE CLASS WITH REAL BALANCE DEDUCTION
         // ============================================
         class TradingBotEngine {
             constructor(config) {
@@ -992,17 +1060,25 @@
                 this.priceHistory = []
                 this.positions = []
                 this.tradeCount = 0
+                this.startingBalance = 0
+                this.currentBalance = 0
             }
 
             async start() {
                 if (this.isRunning) return
                 this.isRunning = true
                 
-                await this.log('info', '🚀 Bot started', { 
+                // Get starting balance
+                const balances = await this.getUserBalances()
+                this.startingBalance = balances.USD || 0
+                this.currentBalance = this.startingBalance
+                
+                await this.log('info', `🚀 Bot started with $${this.startingBalance.toFixed(2)}`, { 
                     botName: this.botName, 
                     pair: this.pair,
                     tradeAmount: this.tradeAmount,
-                    interval: this.interval 
+                    interval: this.interval,
+                    startingBalance: this.startingBalance
                 })
                 
                 console.log('🤖 Bot started!', this.botName)
@@ -1017,7 +1093,17 @@
                     botInterval = null
                 }
                 
-                await this.log('info', '⏹ Bot stopped', { botName: this.botName })
+                // Get final balance
+                const balances = await this.getUserBalances()
+                this.currentBalance = balances.USD || 0
+                const profit = this.currentBalance - this.startingBalance
+                
+                await this.log('info', `⏹ Bot stopped. Final balance: $${this.currentBalance.toFixed(2)} (${profit >= 0 ? '+' : ''}$${profit.toFixed(2)})`, { 
+                    botName: this.botName,
+                    finalBalance: this.currentBalance,
+                    profit: profit
+                })
+                
                 console.log('⏹ Bot stopped!', this.botName)
                 return true
             }
@@ -1055,12 +1141,18 @@
 
                 const balances = await this.getUserBalances()
                 const pairAsset = this.pair.split('/')[0]
+                
+                // Update current balance
+                this.currentBalance = balances.USD || 0
 
-                // Simple strategy: Buy on dip, Sell on peak
+                // Track price history for strategy
                 this.priceHistory.push(price)
                 if (this.priceHistory.length > 20) this.priceHistory.shift()
 
-                if (this.priceHistory.length < 5) return
+                if (this.priceHistory.length < 5) {
+                    await this.log('info', `📊 Building price history... (${this.priceHistory.length}/5)`, { price: price })
+                    return
+                }
 
                 const avgPrice = this.priceHistory.reduce((a, b) => a + b, 0) / this.priceHistory.length
                 const priceChange = ((price - avgPrice) / avgPrice) * 100
@@ -1072,14 +1164,17 @@
                     const result = await this.executeTradeAction('buy', price, amount, pairAsset)
                     if (result) {
                         this.tradeCount++
+                        totalTrades++
                         await this.log('trade', `📈 BUY ${amount.toFixed(4)} ${pairAsset} at $${price.toFixed(2)}`, {
                             type: 'buy',
                             pair: this.pair,
                             price: price,
                             amount: amount,
                             total: amount * price,
-                            priceChange: priceChange.toFixed(2)
+                            priceChange: priceChange.toFixed(2),
+                            balanceAfter: balances.USD - (amount * price)
                         })
+                        await this.updateProfitSummary()
                     }
                 }
                 // Sell on peak (price above average)
@@ -1090,14 +1185,21 @@
                         const result = await this.executeTradeAction('sell', price, sellAmount, pairAsset)
                         if (result) {
                             this.tradeCount++
+                            totalTrades++
+                            const profit = (sellAmount * price) - (sellAmount * avgPrice)
+                            if (profit > 0) winningTrades++
+                            totalProfit += profit
                             await this.log('trade', `📉 SELL ${sellAmount.toFixed(4)} ${pairAsset} at $${price.toFixed(2)}`, {
                                 type: 'sell',
                                 pair: this.pair,
                                 price: price,
                                 amount: sellAmount,
                                 total: sellAmount * price,
-                                priceChange: priceChange.toFixed(2)
+                                priceChange: priceChange.toFixed(2),
+                                profit: profit,
+                                balanceAfter: balances.USD + (sellAmount * price)
                             })
+                            await this.updateProfitSummary()
                         }
                     }
                 }
@@ -1122,7 +1224,7 @@
                     if (type === 'buy') {
                         // Deduct USD
                         const newUsdBalance = (balances.USD || 0) - total
-                        await supabase
+                        const { error: usdError } = await supabase
                             .from('user_balances')
                             .upsert({
                                 user_id: this.userId,
@@ -1130,10 +1232,12 @@
                                 balance: newUsdBalance,
                                 updated_at: new Date().toISOString()
                             }, { onConflict: 'user_id, asset' })
+                        
+                        if (usdError) throw usdError
 
                         // Add crypto
                         const newCryptoBalance = (balances[pairAsset] || 0) + amount
-                        await supabase
+                        const { error: cryptoError } = await supabase
                             .from('user_balances')
                             .upsert({
                                 user_id: this.userId,
@@ -1141,6 +1245,8 @@
                                 balance: newCryptoBalance,
                                 updated_at: new Date().toISOString()
                             }, { onConflict: 'user_id, asset' })
+                        
+                        if (cryptoError) throw cryptoError
 
                         // Update local balances
                         userBalances.USD = newUsdBalance
@@ -1149,7 +1255,7 @@
                     } else {
                         // Deduct crypto
                         const newCryptoBalance = (balances[pairAsset] || 0) - amount
-                        await supabase
+                        const { error: cryptoError } = await supabase
                             .from('user_balances')
                             .upsert({
                                 user_id: this.userId,
@@ -1157,10 +1263,12 @@
                                 balance: newCryptoBalance,
                                 updated_at: new Date().toISOString()
                             }, { onConflict: 'user_id, asset' })
+                        
+                        if (cryptoError) throw cryptoError
 
                         // Add USD
                         const newUsdBalance = (balances.USD || 0) + total
-                        await supabase
+                        const { error: usdError } = await supabase
                             .from('user_balances')
                             .upsert({
                                 user_id: this.userId,
@@ -1168,6 +1276,8 @@
                                 balance: newUsdBalance,
                                 updated_at: new Date().toISOString()
                             }, { onConflict: 'user_id, asset' })
+                        
+                        if (usdError) throw usdError
 
                         // Update local balances
                         userBalances[pairAsset] = newCryptoBalance
@@ -1175,16 +1285,9 @@
                     }
 
                     window.userBalances = userBalances
+                    this.currentBalance = userBalances.USD || 0
                     updateBalanceDisplay()
                     updateEngineBalanceDisplay()
-                    
-                    await this.log('success', `✅ ${type.toUpperCase()} executed: ${amount.toFixed(4)} ${pairAsset} at $${price.toFixed(2)}`, {
-                        type: type,
-                        pair: this.pair,
-                        price: price,
-                        amount: amount,
-                        total: total
-                    })
 
                     return true
 
@@ -1207,6 +1310,8 @@
                     price: details.price || null,
                     amount: details.amount || null,
                     total: details.total || null,
+                    profit: details.profit || null,
+                    balanceAfter: details.balanceAfter || null,
                     details: details,
                     created_at: new Date().toISOString()
                 }
@@ -1226,6 +1331,16 @@
 
                 // Update UI
                 renderLogs()
+                updateProfitSummary()
+            }
+
+            async updateProfitSummary() {
+                // Get fresh balances
+                const balances = await this.getUserBalances()
+                this.currentBalance = balances.USD || 0
+                const profit = this.currentBalance - this.startingBalance
+                totalProfit = profit
+                updateProfitSummary()
             }
 
             // ===== HELPER FUNCTIONS =====
@@ -1328,7 +1443,7 @@
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false })
-                    .limit(50)
+                    .limit(100)
 
                 if (error) {
                     console.log('Logs table may not exist yet:', error)
@@ -1338,6 +1453,7 @@
                 if (data) {
                     botLogs = data
                     renderLogs()
+                    updateProfitSummary()
                 }
             } catch (e) {
                 console.log('Error loading logs:', e)
@@ -1370,12 +1486,22 @@
                 const time = new Date(log.created_at).toLocaleTimeString()
                 let icon = '📌'
                 let iconClass = 'info'
+                let amountDisplay = ''
 
                 switch(log.type) {
                     case 'trade':
                         const isBuy = log.details?.type === 'buy'
                         icon = isBuy ? '📈' : '📉'
                         iconClass = isBuy ? 'trade-buy' : 'trade-sell'
+                        if (log.amount && log.price) {
+                            const profit = log.details?.profit
+                            if (profit !== undefined) {
+                                const profitStr = profit >= 0 ? `+$${profit.toFixed(2)}` : `-$${Math.abs(profit).toFixed(2)}`
+                                amountDisplay = `<span class="log-amount ${profit >= 0 ? 'profit' : 'loss'}">${profitStr}</span>`
+                            } else {
+                                amountDisplay = `<span class="log-amount ${isBuy ? 'buy' : 'sell'}">${log.amount.toFixed(4)} @ $${log.price.toFixed(2)}</span>`
+                            }
+                        }
                         break
                     case 'success':
                         icon = '✅'
@@ -1396,12 +1522,6 @@
                         break
                 }
 
-                let amountDisplay = ''
-                if (log.amount && log.price) {
-                    const isBuy = log.details?.type === 'buy'
-                    amountDisplay = `<span class="log-amount ${isBuy ? 'buy' : 'sell'}">${log.amount.toFixed(4)} @ $${log.price.toFixed(2)}</span>`
-                }
-
                 return `
                     <div class="log-item">
                         <span class="log-time">${time}</span>
@@ -1412,8 +1532,29 @@
                 `
             }).join('')
 
-            // Auto-scroll to top (newest first)
             container.scrollTop = 0
+        }
+
+        // ============================================
+        // UPDATE PROFIT SUMMARY
+        // ============================================
+        function updateProfitSummary() {
+            const totalTradesEl = document.getElementById('totalTrades')
+            const profitLossEl = document.getElementById('profitLoss')
+            const winRateEl = document.getElementById('winRate')
+
+            if (totalTradesEl) totalTradesEl.textContent = totalTrades
+
+            if (profitLossEl) {
+                const profit = totalProfit || 0
+                profitLossEl.textContent = `${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}`
+                profitLossEl.className = profit >= 0 ? 'positive' : 'negative'
+            }
+
+            if (winRateEl) {
+                const rate = totalTrades > 0 ? (winningTrades / totalTrades * 100) : 0
+                winRateEl.textContent = `${rate.toFixed(1)}%`
+            }
         }
 
         // ============================================
@@ -1768,6 +1909,7 @@
         window.loadUserBalances = loadUserBalances
         window.updateBalanceDisplay = updateBalanceDisplay
         window.renderLogs = renderLogs
+        window.updateProfitSummary = updateProfitSummary
 
         // ============================================
         // AUTO-REFRESH BALANCE AND LOGS
@@ -1798,7 +1940,7 @@
         // INIT
         // ============================================
         checkAuth()
-        console.log('🤖 Bot page loaded with logs!')
+        console.log('🤖 Bot page loaded with profit tracking and balance deduction!')
     </script>
 </body>
 </html>
