@@ -1,317 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <meta name="description" content="BluepeakCapital - Create your institutional trading account" />
-    <title>BluepeakCapital | Create Account</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f5f7fb 0%, #ffffff 50%, #f0f4f9 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .signup-container { width: 100%; max-width: 520px; margin: 2rem; }
-        .signup-card {
-            background: white;
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.1);
-        }
-        .logo { text-align: center; margin-bottom: 1.5rem; }
-        .logo-icon {
-            width: 48px; height: 48px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: white;
-            margin-bottom: 1rem;
-        }
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .logo-text span { color: #3b82f6; }
-        h1 { font-size: 1.75rem; font-weight: 600; color: #1a1f36; margin-bottom: 0.5rem; text-align: center; }
-        .subtitle { text-align: center; color: #718096; font-size: 0.875rem; margin-bottom: 2rem; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-        .form-group { margin-bottom: 1.25rem; }
-        label { display: block; font-size: 0.875rem; font-weight: 500; color: #1a1f36; margin-bottom: 0.5rem; }
-        input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        .password-wrapper { position: relative; }
-        .password-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-        }
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .success-message {
-            background: #d1fae5;
-            color: #059669;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .btn-primary {
-            width: 100%;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border: none;
-            padding: 0.875rem;
-            border-radius: 10px;
-            color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 0.5rem;
-        }
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .login-link { text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: #4a5568; }
-        .login-link a { color: #3b82f6; text-decoration: none; font-weight: 500; }
-        .login-link a:hover { text-decoration: underline; }
-        .toast-notification {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #1e293b;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            z-index: 3000;
-            opacity: 0;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            text-align: center;
-            min-width: 200px;
-            max-width: 90vw;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
-        }
-        .toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        .toast-notification.success { background: #059669; }
-        .toast-notification.error { background: #dc2626; }
-        .toast-notification.info { background: #3b82f6; }
-        @media (max-width: 768px) {
-            .signup-card { padding: 1.5rem; }
-            .form-row { grid-template-columns: 1fr; gap: 0; }
-        }
-    </style>
+    <title>Sign Up Test</title>
 </head>
 <body>
-    <div class="signup-container">
-        <div class="signup-card">
-            <div class="logo">
-                <div class="logo-icon">⛰️</div>
-                <div class="logo-text">Bluepeak<span>Capital</span></div>
-            </div>
-            
-            <h1>Create account</h1>
-            <p class="subtitle">Start trading with institutional-grade infrastructure</p>
-
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
-
-            <form id="signupForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>First name</label>
-                        <input type="text" id="firstName" placeholder="John" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Last name</label>
-                        <input type="text" id="lastName" placeholder="Doe" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Email address</label>
-                    <input type="email" id="email" placeholder="john@example.com" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="password" placeholder="Create a password" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('password', 'passwordIcon')">
-                            <svg id="passwordIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Confirm password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', 'confirmPasswordIcon')">
-                            <svg id="confirmPasswordIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary" id="signupBtn">Create Account →</button>
-            </form>
-
-            <div class="login-link">
-                Already have an account? <a href="login.html">Sign in →</a>
-            </div>
-        </div>
-    </div>
-
-    <div id="toastMessage" class="toast-notification">Message</div>
+    <h1>Sign Up Test</h1>
+    <form id="signupForm">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Sign Up</button>
+    </form>
+    <div id="result"></div>
 
     <script>
-        // ============================================
-        // SUPABASE CONFIG
-        // ============================================
         const SUPABASE_URL = 'https://txcbfzcomfyavcgqcevq.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH';
 
-        // ============================================
-        // DOM ELEMENTS
-        // ============================================
-        const signupForm = document.getElementById('signupForm');
-        const errorDiv = document.getElementById('errorMessage');
-        const successDiv = document.getElementById('successMessage');
-        const toast = document.getElementById('toastMessage');
-
-        // ============================================
-        // TOAST FUNCTION
-        // ============================================
-        function showToast(message, type = 'info') {
-            toast.textContent = message;
-            toast.className = `toast-notification ${type}`;
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // ============================================
-        // PASSWORD TOGGLE
-        // ============================================
-        window.togglePassword = function(fieldId, iconId) {
-            const field = document.getElementById(fieldId);
-            const icon = document.getElementById(iconId);
-            
-            if (field.type === 'password') {
-                field.type = 'text';
-                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
-            } else {
-                field.type = 'password';
-                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-            }
-        }
-
-        // ============================================
-        // SHOW ERROR/SUCCESS
-        // ============================================
-        function showError(message) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-
-        function showSuccess(message) {
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-        }
-
-        // ============================================
-        // SIGNUP - ONLY SUPABASE AUTH (NO EDGE FUNCTION)
-        // ============================================
-        signupForm.addEventListener('submit', async (e) => {
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const result = document.getElementById('result');
 
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
-
-            if (!firstName || !lastName || !email || !password || !confirmPassword) {
-                showError('Please fill in all fields');
-                return;
-            }
-
-            if (password.length < 6) {
-                showError('Password must be at least 6 characters');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                showError('Passwords do not match');
-                return;
-            }
-
-            const submitBtn = document.getElementById('signupBtn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Creating account...';
-            submitBtn.disabled = true;
+            result.textContent = 'Creating account...';
 
             try {
-                // ============================================
-                // CREATE USER - SUPABASE SENDS VERIFICATION EMAIL
-                // ============================================
                 const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                     method: 'POST',
                     headers: {
@@ -321,124 +35,25 @@
                     body: JSON.stringify({
                         email: email,
                         password: password,
-                        data: {
-                            first_name: firstName,
-                            last_name: lastName,
-                            full_name: `${firstName} ${lastName}`
-                        }
+                        data: { full_name: 'Test User' }
                     })
                 });
 
                 const data = await response.json();
+                console.log('Response:', data);
 
                 if (!response.ok) {
-                    console.error('Signup error:', data);
-                    if (data.msg?.includes('already registered')) {
-                        showError('This email is already registered. Please login.');
-                    } else {
-                        showError(data.msg || data.error_description || 'Signup failed. Please try again.');
-                    }
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    return;
+                    result.textContent = `❌ Error: ${data.msg || data.error_description || 'Unknown error'}`;
+                    result.style.color = 'red';
+                } else {
+                    result.textContent = '✅ Account created! Check your email.';
+                    result.style.color = 'green';
                 }
-
-                const userId = data.user?.id;
-                if (!userId) {
-                    showError('Failed to create account. Please try again.');
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    return;
-                }
-
-                console.log('✅ User created:', userId);
-                console.log('📧 Supabase will send verification email to:', email);
-
-                // ============================================
-                // CREATE PROFILE (skip if fails)
-                // ============================================
-                try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            id: userId,
-                            full_name: `${firstName} ${lastName}`,
-                            email: email,
-                            created_at: new Date().toISOString()
-                        })
-                    });
-                    console.log('✅ Profile created');
-                } catch (e) {
-                    console.warn('Profile creation skipped:', e);
-                }
-
-                // ============================================
-                // CREATE INITIAL BALANCE (skip if fails)
-                // ============================================
-                try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            user_id: userId,
-                            asset: 'USD',
-                            balance: 0,
-                            created_at: new Date().toISOString()
-                        })
-                    });
-                    console.log('✅ Balance created');
-                } catch (e) {
-                    console.warn('Balance creation skipped:', e);
-                }
-
-                // ============================================
-                // SUCCESS
-                // ============================================
-                showSuccess('✅ Account created! Please check your email to verify your account.');
-                showToast('📧 Check your email for the verification link!', 'success');
-
-                // Redirect to login after 3 seconds
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 3000);
-
             } catch (err) {
-                console.error('Signup error:', err);
-                showError('Network error. Please try again.');
-            } finally {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
+                result.textContent = '❌ Network error: ' + err.message;
+                result.style.color = 'red';
             }
         });
-
-        // ============================================
-        // CHECK IF ALREADY LOGGED IN
-        // ============================================
-        async function checkAuth() {
-            try {
-                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-                    headers: { 'apikey': SUPABASE_ANON_KEY }
-                });
-                if (response.ok) {
-                    const user = await response.json();
-                    if (user && user.id) {
-                        window.location.href = 'dashboard.html';
-                    }
-                }
-            } catch (error) {
-                console.log('Not logged in');
-            }
-        }
-        checkAuth();
     </script>
 </body>
 </html>
