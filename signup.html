@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <meta name="description" content="BluepeakCapital - Create your institutional trading account" />
     <title>BluepeakCapital | Create Account</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -242,6 +241,28 @@
             color: var(--text-secondary);
         }
 
+        .error-message {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: none;
+        }
+
         @media (max-width: 480px) {
             .auth-container { padding: 1rem; }
             .auth-card { padding: 1.5rem; }
@@ -258,8 +279,8 @@
                 <p>Create your account</p>
             </div>
 
-            <div id="errorMessage" style="display:none;" class="error-message"></div>
-            <div id="successMessage" style="display:none;" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
 
             <form id="signupForm">
                 <div class="form-row">
@@ -372,7 +393,7 @@
         }
 
         // ============================================
-        // SIGNUP - NO EMAIL VERIFICATION
+        // SIGNUP - DIRECT TO LOGIN (No auto-login)
         // ============================================
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -456,7 +477,7 @@
                 console.log('✅ User created:', userId);
 
                 // ============================================
-                // CREATE PROFILE (skip if fails)
+                // CREATE PROFILE
                 // ============================================
                 try {
                     await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
@@ -479,7 +500,7 @@
                 }
 
                 // ============================================
-                // CREATE BALANCE (skip if fails)
+                // CREATE BALANCE
                 // ============================================
                 try {
                     await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
@@ -502,15 +523,15 @@
                 }
 
                 // ============================================
-                // SUCCESS - DIRECT TO DASHBOARD
+                // SUCCESS - USER NEEDS TO VERIFY EMAIL
                 // ============================================
-                showSuccess('✅ Account created successfully!');
-                showToast('🎉 Welcome to BluepeakCapital!', 'success');
+                showSuccess('✅ Account created! Please check your email to verify your account.');
+                showToast('📧 Check your email for the verification link!', 'success');
 
-                // Redirect to dashboard after 1.5 seconds
+                // Redirect to login after 3 seconds
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
+                    window.location.href = 'login.html';
+                }, 3000);
 
             } catch (err) {
                 console.error('Signup error:', err);
@@ -544,29 +565,5 @@
         }
         checkAuth();
     </script>
-
-    <style>
-        .error-message {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            display: none;
-        }
-
-        .success-message {
-            background: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            display: none;
-        }
-    </style>
 </body>
 </html>
