@@ -3,118 +3,199 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="BluepeakCapital - Create your institutional trading account" />
     <title>BluepeakCapital | Create Account</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        function initTheme() {
+            const savedTheme = localStorage.getItem('bluepeak_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('bluepeak_theme', 'dark');
+            }
+        }
+        initTheme();
+    </script>
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --bg-input: #374151;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --nav-bg: #111827;
+            --hover-bg: #374151;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+            --positive: #10b981;
+            --negative: #ef4444;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f5f7fb;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --text-primary: #1a1f36;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --nav-bg: #ffffff;
+            --hover-bg: #f1f5f9;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fb 0%, #ffffff 50%, #f0f4f9 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background 0.3s ease, color 0.3s ease;
         }
-        .signup-container { width: 100%; max-width: 520px; margin: 2rem; }
-        .signup-card {
-            background: white;
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.1);
+
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 1.5rem;
         }
-        .logo { text-align: center; margin-bottom: 1.5rem; }
-        .logo-icon {
-            width: 48px; height: 48px;
+
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-logo .logo-icon {
+            width: 48px;
+            height: 48px;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 14px;
+            border-radius: 12px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
             font-size: 1.5rem;
             color: white;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
-        .logo-text {
-            font-size: 1.5rem;
+
+        .auth-logo h1 {
+            font-size: 1.3rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #1a1f36, #3b82f6);
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
-        .logo-text span { color: #3b82f6; }
-        h1 { font-size: 1.75rem; font-weight: 600; color: #1a1f36; margin-bottom: 0.5rem; text-align: center; }
-        .subtitle { text-align: center; color: #718096; font-size: 0.875rem; margin-bottom: 2rem; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-        .form-group { margin-bottom: 1.25rem; }
-        label { display: block; font-size: 0.875rem; font-weight: 500; color: #1a1f36; margin-bottom: 0.5rem; }
-        input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            font-family: inherit;
+
+        .auth-logo p {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
         }
-        input:focus {
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .form-group label .required {
+            color: #ef4444;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        .password-wrapper { position: relative; }
-        .password-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
         }
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .success-message {
-            background: #d1fae5;
-            color: #059669;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
+
         .btn-primary {
             width: 100%;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border: none;
-            padding: 0.875rem;
-            border-radius: 10px;
+            padding: 0.8rem;
+            background: #3b82f6;
             color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
             font-weight: 600;
-            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             margin-top: 0.5rem;
         }
+
         .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
         }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .login-link { text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: #4a5568; }
-        .login-link a { color: #3b82f6; text-decoration: none; font-weight: 500; }
-        .login-link a:hover { text-decoration: underline; }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .auth-footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -135,79 +216,95 @@
             max-width: 90vw;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
         }
-        .toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
         .toast-notification.success { background: #059669; }
         .toast-notification.error { background: #dc2626; }
         .toast-notification.info { background: #3b82f6; }
 
-        @media (max-width: 768px) {
-            .signup-card { padding: 1.5rem; }
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 480px) {
+            .auth-container { padding: 1rem; }
+            .auth-card { padding: 1.5rem; }
             .form-row { grid-template-columns: 1fr; gap: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="signup-container">
-        <div class="signup-card">
-            <div class="logo">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
                 <div class="logo-icon">⛰️</div>
-                <div class="logo-text">Bluepeak<span>Capital</span></div>
+                <h1>BluepeakCapital</h1>
+                <p>Create your account</p>
             </div>
-            
-            <h1>Create account</h1>
-            <p class="subtitle">Start trading with institutional-grade infrastructure</p>
 
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" style="display:none;" class="error-message"></div>
+            <div id="successMessage" style="display:none;" class="success-message"></div>
 
             <form id="signupForm">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>First name</label>
+                        <label>First name <span class="required">*</span></label>
                         <input type="text" id="firstName" placeholder="John" required>
                     </div>
                     <div class="form-group">
-                        <label>Last name</label>
+                        <label>Last name <span class="required">*</span></label>
                         <input type="text" id="lastName" placeholder="Doe" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Email address</label>
-                    <input type="email" id="email" placeholder="john@example.com" required>
+                    <label>Email address <span class="required">*</span></label>
+                    <input type="email" id="email" placeholder="you@example.com" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Password</label>
+                    <label>Password <span class="required">*</span></label>
                     <div class="password-wrapper">
-                        <input type="password" id="password" placeholder="Create a password" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('password', 'passwordIcon')">
-                            <svg id="passwordIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
+                        <input type="password" id="password" placeholder="••••••••" minlength="6" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                            <i class="fas fa-eye" id="passwordIcon"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Confirm password</label>
+                    <label>Confirm password <span class="required">*</span></label>
                     <div class="password-wrapper">
-                        <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', 'confirmPasswordIcon')">
-                            <svg id="confirmPasswordIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
+                        <input type="password" id="confirmPassword" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                            <i class="fas fa-eye" id="confirmPasswordIcon"></i>
                         </button>
                     </div>
-    </div>
+                </div>
 
-                <button type="submit" class="btn-primary" id="signupBtn">Create Account →</button>
+                <button type="submit" class="btn-primary" id="signupBtn">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
             </form>
 
-            <div class="login-link">
-                Already have an account? <a href="login.html">Sign in →</a>
+            <div class="auth-footer">
+                Already have an account? <a href="login.html">Sign In</a>
             </div>
         </div>
     </div>
@@ -221,6 +318,9 @@
         const SUPABASE_URL = 'https://txcbfzcomfyavcgqcevq.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH';
 
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
         const signupForm = document.getElementById('signupForm');
         const errorDiv = document.getElementById('errorMessage');
         const successDiv = document.getElementById('successMessage');
@@ -239,45 +339,54 @@
         // ============================================
         // PASSWORD TOGGLE
         // ============================================
-        window.togglePassword = function(fieldId, iconId) {
+        window.togglePassword = function(fieldId) {
             const field = document.getElementById(fieldId);
-            const icon = document.getElementById(iconId);
+            const icon = document.getElementById(fieldId + 'Icon');
+            
             if (field.type === 'password') {
                 field.type = 'text';
-                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+                icon.className = 'fas fa-eye-slash';
             } else {
                 field.type = 'password';
-                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                icon.className = 'fas fa-eye';
             }
         }
 
+        // ============================================
+        // SHOW ERROR/SUCCESS
+        // ============================================
         function showError(message) {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
-            setTimeout(() => errorDiv.style.display = 'none', 5000);
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
         }
 
         function showSuccess(message) {
             successDiv.textContent = message;
             successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
         }
 
         // ============================================
-        // SIGNUP - FIXED HEADERS
+        // SIGNUP - NO EMAIL VERIFICATION
         // ============================================
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('email').value;
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
 
-            // VALIDATION
+            // Validation
             if (!firstName || !lastName || !email || !password || !confirmPassword) {
                 showError('Please fill in all fields');
                 return;
@@ -292,20 +401,19 @@
             }
 
             const submitBtn = document.getElementById('signupBtn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Creating account...';
+            const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating account...';
 
             try {
                 // ============================================
-                // CREATE USER - USING SUPABASE CLIENT METHOD
+                // CREATE USER IN SUPABASE AUTH
                 // ============================================
                 const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        // REMOVED Authorization header - not needed for signup!
+                        'apikey': SUPABASE_ANON_KEY
                     },
                     body: JSON.stringify({
                         email: email,
@@ -332,24 +440,23 @@
                         showError(errorMsg);
                     }
                     
-                    submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
                     return;
                 }
 
                 const userId = data.user?.id;
                 if (!userId) {
                     showError('Failed to create account. Please try again.');
-                    submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
                     return;
                 }
 
                 console.log('✅ User created:', userId);
-                console.log('📧 Supabase will send verification email to:', email);
 
                 // ============================================
-                // CREATE PROFILE (optional - skip if fails)
+                // CREATE PROFILE (skip if fails)
                 // ============================================
                 try {
                     await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
@@ -372,7 +479,7 @@
                 }
 
                 // ============================================
-                // CREATE BALANCE (optional - skip if fails)
+                // CREATE BALANCE (skip if fails)
                 // ============================================
                 try {
                     await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
@@ -395,22 +502,22 @@
                 }
 
                 // ============================================
-                // SUCCESS
+                // SUCCESS - DIRECT TO DASHBOARD
                 // ============================================
-                showSuccess('✅ Account created! Please check your email to verify your account.');
-                showToast('📧 Check your email for the verification link!', 'success');
+                showSuccess('✅ Account created successfully!');
+                showToast('🎉 Welcome to BluepeakCapital!', 'success');
 
-                // Redirect to login after 3 seconds
+                // Redirect to dashboard after 1.5 seconds
                 setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 3000);
+                    window.location.href = 'dashboard.html';
+                }, 1500);
 
             } catch (err) {
                 console.error('Signup error:', err);
                 showError('Network error. Please try again.');
             } finally {
-                submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
             }
         });
 
@@ -437,5 +544,29 @@
         }
         checkAuth();
     </script>
+
+    <style>
+        .error-message {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: none;
+        }
+    </style>
 </body>
 </html>
