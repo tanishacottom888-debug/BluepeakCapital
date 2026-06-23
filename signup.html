@@ -9,6 +9,14 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+            }
+        }
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -302,7 +310,16 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { createClient } from '@supabase/supabase-js'
+
+        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
+        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+        // Make supabase available globally
+        window.supabase = supabase
+
         const signupForm = document.getElementById('signupForm');
         const errorDiv = document.getElementById('errorMessage');
         const successDiv = document.getElementById('successMessage');
