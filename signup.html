@@ -201,7 +201,7 @@
                             </svg>
                         </button>
                     </div>
-                </div>
+    </div>
 
                 <button type="submit" class="btn-primary" id="signupBtn">Create Account →</button>
             </form>
@@ -263,7 +263,7 @@
         }
 
         // ============================================
-        // SIGNUP - ONLY SUPABASE AUTH
+        // SIGNUP - FIXED HEADERS
         // ============================================
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -277,6 +277,7 @@
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
 
+            // VALIDATION
             if (!firstName || !lastName || !email || !password || !confirmPassword) {
                 showError('Please fill in all fields');
                 return;
@@ -297,14 +298,14 @@
 
             try {
                 // ============================================
-                // CREATE USER - SUPABASE SENDS VERIFICATION EMAIL
+                // CREATE USER - USING SUPABASE CLIENT METHOD
                 // ============================================
                 const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        // REMOVED Authorization header - not needed for signup!
                     },
                     body: JSON.stringify({
                         email: email,
@@ -321,11 +322,16 @@
 
                 if (!response.ok) {
                     console.error('Signup error:', data);
-                    if (data.msg?.includes('already registered')) {
+                    let errorMsg = data.msg || data.error_description || 'Signup failed. Please try again.';
+                    
+                    if (errorMsg.includes('already registered')) {
                         showError('This email is already registered. Please login.');
+                    } else if (errorMsg.includes('password')) {
+                        showError('Password is too weak. Please use a stronger password.');
                     } else {
-                        showError(data.msg || data.error_description || 'Signup failed. Please try again.');
+                        showError(errorMsg);
                     }
+                    
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                     return;
@@ -343,7 +349,7 @@
                 console.log('📧 Supabase will send verification email to:', email);
 
                 // ============================================
-                // CREATE PROFILE
+                // CREATE PROFILE (optional - skip if fails)
                 // ============================================
                 try {
                     await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
@@ -366,7 +372,7 @@
                 }
 
                 // ============================================
-                // CREATE BALANCE
+                // CREATE BALANCE (optional - skip if fails)
                 // ============================================
                 try {
                     await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
