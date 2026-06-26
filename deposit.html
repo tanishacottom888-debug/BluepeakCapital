@@ -670,10 +670,25 @@
             const opts=networkOptions[selectedCrypto]||[{value:selectedCrypto,label:`${selectedCrypto} Network`}]; 
             netSelect.innerHTML=opts.map(opt=>`<option value="${opt.value}">${opt.label}</option>`).join(''); 
             selectedNetwork=opts[0].value; 
+            
+            // ✅ ADD THIS: Log the selected network
+            console.log('Crypto:', selectedCrypto, 'Network:', selectedNetwork);
         }
+        
+        // ============================================================
+        // ✅ FIX: Add event listener for network dropdown change
+        // ============================================================
+        document.getElementById('networkSelect').addEventListener('change', function() {
+            selectedNetwork = this.value;
+            console.log('🔄 Network changed to:', selectedNetwork);
+        });
         
         // FIXED: ASYNC function that SAVES TO SUPABASE FIRST - NO POPUPS
         async function generateDepositAddress() { 
+            // ✅ ADD THIS: Log what's being used
+            console.log('🔍 Generating address for:', selectedCrypto, selectedNetwork);
+            console.log('📋 Available addresses:', depositAddresses[selectedCrypto]);
+            
             const address = depositAddresses[selectedCrypto]?.[selectedNetwork] || 'Address not available'; 
             document.getElementById('depositAddress').innerHTML = address; 
             document.getElementById('finalDepositAmount').innerHTML = `$${depositAmount.toFixed(2)} ${selectedCrypto}`; 
@@ -789,6 +804,9 @@
         
         renderCryptoDropdown(); 
         updateNetworkOptions();
+        
+        // ✅ ADD THIS: Initialize network selection
+        document.getElementById('networkSelect').value = selectedNetwork;
         
         window.setAmount = setAmount;
         window.goToStep2 = goToStep2;
