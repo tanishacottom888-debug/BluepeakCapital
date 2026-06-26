@@ -502,7 +502,7 @@
                     <div class="timer-value" id="timerValue">10:00</div>
                 </div>
                 <div class="confirm-section">
-                    <button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ I have made deposit</button>
+                    <button class="btn-confirm" id="confirmPaymentBtn" onclick="confirmPayment()">✅ Confirm Deposit</button>
                 </div>
                 <button class="btn-back" onclick="goToStep2()" style="margin-top: 1rem;"><i class="fas fa-arrow-left"></i> Back</button>
             </div>
@@ -747,7 +747,7 @@
             timerSeconds = 600; 
             startTimer(); 
             const btn = document.getElementById('confirmPaymentBtn'); 
-            btn.textContent = '✅ I have made deposit'; 
+            btn.textContent = '✅ Confirm Deposit'; 
             btn.classList.remove('reported'); 
             btn.disabled = false; 
             document.getElementById('step1').style.display = 'none'; 
