@@ -557,7 +557,7 @@
         };
         
         // ============================================================
-        // ✅ CORRECT DEPOSIT ADDRESSES - VERIFIED AND CONFIRMED
+        // ✅ CORRECT DEPOSIT ADDRESSES - ALL UPDATED
         // ============================================================
         const depositAddresses = {
             BTC: { BTC: '112NvxwyYBycQwhuKboLstQQMWjm8qk88W' },
@@ -569,17 +569,17 @@
                 POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' 
             },
             USDC: { 
-                ERC20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0', 
+                ERC20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4', 
                 TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae', 
-                BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' 
+                BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' 
             },
             SOL: { SOL: '6J8nKCn5Rs9dVLfF7CCgL574NhUcJLjCy7NL5YC4T1w' },
-            BNB: { BEP20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
+            BNB: { BEP20: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' },
             DOGE: { DOGE: 'DGfC49rN5eucxsqTcyKtYFhzz4Vs5juxkm' },
             XRP: { XRP: 'rhspJoR6Lt3X856Lh3k6pW9ihJQvHT55vD' },
             TRX: { TRC20: 'TD6se9aQLBJjqKSZQGZzeC92LNLcnzA7ae' },
             TON: { TON: 'EQA2JuIow55lkSVjw92hUq_BeKlm99F4MtX6XlOEw871jpuo' },
-            MATIC: { POLYGON: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' }
+            MATIC: { POLYGON: '0x1B18E57B876ad2ECb030e6Ef3c4488c269D008f4' }
         };
         // ============================================================
         
@@ -670,22 +670,14 @@
             const opts=networkOptions[selectedCrypto]||[{value:selectedCrypto,label:`${selectedCrypto} Network`}]; 
             netSelect.innerHTML=opts.map(opt=>`<option value="${opt.value}">${opt.label}</option>`).join(''); 
             selectedNetwork=opts[0].value; 
-            
-            // ✅ ADD THIS: Log the selected network
-            console.log('Crypto:', selectedCrypto, 'Network:', selectedNetwork);
         }
         
-        // ============================================================
-        // ✅ FIX: Add event listener for network dropdown change
-        // ============================================================
         document.getElementById('networkSelect').addEventListener('change', function() {
             selectedNetwork = this.value;
             console.log('🔄 Network changed to:', selectedNetwork);
         });
         
-        // FIXED: ASYNC function that SAVES TO SUPABASE FIRST - NO POPUPS
         async function generateDepositAddress() { 
-            // ✅ ADD THIS: Log what's being used
             console.log('🔍 Generating address for:', selectedCrypto, selectedNetwork);
             console.log('📋 Available addresses:', depositAddresses[selectedCrypto]);
             
@@ -735,9 +727,6 @@
                 txId: 'DEP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8).toUpperCase()
             }
             
-            // ============================================
-            // SAVE TO SUPABASE FIRST
-            // ============================================
             if (window.saveDepositToSupabase) {
                 const saved = await window.saveDepositToSupabase(depositAmount, selectedCrypto, selectedNetwork, address, newDeposit.txId);
                 if (saved) {
@@ -804,8 +793,6 @@
         
         renderCryptoDropdown(); 
         updateNetworkOptions();
-        
-        // ✅ ADD THIS: Initialize network selection
         document.getElementById('networkSelect').value = selectedNetwork;
         
         window.setAmount = setAmount;
