@@ -2,8 +2,9 @@
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
-const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+// UPDATED: Your new Supabase credentials
+const supabaseUrl = 'https://nlrrnqzbotfnmltpaxvw.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5scnJucXpib3Rmbm1sdHBheHZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTI0NjYsImV4cCI6MjEwNDA4ODQ2Nn0.PphFiwnKxHJhrqq0lPo336eUEVCBZNxXmmq3usSQj9I'
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 class TradingBot {
