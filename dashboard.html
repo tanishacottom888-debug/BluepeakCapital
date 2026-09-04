@@ -26,8 +26,9 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-        const supabaseUrl = 'https://txcbfzcomfyavcgqcevq.supabase.co'
-        const supabaseAnonKey = 'sb_publishable_6-gQnlgqnM20wQ9iWx5lsw_ZD7Uz5bH'
+        // UPDATED: Your new Supabase credentials
+        const supabaseUrl = 'https://nlrrnqzbotfnmltpaxvw.supabase.co'
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5scnJucXpib3Rmbm1sdHBheHZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTI0NjYsImV4cCI6MjEwNDA4ODQ2Nn0.PphFiwnKxHJhrqq0lPo336eUEVCBZNxXmmq3usSQj9I'
         
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
@@ -142,7 +143,6 @@
         }
         
         function updatePortfolioWithBalances(balances) {
-            // Get USD balance separately
             const usdBalance = balances.find(b => b.asset === 'USD')?.balance || 0
             updateBalanceDisplay(usdBalance)
             
@@ -193,9 +193,8 @@
             if (balanceDisplay) {
                 balanceDisplay.innerHTML = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             }
-            // Also update total balance if it's just USD
-            if (totalBalanceElem && document.getElementById('portfolioBody').children.length <= 1) {
-                totalBalanceElem.innerHTML = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            if (totalBalanceElem) {
+                // Will be updated by updatePortfolioWithBalances
             }
         }
         
@@ -935,7 +934,7 @@
                     <tr><th>Asset</th><th>Holdings</th><th>Avg. Price</th><th>Current Price</th><th>Value</th><th>P&L</th><th></th></tr>
                 </thead>
                 <tbody id="portfolioBody">
-                    <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading portfolio...</div></div> </div>
+                    <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading portfolio...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -996,8 +995,8 @@
                 asks.push({ price: basePrice + (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice + (i * 5)) * Math.random() * 2).toFixed(0) });
                 bids.push({ price: basePrice - (i * 5), size: (Math.random() * 2).toFixed(3), total: ((basePrice - (i * 5)) * Math.random() * 2).toFixed(0) });
             }
-            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</div><td>${a.size}</div><td>$${parseInt(a.total).toLocaleString()}</div></tr>`).join('');
-            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</div><td>${b.size}</div><td>$${parseInt(b.total).toLocaleString()}</div></tr>`).join('');
+            document.getElementById('askOrders').innerHTML = asks.map(a => `<tr><td class="ask">$${a.price.toFixed(0)}</td><td>${a.size}</td><td>$${parseInt(a.total).toLocaleString()}</td></tr>`).join('');
+            document.getElementById('bidOrders').innerHTML = bids.map(b => `<tr><td class="bid">$${b.price.toFixed(0)}</td><td>${b.size}</td><td>$${parseInt(b.total).toLocaleString()}</td></tr>`).join('');
         }
 
         function addPriceAlert() {
