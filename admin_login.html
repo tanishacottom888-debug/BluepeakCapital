@@ -258,6 +258,7 @@
     </div>
 
     <script>
+        // You can change this password
         const MASTER_PASSWORD = "Bluepeak2024";
         
         function togglePassword() {
@@ -296,6 +297,7 @@
             }
         });
         
+        // Redirect if already authenticated
         const isAdminAuth = localStorage.getItem('admin_authenticated');
         if (isAdminAuth === 'true') {
             window.location.href = 'admin_panel.html';
